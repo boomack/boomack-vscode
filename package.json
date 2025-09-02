@@ -107,6 +107,12 @@
         "category": "Boomack",
         "title": "Clear Selected Slot",
         "icon": "$(clear-all)"
+      },
+      {
+        "command": "boomack.displayCurrentFile",
+        "category": "Boomack",
+        "title": "Display Current File",
+        "icon": "$(send)"
       }
     ],
     "viewsContainers": {
@@ -171,7 +177,12 @@
         {
           "command": "boomack.clearSlot",
           "when": "view == boomack-slots",
-          "group": "inline"
+          "group": "inline@2"
+        },
+        {
+          "command": "boomack.displayCurrentFile",
+          "when": "view == boomack-slots",
+          "group": "inline@1"
         }
       ]
     }

@@ -1,3 +1,4 @@
+const fs = require('node:fs/promises')
 const vscode = require('vscode')
 const inventory = require('./inventory.js')
 const { getClientFor } = require('./client.js')
@@ -277,6 +278,44 @@ function clearSlotCommand(context, slotItemProvider) {
     }
 }
 
+/**
+ * @param {vscode.ExtensionContext} context
+ * @param {vscode.TreeView} slotTreeView
+ * @returns {function(?SlotItem):(void | Promise<void>)}
+ */
+function displayCurrentFile(context, slotTreeView) {
+    return async slotItem => {
+        if (!slotItem) {
+            if (slotTreeView.selection.length > 0) {
+                slotItem = slotTreeView.selection[0]
+            } else {
+                vscode.window.showErrorMessage("No target slot selected")
+                return
+            }
+        }
+        const { server, panelId, slotId } = slotItem
+        const client = await getClientFor(context, server)
+        const editor = vscode.window.activeTextEditor
+        if (!editor) {
+            vscode.window.showErrorMessage("No active text editor")
+            return
+        }
+        const filename = editor.document.uri.fsPath
+        const fileStat = await fs.stat(filename)
+        const fd = await fs.open(filename)
+        const s = fd.createReadStream()
+        const result = await client.streamMediaItemToSlot(
+            panelId, slotId,
+            'text/plain', s, fileStat.size,
+            filename,
+            null, null)
+        fd.close()
+        if (!result.success) {
+            vscode.window.showErrorMessage(`Failed to display file content. HTTP Status ${result.statusCode}.`)
+        }
+    }
+}
+
 module.exports = {
     addServerCommand,
     removeServerCommand,
@@ -289,4 +328,5 @@ module.exports = {
     selectSlotCommand,
     clearSlotCommand,
     clearSelectedSlotCommand,
+    displayCurrentFile,
 }

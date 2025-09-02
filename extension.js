@@ -136,6 +136,10 @@ function activate(context) {
         commands.clearSelectedSlotCommand(context, slotsView))
     context.subscriptions.push(clearSelectedSlotHandle)
 
+    const displayCurrentFileHandle = vscode.commands.registerCommand(
+        'boomack.displayCurrentFile',
+        commands.displayCurrentFile(context, slotsView))
+    context.subscriptions.push(displayCurrentFileHandle)
 }
 
 // This method is called when your extension is deactivated
