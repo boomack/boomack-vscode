@@ -1,0 +1,196 @@
+{
+  "name": "boomack-vscode",
+  "displayName": "Boomack",
+  "description": "Boomack client for VS Code",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.100.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "Boomack",
+      "type": "object",
+      "properties": {
+        "boomack.autoSelect.server": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically select default server"
+        },
+        "boomack.autoSelect.panel": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically select default panel"
+        },
+        "boomack.autoSelect.slot": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically select default slot"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "boomack.startLocalServer",
+        "category": "Boomack",
+        "title": "Start Local Server",
+        "icon": "$(run)"
+      },
+      {
+        "command": "boomack.addServer",
+        "category": "Boomack",
+        "title": "Add Server...",
+        "icon": "$(add)"
+      },
+      {
+        "command": "boomack.removeServer",
+        "category": "Boomack",
+        "title": "Remove Server",
+        "shortTitle": "Remove",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "boomack.selectServer",
+        "category": "Boomack",
+        "title": "Select Server"
+      },
+      {
+        "command": "boomack.refreshPanelList",
+        "category": "Boomack",
+        "title": "Refresh Panel List",
+        "shortTitle": "Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "boomack.selectPanel",
+        "category": "Boomack",
+        "title": "Select Panel"
+      },
+      {
+        "command": "boomack.clearPanel",
+        "category": "Boomack",
+        "title": "Clear Panel",
+        "shortTitle": "Clear",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "boomack.clearSelectedPanel",
+        "category": "Boomack",
+        "title": "Clear Selected Panel",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "boomack.refreshSlotList",
+        "category": "Boomack",
+        "title": "Refresh Slot List",
+        "shortTitle": "Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "boomack.selectSlot",
+        "category": "Boomack",
+        "title": "Select Slot"
+      },
+      {
+        "command": "boomack.clearSlot",
+        "category": "Boomack",
+        "title": "Clear Slot",
+        "shortTitle": "Clear",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "boomack.clearSelectedSlot",
+        "category": "Boomack",
+        "title": "Clear Selected Slot",
+        "icon": "$(clear-all)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "boomack",
+          "title": "Boomack",
+          "icon": "res/boomack-logo-black.svg"
+        }
+      ]
+    },
+    "views": {
+      "boomack": [
+        {
+          "id": "boomack-servers",
+          "name": "Servers"
+        },
+        {
+          "id": "boomack-panels",
+          "name": "Panels"
+        },
+        {
+          "id": "boomack-slots",
+          "name": "Slots"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "boomack.startLocalServer",
+          "when": "view == boomack-servers",
+          "group": "navigation"
+        },
+        {
+          "command": "boomack.addServer",
+          "when": "view == boomack-servers",
+          "group": "navigation"
+        },
+        {
+          "command": "boomack.refreshPanelList",
+          "when": "view == boomack-panels",
+          "group": "navigation"
+        },
+        {
+          "command": "boomack.refreshSlotList",
+          "when": "view == boomack-slots",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "boomack.removeServer",
+          "when": "view == boomack-servers",
+          "group": "inline"
+        },
+        {
+          "command": "boomack.clearPanel",
+          "when": "view == boomack-panels",
+          "group": "inline"
+        },
+        {
+          "command": "boomack.clearSlot",
+          "when": "view == boomack-slots",
+          "group": "inline"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "pretest": "npm run lint",
+    "test": "vscode-test"
+  },
+  "dependencies": {
+    "boomack": "0.14.9",
+    "boomack-js": "0.11.2"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.103.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "eslint": "^9.32.0",
+    "@vscode/test-cli": "^0.0.11",
+    "@vscode/test-electron": "^2.5.2"
+  }
+}

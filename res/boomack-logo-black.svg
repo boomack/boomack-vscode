@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xml:space="preserve"
+   width="100"
+   height="100"
+   version="1.1"
+   style="clip-rule:evenodd;fill-rule:evenodd;image-rendering:optimizeQuality;shape-rendering:geometricPrecision;text-rendering:geometricPrecision"
+   viewBox="0 0 96.020099 95.928"
+   id="svg3"
+   sodipodi:docname="logo-black.svg"
+   inkscape:version="1.4.2 (f4327f4, 2025-05-13)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
+   id="namedview3"
+   pagecolor="#505050"
+   bordercolor="#eeeeee"
+   borderopacity="1"
+   inkscape:showpageshadow="0"
+   inkscape:pageopacity="0"
+   inkscape:pagecheckerboard="0"
+   inkscape:deskcolor="#505050"
+   inkscape:zoom="4.2391315"
+   inkscape:cx="183.05637"
+   inkscape:cy="49.420501"
+   inkscape:window-width="2560"
+   inkscape:window-height="1369"
+   inkscape:window-x="-8"
+   inkscape:window-y="-8"
+   inkscape:window-maximized="1"
+   inkscape:current-layer="Ebene_x0020_1" />
+ <defs
+   id="defs1">
+  <style
+   type="text/css"
+   id="style1">
+   <![CDATA[
+    .fil1 {fill:#4ABD15}
+    .fil0 {fill:#F0441D}
+    .fil2 {fill:#333333;fill-rule:nonzero}
+   ]]>
+  </style>
+ </defs>
+ <g
+   id="Ebene_x0020_1"
+   inkscape:label="Ebene 1"
+   inkscape:groupmode="layer">
+  <metadata
+   id="CorelCorpID_0Corel-Layer" />
+  
+  <g
+   id="g3"
+   transform="matrix(0.92088328,0,0,0.92088328,4.8009867,4.7549553)"><path
+     class="fil0"
+     d="M 67.255,7.534 93.481,0 93.971,0.482 V 95.735 L 93.466,95.928 80.41,84.965 67.261,73.924 66.849,73.111 V 59.512 C 73.431,56.015 80.504,51.389 82.467,46.699 85.192,40.189 75.3,33.624 66.849,29.324 V 8.113 Z"
+     id="path1"
+     style="fill:#000000" /><path
+     class="fil1"
+     d="m 21.599,18.823 c -9.42,-0.68 -14.564,1.072 -10.613,7.341 1.163,1.845 4.061,5.905 10.853,7.059 5.851,0.994 12.999,2.064 18.974,3.364 10.795,2.349 23.869,6.927 21.551,10.8 C 59.736,51.777 49.723,57.473 30.441,64.348 10.313,71.526 3.358,71.46 0.333,75.613 -2.691,79.765 15.239,75.47 39.602,67.549 63.964,59.627 76.325,50.747 78.486,45.586 80.646,40.425 68.147,32.665 55.683,27.584 45.47,23.42 31.019,19.503 21.599,18.823 Z"
+     id="path2"
+     style="fill:#000000" /></g>
+  
+  
+  
+  
+  
+  
+  
+ </g>
+</svg>
