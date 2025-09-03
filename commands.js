@@ -1,15 +1,25 @@
 const fs = require('node:fs/promises')
+const path = require('node:path')
 const vscode = require('vscode')
+const mime = require('mime')
+const { config } = require('./config.js')
 const inventory = require('./inventory.js')
 const { getClientFor } = require('./client.js')
 
 /**
+ * @typedef {import('./inventory.js').BoomackServer} BoomackServer
  * @typedef {import('./navigation.js').ServerTreeItemProvider} ServerTreeItemProvider
  * @typedef {import('./navigation.js').PanelTreeItemProvider} PanelTreeItemProvider
  * @typedef {import('./navigation.js').PanelItem} PanelItem
  * @typedef {import('./navigation.js').SlotTreeItemProvider} SlotTreeItemProvider
  * @typedef {import('./navigation.js').SlotItem} SlotItem
  */
+
+function playgroundCommand() {
+    return async () => {
+        console.log('Use for protoyping...')
+    }
+}
 
 /**
  * @param {vscode.ExtensionContext} context
@@ -121,11 +131,29 @@ function refreshPanelsCommand(treeItemProvider) {
 }
 
 /**
+ * @param {PanelItem?} item
+ * @param {vscode.TreeView} panelTreeView
+ * @param {PanelTreeItemProvider} [panelItemProvider]
+ * @returns {Promise<PanelItem|undefined>}
+ */
+async function resolvePanelItem(item, panelTreeView, panelItemProvider) {
+    if (item) return item
+    if (panelTreeView.selection.length > 0) {
+        item = panelTreeView.selection[0]
+    }
+    if (panelItemProvider) {
+        const items = await panelItemProvider.getChildren(null)
+        return items.find(item => item.panelId === 'default')
+    }
+    return undefined
+}
+
+/**
  * @param {PanelTreeItemProvider} panelItemProvider
  * @param {string} title
  * @returns {Promise<PanelItem | undefined>}
  */
-async function _choosePanel(panelItemProvider, title) {
+async function choosePanel(panelItemProvider, title) {
     const panelItems = await panelItemProvider.getChildren(null)
     const items = panelItems.map(x => ({
         label: x.panelId,
@@ -144,7 +172,7 @@ async function _choosePanel(panelItemProvider, title) {
  */
 function selectPanelCommand(panelItemProvider, panelTreeView) {
     return async panelItem => {
-        if (!panelItem) panelItem = await _choosePanel(panelItemProvider, 'Select Boomack Panel')
+        if (!panelItem) panelItem = await choosePanel(panelItemProvider, 'Select Boomack Panel')
         if (!panelItem) return
         panelTreeView.reveal(panelItem, { select: true })
     }
@@ -154,7 +182,7 @@ function selectPanelCommand(panelItemProvider, panelTreeView) {
  * @param {vscode.ExtensionContext} context
  * @param {PanelItem} panelItem
  */
-async function _clearPanel(context, panelItem) {
+async function clearPanel(context, panelItem) {
     const { server, panelId } = panelItem
     const client = await getClientFor(context, server)
     try {
@@ -172,26 +200,15 @@ async function _clearPanel(context, panelItem) {
 
 /**
  * @param {vscode.ExtensionContext} context
+ * @param {PanelTreeItemProvider} panelItemProvider
  * @param {vscode.TreeView} panelTreeView
  * @returns {function(?PanelItem):(void | Promise<void>)}
  */
-function clearSelectedPanelCommand(context, panelTreeView) {
-    return async () => {
-        if (panelTreeView.selection.length === 0) return
-        _clearPanel(context, panelTreeView.selection[0])
-    }
-}
-
-/**
- * @param {vscode.ExtensionContext} context
- * @param {PanelTreeItemProvider} panelItemProvider
- * @returns {function(?PanelItem):(void | Promise<void>)}
- */
-function clearPanelCommand(context, panelItemProvider) {
+function clearPanelCommand(context, panelTreeView, panelItemProvider) {
     return async panelItem => {
-        if (!panelItem) panelItem = await _choosePanel(panelItemProvider, 'Clear Boomack Panel')
+        panelItem = await resolvePanelItem(panelItem, panelTreeView, panelItemProvider)
         if (!panelItem) return
-        await _clearPanel(context, panelItem)
+        await clearPanel(context, panelItem)
     }
 }
 
@@ -204,11 +221,29 @@ function refreshSlotsCommand(treeItemProvider) {
 }
 
 /**
+ * @param {SlotItem?} item
+ * @param {vscode.TreeView} slotTreeView
+ * @param {SlotTreeItemProvider} [slotItemProvider]
+ * @returns {Promise<SlotItem|undefined>}
+ */
+async function resolveSlotItem(item, slotTreeView, slotItemProvider) {
+    if (item) return item
+    if (slotTreeView.selection.length > 0) {
+        item = slotTreeView.selection[0]
+    }
+    if (slotItemProvider) {
+        const items = await slotItemProvider.getChildren(null)
+        return items.find(item => item.defaultSlot)
+    }
+    return undefined
+}
+
+/**
  * @param {SlotTreeItemProvider} slotItemProvider
  * @param {string} title
  * @returns {Promise<SlotItem | undefined>}
  */
-async function _chooseSlot(slotItemProvider, title) {
+async function chooseSlot(slotItemProvider, title) {
     const slotItems = await slotItemProvider.getChildren(null)
     const items = slotItems.map(x => ({
         label: x.slotId,
@@ -227,7 +262,7 @@ async function _chooseSlot(slotItemProvider, title) {
  */
 function selectSlotCommand(slotItemProvider, slotTreeView) {
     return async slotItem => {
-        if (!slotItem) slotItem = await _chooseSlot(slotItemProvider, 'Select Boomack Slot')
+        if (!slotItem) slotItem = await chooseSlot(slotItemProvider, 'Select Boomack Slot')
         if (!slotItem) return
         slotTreeView.reveal(slotItem, { select: true })
     }
@@ -237,7 +272,7 @@ function selectSlotCommand(slotItemProvider, slotTreeView) {
  * @param {vscode.ExtensionContext} context
  * @param {SlotItem} slotItem
  */
-async function _clearSlot(context, slotItem) {
+async function clearSlot(context, slotItem) {
     const { server, panelId, slotId } = slotItem
     const client = await getClientFor(context, server)
     try {
@@ -256,25 +291,76 @@ async function _clearSlot(context, slotItem) {
 /**
  * @param {vscode.ExtensionContext} context
  * @param {vscode.TreeView} slotTreeView
+ * @param {SlotTreeItemProvider} slotItemProvider
  * @returns {function(?SlotItem):(void | Promise<void>)}
  */
-function clearSelectedSlotCommand(context, slotTreeView) {
-    return async () => {
-        if (slotTreeView.selection.length === 0) return
-        _clearSlot(context, slotTreeView.selection[0])
+function clearSlotCommand(context, slotItemProvider, slotTreeView) {
+    return async slotItem => {
+        slotItem = await resolveSlotItem(slotItem, slotTreeView, slotItemProvider)
+        if (!slotItem) return
+        await clearSlot(context, slotItem)
     }
 }
 
 /**
- * @param {vscode.ExtensionContext} context
- * @param {SlotTreeItemProvider} slotItemProvider
- * @returns {function(?SlotItem):(void | Promise<void>)}
+ * @param {{ predicate: function(string):boolean, type: string }[]} types
+ * @param {string} filename
+ * @returns {string}
  */
-function clearSlotCommand(context, slotItemProvider) {
-    return async slotItem => {
-        if (!slotItem) slotItem = await _chooseSlot(slotItemProvider, 'Clear Boomack Slot')
-        if (!slotItem) return
-        await _clearSlot(context, slotItem)
+function lookupMediaType(types, filename) {
+    const name = path.basename(filename)
+    for (const { predicate, type } of types) {
+        if (predicate(name)) return type
+    }
+	let ext = path.extname(name)
+    if (ext.startsWith('.')) ext = ext.substring(1)
+	if (ext) {
+		return mime.getType(ext);
+	} else {
+		return 'application/octet-stream';
+	}
+}
+
+/**
+ * @param {vscode.ExtensionContext} context
+ * @param {BoomackServer} server
+ * @param {?string} panelId
+ * @param {?string} slotId
+ * @param {string} filename
+ * @param {?string} [mediaType]
+ * @param {?string[]} [presets]
+ * @param {?Object} [options]
+ */
+async function displayFile(context, server, panelId, slotId, filename, mediaType, presets, options) {
+    if (!panelId) panelId = 'default'
+    const boomackClient = await getClientFor(context, server)
+    if (!mediaType) {
+        mediaType = lookupMediaType(boomackClient.config.client.types, filename)
+    }
+    if (!presets) presets = null
+    if (!options) options = null
+    let title = null
+    const titleMode = config('displayTitle')
+    if (titleMode === 'filename') {
+        title = path.basename(filename)
+    } else if (titleMode === 'filepath') {
+        title = filename
+    }
+    const fileStat = await fs.stat(filename)
+    const fd = await fs.open(filename)
+    const s = fd.createReadStream()
+    const result = slotId
+        ? await boomackClient.streamMediaItemToSlot(
+            panelId, slotId,
+            mediaType, s, fileStat.size,
+            title, presets, options)
+        : await boomackClient.streamMediaItemToPanel(
+            panelId,
+            mediaType, s, fileStat.size,
+            title, presets, options)
+    fd.close()
+    if (!result.success) {
+        vscode.window.showErrorMessage(`Failed to display file content. HTTP Status ${result.statusCode}.`)
     }
 }
 
@@ -283,50 +369,82 @@ function clearSlotCommand(context, slotItemProvider) {
  * @param {vscode.TreeView} slotTreeView
  * @returns {function(?SlotItem):(void | Promise<void>)}
  */
-function displayCurrentFile(context, slotTreeView) {
+function displayInSlotCommand(context, slotTreeView) {
     return async slotItem => {
+        slotItem = await resolveSlotItem(slotItem, slotTreeView)
         if (!slotItem) {
-            if (slotTreeView.selection.length > 0) {
-                slotItem = slotTreeView.selection[0]
-            } else {
-                vscode.window.showErrorMessage("No target slot selected")
-                return
-            }
+            vscode.window.showErrorMessage("No target slot selected")
+            return
         }
         const { server, panelId, slotId } = slotItem
-        const client = await getClientFor(context, server)
         const editor = vscode.window.activeTextEditor
         if (!editor) {
             vscode.window.showErrorMessage("No active text editor")
             return
         }
         const filename = editor.document.uri.fsPath
-        const fileStat = await fs.stat(filename)
-        const fd = await fs.open(filename)
-        const s = fd.createReadStream()
-        const result = await client.streamMediaItemToSlot(
-            panelId, slotId,
-            'text/plain', s, fileStat.size,
-            filename,
-            null, null)
-        fd.close()
-        if (!result.success) {
-            vscode.window.showErrorMessage(`Failed to display file content. HTTP Status ${result.statusCode}.`)
+        await displayFile(context, server, panelId, slotId, filename)
+    }
+}
+
+/**
+ * @param {vscode.ExtensionContext} context
+ * @param {SlotTreeItemProvider} slotItemProvider
+ * @param {vscode.TreeView} slotTreeView
+ * @returns {function({fsPath: string}):(void | Promise<void>)}
+ */
+function displayFileCommand(context, slotItemProvider, slotTreeView) {
+    return async resource => {
+        if (!resource) {
+            vscode.window.showErrorMessage("Command requires argument")
+            return
         }
+        if (!resource.fsPath) {
+            vscode.window.showErrorMessage("Command expects a file resource or editor document as argument")
+            return
+        }
+        const slotItem = await resolveSlotItem(null, slotTreeView, slotItemProvider)
+        if (slotItem === undefined) return
+        const { server, panelId, slotId } = slotItem
+        const filename = resource.fsPath
+        await displayFile(context, server, panelId, slotId, filename)
+    }
+}
+
+/**
+ * @param {vscode.ExtensionContext} context
+ * @param {SlotTreeItemProvider} slotItemProvider
+ * @param {vscode.TreeView<any>} slotTreeView
+ * @param {'in'|'out'} direction
+ */
+function slotZoomCommand(context, slotItemProvider, slotTreeView, direction) {
+    return async slotItem => {
+        slotItem = await resolveSlotItem(slotItem, slotTreeView, slotItemProvider)
+        if (slotItem === undefined) return
+        const { server, panelId, slotId } = slotItem
+        const client = await getClientFor(context, server)
+        let dirWord = null
+        if (direction === 'in') dirWord = 'In'
+        else if (direction === 'out') dirWord = 'Out'
+        await client.evaluateCode([{
+            panelId,
+            script: `boomack.cmdSlotZoom${dirWord}('${slotId}')`
+        }])
     }
 }
 
 module.exports = {
+    playgroundCommand,
     addServerCommand,
     removeServerCommand,
     selectServerCommand,
     refreshPanelsCommand,
     selectPanelCommand,
     clearPanelCommand,
-    clearSelectedPanelCommand,
     refreshSlotsCommand,
     selectSlotCommand,
     clearSlotCommand,
-    clearSelectedSlotCommand,
-    displayCurrentFile,
+    slotZoomCommand,
+    displayInSlotCommand,
+    displayFileCommand,
 }

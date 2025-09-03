@@ -92,8 +92,12 @@ class PanelTreeItemProvider {
     constructor(context, serverView) {
         this._context = context
         this._serverView = serverView
+
         this._changeEmitter = new vscode.EventEmitter()
         this.onDidChangeTreeData = this._changeEmitter.event
+
+        this._itemsLoadedEmitter = new vscode.EventEmitter()
+        this.onItemsLoaded = this._itemsLoadedEmitter.event
 
         const changeHandle = serverView.onDidChangeSelection(() => this.refresh())
         context.subscriptions.push(changeHandle)
@@ -127,6 +131,7 @@ class PanelTreeItemProvider {
                 const panelIds = panelIdResponse.body
                 if (typeof(panelIds) === 'object' && typeof(panelIds.map) === 'function') {
                     this._panelItems = panelIds.map(id => new PanelItem(server, id))
+                    this._itemsLoadedEmitter.fire(this._panelItems)
                     return this._panelItems
                 } else {
                     console.error("Failed to parse server response for panel list")
@@ -187,6 +192,9 @@ class SlotTreeItemProvider {
         this._changeEmitter = new vscode.EventEmitter()
         this.onDidChangeTreeData = this._changeEmitter.event
 
+        this._itemsLoadedEmitter = new vscode.EventEmitter()
+        this.onItemsLoaded = this._itemsLoadedEmitter.event
+
         const changeHandle = panelView.onDidChangeSelection(() => this.refresh())
         context.subscriptions.push(changeHandle)
 
@@ -228,6 +236,7 @@ class SlotTreeItemProvider {
                             panel.slots[slotId],
                             panel.defaultSlot === slotId))
                     }
+                    this._itemsLoadedEmitter.fire(this._slotItems)
                     return this._slotItems
                 } else {
                     console.error("Failed to parse server response for panel layout")

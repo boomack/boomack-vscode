@@ -19,42 +19,59 @@
         "boomack.autoSelect.server": {
           "type": "boolean",
           "default": false,
-          "description": "Automatically select default server"
+          "description": "Automatically select default server",
+          "order": 1
         },
         "boomack.autoSelect.panel": {
           "type": "boolean",
-          "default": true,
-          "description": "Automatically select default panel"
+          "default": false,
+          "description": "Automatically select default panel",
+          "order": 2
         },
         "boomack.autoSelect.slot": {
           "type": "boolean",
-          "default": true,
-          "description": "Automatically select default slot"
+          "default": false,
+          "description": "Automatically select default slot",
+          "order": 3
+        },
+        "boomack.displayTitle": {
+          "type": "string",
+          "default": "filename",
+          "enum": ["none", "filename", "filepath"],
+          "enumItemLabels": ["None", "Filename", "Path"],
+          "enumDescriptions": [null, "The name of the file", "The full path of the file"],
+          "description": "The title for display requests to Boomack",
+          "order": 4
         }
       }
     },
     "commands": [
       {
-        "command": "boomack.startLocalServer",
+        "command": "boomack.playground",
+        "category": "Boomack",
+        "title": "Playground"
+      },
+      {
+        "command": "boomack.server.startLocal",
         "category": "Boomack",
         "title": "Start Local Server",
         "icon": "$(run)"
       },
       {
-        "command": "boomack.addServer",
+        "command": "boomack.server.add",
         "category": "Boomack",
         "title": "Add Server...",
         "icon": "$(add)"
       },
       {
-        "command": "boomack.removeServer",
+        "command": "boomack.server.remove",
         "category": "Boomack",
         "title": "Remove Server",
         "shortTitle": "Remove",
-        "icon": "$(trash)"
+        "icon": "$(close)"
       },
       {
-        "command": "boomack.selectServer",
+        "command": "boomack.server.select",
         "category": "Boomack",
         "title": "Select Server"
       },
@@ -66,22 +83,16 @@
         "icon": "$(refresh)"
       },
       {
-        "command": "boomack.selectPanel",
+        "command": "boomack.panel.select",
         "category": "Boomack",
         "title": "Select Panel"
       },
       {
-        "command": "boomack.clearPanel",
+        "command": "boomack.panel.clear",
         "category": "Boomack",
         "title": "Clear Panel",
         "shortTitle": "Clear",
-        "icon": "$(clear-all)"
-      },
-      {
-        "command": "boomack.clearSelectedPanel",
-        "category": "Boomack",
-        "title": "Clear Selected Panel",
-        "icon": "$(clear-all)"
+        "icon": "$(trash)"
       },
       {
         "command": "boomack.refreshSlotList",
@@ -91,27 +102,45 @@
         "icon": "$(refresh)"
       },
       {
-        "command": "boomack.selectSlot",
+        "command": "boomack.slot.select",
         "category": "Boomack",
         "title": "Select Slot"
       },
       {
-        "command": "boomack.clearSlot",
+        "command": "boomack.slot.clear",
         "category": "Boomack",
         "title": "Clear Slot",
         "shortTitle": "Clear",
-        "icon": "$(clear-all)"
+        "icon": "$(trash)"
       },
       {
-        "command": "boomack.clearSelectedSlot",
+        "command": "boomack.slot.zoomIn",
         "category": "Boomack",
-        "title": "Clear Selected Slot",
-        "icon": "$(clear-all)"
+        "title": "Slot zoom in",
+        "icon": "$(zoom-in)"
       },
       {
-        "command": "boomack.displayCurrentFile",
+        "command": "boomack.slot.zoomOut",
         "category": "Boomack",
-        "title": "Display Current File",
+        "title": "Slot zoom out",
+        "icon": "$(zoom-out)"
+      },
+      {
+        "command": "boomack.display.inSlot",
+        "category": "Boomack",
+        "title": "Display file of active editor",
+        "icon": "$(send)"
+      },
+      {
+        "command": "boomack.display.document",
+        "category": "Boomack",
+        "title": "Display document in Boomack slot",
+        "icon": "$(send)"
+      },
+      {
+        "command": "boomack.display.fileResource",
+        "category": "Boomack",
+        "title": "Display on Boomack",
         "icon": "$(send)"
       }
     ],
@@ -128,61 +157,86 @@
       "boomack": [
         {
           "id": "boomack-servers",
-          "name": "Servers"
+          "name": "Servers",
+          "icon": "$(server)"
         },
         {
           "id": "boomack-panels",
-          "name": "Panels"
+          "name": "Panels",
+          "icon": "$(multiple-windows)"
         },
         {
           "id": "boomack-slots",
-          "name": "Slots"
+          "name": "Slots",
+          "icon": "$(symbol-enum)"
         }
       ]
     },
     "menus": {
       "view/title": [
         {
-          "command": "boomack.startLocalServer",
+          "command": "boomack.server.startLocal",
           "when": "view == boomack-servers",
           "group": "navigation"
         },
         {
-          "command": "boomack.addServer",
+          "command": "boomack.server.add",
           "when": "view == boomack-servers",
           "group": "navigation"
         },
         {
           "command": "boomack.refreshPanelList",
-          "when": "view == boomack-panels",
+          "when": "view == boomack-panels && boomack.serverSelected",
           "group": "navigation"
         },
         {
           "command": "boomack.refreshSlotList",
-          "when": "view == boomack-slots",
+          "when": "view == boomack-slots && boomack.panelSelected",
           "group": "navigation"
         }
       ],
       "view/item/context": [
         {
-          "command": "boomack.removeServer",
-          "when": "view == boomack-servers",
-          "group": "inline"
+          "command": "boomack.server.remove",
+          "when": "view == boomack-servers"
         },
         {
-          "command": "boomack.clearPanel",
+          "command": "boomack.panel.clear",
           "when": "view == boomack-panels",
           "group": "inline"
         },
         {
-          "command": "boomack.clearSlot",
+          "command": "boomack.display.inSlot",
+          "when": "view == boomack-slots && boomack.activeTextEditor",
+          "group": "inline@1"
+        },
+        {
+          "command": "boomack.slot.zoomIn",
           "when": "view == boomack-slots",
           "group": "inline@2"
         },
         {
-          "command": "boomack.displayCurrentFile",
+          "command": "boomack.slot.zoomOut",
           "when": "view == boomack-slots",
-          "group": "inline@1"
+          "group": "inline@3"
+        },
+        {
+          "command": "boomack.slot.clear",
+          "when": "view == boomack-slots",
+          "group": "inline@4"
+        }
+      ],
+      "editor/title/run": [
+        {
+          "command": "boomack.display.document",
+          "when": "boomack.serverSelected && boomack.activeTextEditor"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "boomack.display.fileResource",
+          "when": "boomack.serverSelected",
+          "group": "3_compare"
         }
       ]
     }
@@ -194,7 +248,8 @@
   },
   "dependencies": {
     "boomack": "0.14.9",
-    "boomack-js": "0.11.2"
+    "boomack-js": "0.11.3",
+    "mime": "^3.0.0"
   },
   "devDependencies": {
     "@types/vscode": "^1.103.0",
