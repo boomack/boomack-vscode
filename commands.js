@@ -67,24 +67,10 @@ function addServerCommand(context) {
 
 /**
  * @param {vscode.ExtensionContext} context
- * @param {string} serverName
- */
-function _removeServer(context, serverName) {
-    if (inventory.removeServer(context, serverName)) {
-        vscode.window.showInformationMessage(
-            `Removed Boomack server "${serverName}" from the inventory`)
-    } else {
-        vscode.window.showWarningMessage(
-            `Removed Boomack server "${serverName}" not found in the inventory`)
-    }
-}
-
-/**
- * @param {vscode.ExtensionContext} context
  * @param {string} title
  * @returns {Promise<inventory.BoomackServer | undefined>}
  */
-async function _chooseServer(context, title) {
+async function chooseServer(context, title) {
     const servers = inventory.getServers(context)
     const items = servers.map(s => ({
         label: s.name,
@@ -99,13 +85,27 @@ async function _chooseServer(context, title) {
 
 /**
  * @param {vscode.ExtensionContext} context
+ * @param {string} serverName
+ */
+function removeServer(context, serverName) {
+    if (inventory.removeServer(context, serverName)) {
+        vscode.window.showInformationMessage(
+            `Removed Boomack server "${serverName}" from the inventory`)
+    } else {
+        vscode.window.showWarningMessage(
+            `Removed Boomack server "${serverName}" not found in the inventory`)
+    }
+}
+
+/**
+ * @param {vscode.ExtensionContext} context
  * @returns {function(inventory.BoomackServer):(void | Promise<void>)}
  */
 function removeServerCommand(context) {
     return async server => {
-        if (!server) server = await _chooseServer(context, 'Remove Boomack Server')
+        if (!server) server = await chooseServer(context, 'Remove Boomack Server')
         if (!server) return
-        _removeServer(context, server.name)
+        removeServer(context, server.name)
     }
 }
 
@@ -116,7 +116,7 @@ function removeServerCommand(context) {
  */
 function selectServerCommand(context, serverTreeView) {
     return async server => {
-        if (!server) server = await _chooseServer(context, 'Select Boomack Server')
+        if (!server) server = await chooseServer(context, 'Select Boomack Server')
         if (!server) return
         serverTreeView.reveal(server, { select: true })
     }
