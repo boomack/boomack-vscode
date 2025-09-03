@@ -9,6 +9,19 @@ const {
 } = require('./navigation.js')
 const commands = require('./commands.js')
 
+// === TODO ===
+// - display text selection
+// - display HTML source code
+// - display with explicit media type / preset
+// - setup panel from file
+// - setup from assets in directory structure (types, presets, layouts, actions, initial content)
+// - detect workspace server config
+// - run server in workspace (replaces default server)
+// - json schema for server config
+// - open home page, panel, slot in browser
+// - use file:/// references instead of streaming requests for workspace server
+// - allow opt-in streaming requests for workspace server
+
 /**
  * @typedef {import('./navigation.js').PanelItem} PanelItem
  * @typedef {import('./navigation.js').SlotItem} SlotItem
@@ -132,12 +145,12 @@ function activate(context) {
         'boomack.playground', commands.playgroundCommand())
     context.subscriptions.push(playgroundCmdSubs)
 
-    const startLocalServerCmdSubs = vscode.commands.registerCommand(
-        'boomack.server.startLocal',
+    const startServerCmdSubs = vscode.commands.registerCommand(
+        'boomack.server.start',
         () => {
-            vscode.window.showWarningMessage('Not Implemented: Start local Boomack server')
+            vscode.window.showWarningMessage('Not Implemented: Start Boomack server for workspace')
         })
-    context.subscriptions.push(startLocalServerCmdSubs)
+    context.subscriptions.push(startServerCmdSubs)
 
     const addServerCmdSubs = vscode.commands.registerCommand(
         'boomack.server.add',
