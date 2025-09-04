@@ -2,17 +2,17 @@ const fs = require('node:fs/promises')
 const path = require('node:path')
 const vscode = require('vscode')
 const mime = require('mime')
+const { WORKSPACE_SERVER_NAME } = require('./model.js')
 const { config } = require('./config.js')
 const inventory = require('./inventory.js')
 const { getClientFor } = require('./client.js')
 
 /**
  * @typedef {import('./inventory.js').BoomackServer} BoomackServer
- * @typedef {import('./navigation.js').ServerTreeItemProvider} ServerTreeItemProvider
- * @typedef {import('./navigation.js').PanelTreeItemProvider} PanelTreeItemProvider
- * @typedef {import('./navigation.js').PanelItem} PanelItem
- * @typedef {import('./navigation.js').SlotTreeItemProvider} SlotTreeItemProvider
- * @typedef {import('./navigation.js').SlotItem} SlotItem
+ * @typedef {import('./model.js').ServerUIState} ServerUIState
+ * @typedef {import('./model.js').PanelUIState} PanelUIState
+ * @typedef {import('./model.js').SlotUIState} SlotUIState
+ * @typedef {import('./navigation.js').Navigator} Navigator
  */
 
 function playgroundCommand() {
@@ -38,6 +38,11 @@ function addServerCommand(context) {
         if (name === undefined) return
         if (!name) name = defaultName
 
+        if (name === WORKSPACE_SERVER_NAME) {
+            vscode.window.showErrorMessage("This name is reserved for the workspace server")
+            return
+        }
+
         let url = await vscode.window.showInputBox({
             title: 'Boomack Server URL',
             placeHolder: defaultUrl,
@@ -61,20 +66,19 @@ function addServerCommand(context) {
             vscode.window.showInformationMessage(
                 `Updated Boomack server "${name}" in the inventory`)
         }
-
     }
 }
 
 /**
- * @param {vscode.ExtensionContext} context
+ * @param {Navigator} navigator
  * @param {string} title
- * @returns {Promise<inventory.BoomackServer | undefined>}
+ * @returns {Promise<ServerUIState|undefined>}
  */
-async function chooseServer(context, title) {
-    const servers = inventory.getServers(context)
+async function chooseServer(navigator, title) {
+    const servers = navigator.getServerStates()
     const items = servers.map(s => ({
         label: s.name,
-        description: s.url,
+        description: s.server.url,
         serverName: s.name,
         iconPath: new vscode.ThemeIcon('server-environment'),
     }))
@@ -84,11 +88,11 @@ async function chooseServer(context, title) {
 }
 
 /**
- * @param {vscode.ExtensionContext} context
+ * @param {Navigator} navigator
  * @param {string} serverName
  */
-function removeServer(context, serverName) {
-    if (inventory.removeServer(context, serverName)) {
+function removeServer(navigator, serverName) {
+    if (inventory.removeServer(navigator.getContext(), serverName)) {
         vscode.window.showInformationMessage(
             `Removed Boomack server "${serverName}" from the inventory`)
     } else {
@@ -98,14 +102,14 @@ function removeServer(context, serverName) {
 }
 
 /**
- * @param {vscode.ExtensionContext} context
- * @returns {function(inventory.BoomackServer):(void | Promise<void>)}
+ * @param {Navigator} navigator
+ * @returns {function(ServerUIState):(void | Promise<void>)}
  */
-function removeServerCommand(context) {
+function removeServerCommand(navigator) {
     return async server => {
-        if (!server) server = await chooseServer(context, 'Remove Boomack Server')
+        if (!server) server = await chooseServer(navigator, 'Remove Boomack Server')
         if (!server) return
-        removeServer(context, server.name)
+        removeServer(navigator, server.name)
     }
 }
 
@@ -123,20 +127,24 @@ function selectServerCommand(context, serverTreeView) {
 }
 
 /**
- * @param {PanelTreeItemProvider} treeItemProvider
+ * @param {Navigator} navigator
  * @returns {function():(void | Promise<void>)}
  */
-function refreshPanelsCommand(treeItemProvider) {
-    return () => treeItemProvider.refresh()
+function refreshPanelsCommand(navigator) {
+    return () => {
+        const serverState = navigator.getSelectedServerState()
+        if (serverState) {
+            navigator.refreshServerState(serverState.name)
+        }
+    }
 }
 
 /**
- * @param {PanelItem?} item
- * @param {vscode.TreeView} panelTreeView
- * @param {PanelTreeItemProvider} [panelItemProvider]
+ * @param {PanelUIState?} item
+ * @param {Navigator} navigator
  * @returns {Promise<PanelItem|undefined>}
  */
-async function resolvePanelItem(item, panelTreeView, panelItemProvider) {
+async function resolvePanel(item, navigator) {
     if (item) return item
     if (panelTreeView.selection.length > 0) {
         item = panelTreeView.selection[0]

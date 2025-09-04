@@ -1,8 +1,7 @@
+const { EventEmitter } = require('vscode')
+
 /**
- * @typedef {Object} BoomackServer
- * @property {string} name An user readable identifier for the server
- * @property {string} url The HTTP(S) URL of the Boomack server
- * @property {?string} token The API authentication token
+ * @typedef {import('./model.js').BoomackServer} BoomackServer
  */
 
 // TODO: store tokens as secret
@@ -11,14 +10,9 @@
  * @typedef {import('vscode').ExtensionContext} ExtensionContext
  */
 
-const changeListener = []
-
-/**
- * @param {function(BoomackServer[]):void} cb
- */
-function onChanged(cb) {
-    changeListener.push(cb)
-}
+/** @type {EventEmitter<BoomackServer[]>} */
+const changedEmitter = new EventEmitter()
+const onChanged = changedEmitter.event
 
 /**
  * @param {BoomackServer} a
@@ -49,13 +43,7 @@ function getServers(context) {
  */
 function updateServers(context, servers) {
     context.globalState.update('boomack.servers', servers)
-    for (const cb of changeListener) {
-        try {
-            cb(servers)
-        } catch (err) {
-            console.error('Calling inventory change handler failed', err)
-        }
-    }
+    changedEmitter.fire(servers)
 }
 
 /**

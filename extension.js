@@ -1,13 +1,12 @@
-
 const vscode = require('vscode')
 const { config } = require('./config.js')
 const { clearClientCache } = require('./client.js')
-const {
-    ServerTreeItemProvider,
-    PanelTreeItemProvider,
-    SlotTreeItemProvider,
-} = require('./navigation.js')
+const { WORKSPACE_SERVER_NAME } = require('./model.js')
+const { Navigator } = require('./navigation.js')
 const commands = require('./commands.js')
+
+/** @type {?Navigator} */
+let navigator = null
 
 // === TODO ===
 // - display text selection
@@ -23,54 +22,20 @@ const commands = require('./commands.js')
 // - allow opt-in streaming requests for workspace server
 
 /**
- * @typedef {import('./navigation.js').PanelItem} PanelItem
- * @typedef {import('./navigation.js').SlotItem} SlotItem
- */
-
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
-
-/**
- * @param {ServerTreeItemProvider} serverItemProvider
+ * @param {Navigator} navigator
  * @param {vscode.TreeView} serversView
  */
-function autoselectServer(serverItemProvider, serversView) {
+function autoselectServer(navigator, serversView) {
     if (serversView.selection.length > 0) return
     if (!config('autoSelect.server')) return
-    const servers = serverItemProvider.getChildren(null)
+    const servers = navigator.getServerStates()
     if (servers.length === 0) return
-    const defaultItem = servers.find(x => x.name === 'default') || servers[0]
-    serversView.reveal(defaultItem, { select: true })
-}
-
-/**
- * @param {PanelItem[]} panelItems
- * @param {vscode.TreeView} panelsView
- * @returns {Promise<void>}
- */
-async function autoSelectPanel(panelItems, panelsView) {
-    if (panelsView.selection.length > 0) return
-    if (!config('autoSelect.panel')) return
-    if (panelItems.length === 0) return
-    const defaultItem = panelItems.find(x => x.panelId === 'default') || panelItems[0]
-    panelsView.reveal(defaultItem, { select: true })
-}
-
-/**
- * @param {SlotItem[]} slotItems
- * @param {vscode.TreeView} slotsView
- * @returns {Promise<void>}
- */
-async function autoSelectSlot(slotItems, slotsView) {
-    if (slotsView.selection.length > 0) return
-    if (!config('autoSelect.slot')) return
-    if (slotItems.length === 0) return
-    const defaultItem = slotItems.find(x => x.defaultSlot) || slotItems[0]
-    slotsView.reveal(defaultItem, { select: true })
+    const defaultItem = servers.find(x => x.name === WORKSPACE_SERVER_NAME) || servers[0]
+    return serversView.reveal(defaultItem, { select: true })
 }
 
 function updateContextActiveTextEditor() {
-    vscode.commands.executeCommand('setContext',
+    return vscode.commands.executeCommand('setContext',
             'boomack.activeTextEditor', !!vscode.window.activeTextEditor)
 }
 
@@ -83,61 +48,39 @@ function activate(context) {
     console.log('Boomack VS Code extension intializing...')
 
     updateContextActiveTextEditor()
-    const activeTextEditorChangeSubs = vscode.window.onDidChangeActiveTextEditor(() => {
-        updateContextActiveTextEditor()
-    })
+    const activeTextEditorChangeSubs = vscode.window.onDidChangeActiveTextEditor(() =>
+        updateContextActiveTextEditor())
     context.subscriptions.push(activeTextEditorChangeSubs)
+
+    if (navigator) throw new Error("Possible multiple parallel activations of the extension")
+    navigator = new Navigator(context)
 
     // register tree data providers for tree views, defined in package.json
 
-    const serverItemProvider = new ServerTreeItemProvider(context)
-    const serversView = vscode.window.createTreeView('boomack-servers', {
-        treeDataProvider: serverItemProvider,
-    })
+    const serversView = navigator.createServerTreeView()
+    const panelsView = navigator.createPanelTreeView()
+    const slotsView = navigator.createSlotTreeView()
 
-    const panelItemProvider = new PanelTreeItemProvider(context, serversView)
-    const panelsView = vscode.window.createTreeView('boomack-panels', {
-        treeDataProvider: panelItemProvider,
-    })
-
-    const slotItemProvider = new SlotTreeItemProvider(context, panelsView)
-    const slotsView = vscode.window.createTreeView('boomack-slots', {
-        treeDataProvider: slotItemProvider,
-    })
-
-    const serverViewVisibilityChangeSubs = serversView.onDidChangeVisibility(e => {
+    const serverViewVisibilityChangeSubs = serversView.onDidChangeVisibility(async e => {
         if (!e.visible) return
-        autoselectServer(serverItemProvider, serversView)
+        await autoselectServer(navigator, serversView)
     })
     context.subscriptions.push(serverViewVisibilityChangeSubs)
 
-    const panelsLoadedSubs = panelItemProvider.onItemsLoaded(panels => {
-        autoSelectPanel(panels, panelsView)
-    })
-    context.subscriptions.push(panelsLoadedSubs)
-
-    const serverViewSelectionChangeSubs = serversView.onDidChangeSelection(async () => {
+    const serverSelectionChangeSubs = navigator.onSelectedServerChanged(e =>
         vscode.commands.executeCommand('setContext',
-            'boomack.serverSelected', serversView.selection.length > 0)
-    })
-    context.subscriptions.push(serverViewSelectionChangeSubs)
+            'boomack.serverSelected', !!e.serverState))
+    context.subscriptions.push(serverSelectionChangeSubs)
 
-    const panelViewSelectionChangeSubs = panelsView.onDidChangeSelection(async () => {
+    const panelSelectionChangeSubs = navigator.onSelectedPanelChanged(async e =>
         vscode.commands.executeCommand('setContext',
-            'boomack.panelSelected', panelsView.selection.length > 0)
-    })
-    context.subscriptions.push(panelViewSelectionChangeSubs)
+            'boomack.panelSelected', !!e.panelState))
+    context.subscriptions.push(panelSelectionChangeSubs)
 
-    const slotsLoadedSubs = slotItemProvider.onItemsLoaded(slots => {
-        autoSelectSlot(slots, slotsView)
-    })
-    context.subscriptions.push(slotsLoadedSubs)
-
-    const slotsViewSelectionChangeSubs = slotsView.onDidChangeSelection(async () => {
+    const slotSelectionChangeSubs = navigator.onSelectedSlotChanged(async e =>
         vscode.commands.executeCommand('setContext',
-            'boomack.slotSelected', slotsView.selection.length > 0)
-    })
-    context.subscriptions.push(slotsViewSelectionChangeSubs)
+            'boomack.slotSelected', !!e.slotState))
+    context.subscriptions.push(slotSelectionChangeSubs)
 
     // register commands, defined in the package.json
 
@@ -225,6 +168,8 @@ function activate(context) {
 
 // This method is called when your extension is deactivated
 function deactivate() {
+    navigator.dispose()
+    navigator = null
     clearClientCache()
 }
 
