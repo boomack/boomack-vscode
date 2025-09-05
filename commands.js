@@ -363,11 +363,11 @@ function clearPanelCommand(navigator) {
  * @returns {function(?PanelUIState):(void | Promise<void>)}
  */
 function refreshSlotsCommand(navigator) {
-    return async panelState => {
-        panelState = resolvePanel(panelState, navigator)
-        if (!panelState) panelState = await userChoosePanel(navigator, 'Refresh Panel', true)
-        if (!panelState) return
-        await navigator.refreshPanelState(panelState)
+    return async element => {
+        element = resolvePanel(element, navigator)
+        if (!element) element = await userChoosePanel(navigator, 'Refresh Panel', true)
+        if (!element) return
+        await navigator.refreshPanelState(element)
     }
 }
 

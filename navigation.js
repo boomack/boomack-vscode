@@ -416,8 +416,12 @@ class Navigator {
             }
         }
         this._selectedServerChangedEmitter.fire({ serverState })
-        this._selectedPanelChangedEmitter.fire({ serverState, panelState })
-        this._selectedSlotChangedEmitter.fire({ panelState, slotState })
+        if (serverState) {
+            this._selectedPanelChangedEmitter.fire({ serverState, panelState })
+            if (panelState) {
+                this._selectedSlotChangedEmitter.fire({ panelState, slotState })
+            }
+        }
     }
 
     /**
@@ -526,7 +530,9 @@ class Navigator {
             await this._updatePanelState(panelState)
         }
         this._selectedPanelChangedEmitter.fire({ serverState, panelState })
-        this._selectedSlotChangedEmitter.fire({ panelState, slotState })
+        if (panelState) {
+            this._selectedSlotChangedEmitter.fire({ panelState, slotState })
+        }
     }
 
     /**
@@ -778,6 +784,13 @@ class SlotTreeItemProvider {
         this.panelState = null
 
         navigator.registerSubscription(
+            navigator.onSelectedServerChanged(
+                e => {
+                    this.serverState = e.serverState
+                    this.panelState = null
+                    this._changeEmitter.fire(null)
+                }))
+        navigator.registerSubscription(
             navigator.onSelectedPanelChanged(
                 e => {
                     this.serverState = e.serverState
@@ -788,7 +801,7 @@ class SlotTreeItemProvider {
             navigator.onPanelChanged(
                 e => {
                     if (e.panelState.server.name !== this.serverState?.name
-                        || e.panelState.id === this.panelState?.id ) {
+                        || e.panelState.id !== this.panelState?.id ) {
                         return
                     }
                     this.panelState = e.panelState

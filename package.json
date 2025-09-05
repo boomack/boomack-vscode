@@ -197,13 +197,24 @@
       ],
       "view/item/context": [
         {
+          "command": "boomack.refreshPanelList",
+          "when": "view == boomack-servers",
+          "group": "inline@1"
+        },
+        {
           "command": "boomack.server.remove",
-          "when": "view == boomack-servers"
+          "when": "view == boomack-servers",
+          "group": "inline@2"
+        },
+        {
+          "command": "boomack.refreshSlotList",
+          "when": "view == boomack-panels",
+          "group": "inline@1"
         },
         {
           "command": "boomack.panel.clear",
           "when": "view == boomack-panels",
-          "group": "inline"
+          "group": "inline@2"
         },
         {
           "command": "boomack.display.inSlot",
