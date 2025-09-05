@@ -126,6 +126,12 @@
         "icon": "$(zoom-out)"
       },
       {
+        "command": "boomack.slot.toggleMaximize",
+        "category": "Boomack",
+        "title": "Slot toggle maximize",
+        "icon": "$(screen-full)"
+      },
+      {
         "command": "boomack.display.inSlot",
         "category": "Boomack",
         "title": "Display file of active editor",
@@ -223,13 +229,15 @@
         },
         {
           "command": "boomack.slot.zoomIn",
-          "when": "view == boomack-slots",
-          "group": "inline@2"
+          "when": "view == boomack-slots"
         },
         {
           "command": "boomack.slot.zoomOut",
-          "when": "view == boomack-slots",
-          "group": "inline@3"
+          "when": "view == boomack-slots"
+        },
+        {
+          "command": "boomack.slot.toggleMaximize",
+          "when": "view == boomack-slots"
         },
         {
           "command": "boomack.slot.clear",

@@ -147,6 +147,11 @@ function activate(context) {
         commands.slotZoomCommand(navigator, 'out'))
     context.subscriptions.push(slotZoomOutCmdSubs)
 
+    const slotToggleMaximizeCmdSubs = vscode.commands.registerCommand(
+        'boomack.slot.toggleMaximize',
+        commands.slotToggleMaximizeCommand(navigator))
+    context.subscriptions.push(slotToggleMaximizeCmdSubs)
+
     const clearSlotCmdSubs = vscode.commands.registerCommand(
         'boomack.slot.clear',
         commands.clearSlotCommand(navigator))

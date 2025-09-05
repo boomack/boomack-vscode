@@ -548,6 +548,27 @@ function slotZoomCommand(navigator, direction) {
     }
 }
 
+/**
+ * @param {Navigator} navigator
+ * @returns {function(SlotUIState):(void | Promise<void>)}
+ */
+function slotToggleMaximizeCommand(navigator) {
+    return async slotState => {
+        slotState = resolveSlot(slotState, navigator)
+        if (!slotState) slotState == await userChooseSlot(navigator, 'Slot Toggle Maximize')
+        if (!slotState) {
+            vscode.window.showErrorMessage("No target slot selected")
+            return
+        }
+        const { server, panelId, slotId } = navigator.targetFromSlot(slotState)
+        const client = await navigator.clientFor(server)
+        await client.evaluateCode([{
+            panelId,
+            script: `boomack.cmdToggleMaximize('${slotId}')`
+        }])
+    }
+}
+
 module.exports = {
     playgroundCommand,
     addServerCommand,
@@ -560,6 +581,7 @@ module.exports = {
     selectSlotCommand,
     clearSlotCommand,
     slotZoomCommand,
+    slotToggleMaximizeCommand,
     displayInSlotCommand,
     displayFileCommand,
 }
