@@ -13,13 +13,15 @@ let navigator = null
 // - display HTML source code
 // - display with explicit media type / preset
 // - setup panel from file
+// - setup from playbook
 // - setup from assets in directory structure (types, presets, layouts, actions, initial content)
 // - detect workspace server config
 // - run server in workspace (replaces default server)
 // - json schema for server config
 // - json schema for panel layout
 // - json schema for display request
-// - open home page, panel, slot in browser
+// - json schema for playbook
+// - open server, panel, slot in browser (configurable command with URL placeholder)
 // - use file:/// references instead of streaming requests for workspace server
 // - allow opt-in streaming requests for workspace server
 
