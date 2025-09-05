@@ -32,7 +32,6 @@ const { getClientFor } = require('./client.js')
 
 /**
  * @typedef {Object} PanelChangedEvent
- * @property {ServerUIState} serverState
  * @property {PanelUIState} panelState
  */
 
@@ -44,7 +43,6 @@ const { getClientFor } = require('./client.js')
 
 /**
  * @typedef {Object} SlotSelectionEvent
- * @property {ServerUIState} serverState
  * @property {PanelUIState} panelState
  * @property {?SlotUIState} slotState
  */
@@ -69,6 +67,7 @@ const SERVER_UI_STATE_TEMPLATE = {
 
 /** @type {PanelUIState} */
 const PANEL_UI_STATE_TEMPLATE = {
+    server: undefined,
     invalid: true,
     id: '<unknown>',
     definition: undefined,
@@ -175,7 +174,7 @@ class Navigator {
                     ? /** @type {ServerUIState} */ (e.selection[0])
                     : null
                 blockEvent = true
-                await this.selectServer(serverState?.name)
+                await this.selectServer(serverState)
                 blockEvent = false
             }))
         this.registerSubscription(
@@ -202,7 +201,7 @@ class Navigator {
                     blockEvent = true
                     await this.selectPanel(
                         this.panelItemProvider.serverState,
-                        panelState?.id)
+                        panelState)
                     blockEvent = false
                 }
             }))
@@ -230,16 +229,15 @@ class Navigator {
                 if (this.slotItemProvider.serverState && this.slotItemProvider.panelState) {
                     blockEvent = true
                     this.selectSlot(
-                        this.slotItemProvider.serverState,
-                        this.slotItemProvider.panelState.id,
-                        slotState.id)
+                        this.slotItemProvider.panelState,
+                        slotState)
                     blockEvent = false
                 }
             }))
         this.registerSubscription(
             this.onSelectedSlotChanged(async e => {
                 if (blockEvent) return
-                if (e.serverState.name !== this.slotItemProvider.serverState?.name) return
+                if (e.panelState.server.name !== this.slotItemProvider.serverState?.name) return
                 if (e.panelState.id !== this.slotItemProvider.panelState?.id) return
                 await treeView.reveal(e.slotState, { select: true })
             })
@@ -273,7 +271,7 @@ class Navigator {
         state.running = false
     }
 
-    _initializeServerStates() {
+    _updateServerStateCollection() {
         if (!this.serverStates[WORKSPACE_SERVER_NAME]) {
             this.serverStates[WORKSPACE_SERVER_NAME] = { ...SERVER_UI_STATE_TEMPLATE }
         }
@@ -299,39 +297,14 @@ class Navigator {
     /**
      * @param {ServerUIState} serverState
      */
-    _initializePanelStates(serverState) {
-        for (const panelId of serverState.panelIds) {
-            let state = serverState.panels[panelId]
-            if (!state) {
-                state = { ...PANEL_UI_STATE_TEMPLATE }
-                serverState.panels[panelId] = state
-            }
-        }
-        const obsoletePanelIds = _.keys(serverState.panels)
-            .filter(id => !serverState.panelIds.includes(id))
-        for (const id of obsoletePanelIds) {
-            delete serverState.panels[id]
-            if (serverState.selectedPanelId === id) {
-                serverState.selectedPanelId = null
-            }
-        }
-    }
-
-    /**
-     * @param {string} serverName
-     */
-    async _updateServerState(serverName) {
-        const server = this.serverConfig(serverName)
+    async _updateServerState(serverState) {
+        const server = this.serverConfig(serverState.name)
         console.assert(server,
-            "Server '%s' unknown", serverName)
-        const serverState = this.serverStates[serverName]
-        console.assert(serverState,
-            "No UI state initialized for server '%s'", serverName)
+            "Server '%s' unknown", serverState.name)
 
         if (!serverState.invalid) return
 
         serverState.server = server
-        serverState.name = serverName
 
         if (serverState.running === false) {
             serverState.panelIds = []
@@ -346,31 +319,26 @@ class Navigator {
             const panelIds = /** @type {string[]} */ (panelIdsResponse.body)
             serverState.panelIds = [ ...panelIds ]
         }
+        this._updatePanelStateCollection(serverState)
 
-        // if (serverState.panelIds.includes('default')) {
-        //     await this.updatePanelState(server, 'default')
+        // const defaultPanelState = serverState.panels['default']
+        // if (defaultPanelState) {
+        //     await this._updatePanelState(defaultPanelState)
         // }
-        for (const panelId of serverState.panelIds) {
-            await this._updatePanelState(serverState, panelId)
+        for (const panelState of _.values(serverState.panels)) {
+            await this._updatePanelState(panelState)
         }
 
         serverState.invalid = false
     }
 
     /**
-     * @param {string} serverName
+     * @param {ServerUIState} serverState
      */
-    async refreshServerState(serverName) {
-        const server = this.serverConfig(serverName)
-        if (!server) {
-            throw new Error(`Server '${serverName}' unknown`)
-        }
-        const serverState = this.serverStates[server.name]
-        console.assert(serverState,
-            "No UI state initialized for server '%s'", serverName)
+    async refreshServerState(serverState) {
         serverState.invalid = true
-        await this._updateServerState(serverName)
-        this._serverChangedEmitter.fire({ serverState: this.serverStates[serverName] })
+        await this._updateServerState(serverState)
+        this._serverChangedEmitter.fire({ serverState: this.serverStates[serverState.name] })
     }
 
     /**
@@ -379,18 +347,18 @@ class Navigator {
     async updateWorkspaceServer(serverConfig) {
         this._workspaceServerConfig.url = serverConfig.url
         this._workspaceServerConfig.token = serverConfig.token
-        await this.refreshServerState(WORKSPACE_SERVER_NAME)
+        await this.refreshServerState(this.serverStates[WORKSPACE_SERVER_NAME])
     }
 
     /**
      * @param {boolean} running
      */
     async setWorkspaceServerRunning(running) {
-        const state = this.serverStates[WORKSPACE_SERVER_NAME]
-        console.assert(state,
+        const serverState = this.serverStates[WORKSPACE_SERVER_NAME]
+        console.assert(serverState,
             "No UI state initialized for server '%s'", WORKSPACE_SERVER_NAME)
-        state.running = running
-        await this.refreshServerState(WORKSPACE_SERVER_NAME)
+        serverState.running = running
+        await this.refreshServerState(serverState)
     }
 
     /**
@@ -398,7 +366,7 @@ class Navigator {
      */
     setInventoryServers(serverConfigs) {
         this._inventoryServerConfigs = serverConfigs
-        this._initializeServerStates()
+        this._updateServerStateCollection()
         this._serversChangedEmitter.fire({ serverStates: this.getServerStates() })
     }
 
@@ -421,19 +389,16 @@ class Navigator {
     }
 
     /**
-     * @param {?string} serverName
+     * @param {?ServerUIState} serverState
      */
-    async selectServer(serverName) {
-        let serverState = null
+    async selectServer(serverState) {
+        const serverName = serverState?.name || null
+        if (this.selectedServerName === serverName) return
         let panelState = null
         let slotState = null
         this.selectedServerName = serverName
-        if (serverName) {
-            serverState = this.serverStates[serverName]
-            if (!serverState) {
-                throw new Error(`Unknown Boomack server '${serverName}'`)
-            }
-            await this._updateServerState(serverName)
+        if (serverState) {
+            await this._updateServerState(serverState)
             if (serverState.selectedPanelId) {
                 panelState = serverState.panels[serverState.selectedPanelId] || null
             }
@@ -443,26 +408,50 @@ class Navigator {
         }
         this._selectedServerChangedEmitter.fire({ serverState })
         this._selectedPanelChangedEmitter.fire({ serverState, panelState })
-        this._selectedSlotChangedEmitter.fire({ serverState, panelState, slotState })
+        this._selectedSlotChangedEmitter.fire({ panelState, slotState })
     }
 
     /**
      * @param {ServerUIState} serverState
-     * @param {string} panelId
      */
-    async _updatePanelState(serverState, panelId) {
-        let panelState = serverState.panels[panelId]
-        console.assert(panelState,
-            "No UI state initialized for panel '%s' on server '%s'", serverState.name, panelId)
-        panelState.id = panelId
-        const client = await this.clientFor(serverState.server)
-        const response = await client.getPanel(panelId)
+    _updatePanelStateCollection(serverState) {
+        for (const panelId of serverState.panelIds) {
+            let state = serverState.panels[panelId]
+            if (!state) {
+                state = { ...PANEL_UI_STATE_TEMPLATE, server: serverState }
+                serverState.panels[panelId] = state
+            }
+        }
+        const obsoletePanelIds = _.keys(serverState.panels)
+            .filter(id => !serverState.panelIds.includes(id))
+        for (const id of obsoletePanelIds) {
+            const panelState = serverState.panels[id]
+            panelState.server = undefined // reset backlink
+            delete serverState.panels[id]
+            if (serverState.selectedPanelId === id) {
+                serverState.selectedPanelId = null
+            }
+        }
+    }
+
+    /**
+     * @param {PanelUIState} panelState
+     */
+    async _updatePanelState(panelState) {
+        const client = await this.clientFor(panelState.server.server)
+        const response = await client.getPanel(panelState.id)
         if (response.success) {
             panelState.definition = /** @type {PanelDefinition} */ (response.body)
             panelState.defaultSlotId = panelState.definition.defaultSlot
                 || _.sortBy(panelState.definition.slots, 'id')[0]?.id
+            if (panelState.slots) {
+                for (const slotState of _.values(panelState.slots)) {
+                    slotState.panel = undefined // reset backlink
+                }
+            }
             panelState.slots = _.keyBy(
                 _.map(panelState.definition.slots, s => ({
+                    panel: panelState,
                     id: s.id,
                     defaultSlot: s.id === panelState.defaultSlotId,
                 })),
@@ -478,17 +467,12 @@ class Navigator {
     }
 
     /**
-     * @param {ServerUIState} serverState
-     * @param {string} panelId
+     * @param {PanelUIState} panelState
      */
-    async refreshPanelState(serverState, panelId) {
-        const panelState = serverState.panels[panelId]
-        if (!panelState) {
-            throw new Error(`Unknown panel '${panelId}' on server '${serverState.name}'`)
-        }
+    async refreshPanelState(panelState) {
         panelState.invalid = true
-        await this._updatePanelState(serverState, panelId)
-        this._panelChangedEmitter.fire({ serverState, panelState })
+        await this._updatePanelState(panelState)
+        this._panelChangedEmitter.fire({ panelState })
     }
 
     /**
@@ -513,41 +497,31 @@ class Navigator {
 
     /**
      * @param {ServerUIState} serverState
-     * @param {?string} panelId
+     * @param {?PanelUIState} panelState
      */
-    async selectPanel(serverState, panelId) {
-        let panelState = null
+    async selectPanel(serverState, panelState) {
+        const panelId = panelState?.id || null
+        if (serverState.selectedPanelId === panelId) return
         let slotState = null
-        if (panelId) {
-            panelState = serverState.panels[panelId]
-            if (!panelState) {
-                throw new Error(`Unknown panel '${panelId}' on server '${serverState.name}'`)
-            }
+        if (panelState) {
             if (panelState?.selectedSlotId) {
                 slotState = panelState.slots[panelState.selectedSlotId] || null
             }
         }
-        serverState.selectedPanelId = panelId || null
-        if (panelId) {
-            await this._updatePanelState(serverState, panelId)
+        serverState.selectedPanelId = panelId
+        if (panelState) {
+            await this._updatePanelState(panelState)
         }
         this._selectedPanelChangedEmitter.fire({ serverState, panelState })
-        this._selectedSlotChangedEmitter.fire({ serverState, panelState, slotState })
+        this._selectedSlotChangedEmitter.fire({ panelState, slotState })
     }
 
     /**
-     * @param {ServerUIState} serverState
-     * @param {?string} panelId
+     * @param {?PanelUIState} panelState
      * @returns {SlotUIState[]}
      */
-    getSlotStates(serverState, panelId) {
-        let panelState = null
-        if (panelId) {
-            panelState = serverState.panels[panelId]
-        }
-        if (!panelState) {
-            return []
-        }
+    getSlotStates(panelState) {
+        if (!panelState) return []
         return _.sortBy(_.values(panelState.slots),
             s => !s.defaultSlot,
             s => s.id)
@@ -564,24 +538,14 @@ class Navigator {
     }
 
     /**
-     * @param {ServerUIState} serverState
-     * @param {string} panelId
-     * @param {?string} slotId
+     * @param {PanelUIState} panelState
+     * @param {?SlotUIState} slotState
      */
-    selectSlot(serverState, panelId, slotId) {
-        const panelState = serverState.panels[panelId]
-        if (!panelState) {
-            throw new Error(`Unknown panel '${panelId}' on server '${serverState.name}'`)
-        }
-        let slotState = null
-        if (slotId) {
-            slotState = panelState.slots[slotId]
-            if (!slotState) {
-                throw new Error(`Unknown slot '${slotId}' in panel '${panelId}' on server'${serverState.name}'`)
-            }
-        }
+    selectSlot(panelState, slotState) {
+        const slotId = slotState?.id || null
+        if (panelState.selectedSlotId === slotId) return
         panelState.selectedSlotId = slotId
-        this._selectedSlotChangedEmitter.fire({ serverState, panelState, slotState })
+        this._selectedSlotChangedEmitter.fire({ panelState, slotState })
     }
 }
 
@@ -731,7 +695,7 @@ class SlotTreeItemProvider {
         navigator.registerSubscription(
             navigator.onPanelChanged(
                 e => {
-                    if (e.serverState.name !== this.serverState?.name
+                    if (e.panelState.server.name !== this.serverState?.name
                         || e.panelState.id === this.panelState?.id ) {
                         return
                     }
@@ -747,7 +711,7 @@ class SlotTreeItemProvider {
      */
     getChildren(element) {
         if (element || !this.panelState) return []
-        return this.navigator.getSlotStates(this.serverState, this.panelState.id)
+        return this.navigator.getSlotStates( this.panelState)
     }
 
     /**

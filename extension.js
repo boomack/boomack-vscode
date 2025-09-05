@@ -17,6 +17,8 @@ let navigator = null
 // - detect workspace server config
 // - run server in workspace (replaces default server)
 // - json schema for server config
+// - json schema for panel layout
+// - json schema for display request
 // - open home page, panel, slot in browser
 // - use file:/// references instead of streaming requests for workspace server
 // - allow opt-in streaming requests for workspace server

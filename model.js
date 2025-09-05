@@ -21,12 +21,14 @@
 
 /**
  * @typedef {Object} SlotUIState
+ * @property {?PanelUIState} panel
  * @property {string} id
  * @property {boolean} defaultSlot
  */
 
 /**
  * @typedef {Object} PanelUIState
+ * @property {?ServerUIState} server
  * @property {boolean} invalid
  * @property {string} id
  * @property {?PanelDefinition} definition

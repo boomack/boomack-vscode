@@ -5,7 +5,6 @@ const mime = require('mime')
 const { WORKSPACE_SERVER_NAME } = require('./model.js')
 const { config } = require('./config.js')
 const inventory = require('./inventory.js')
-const { getClientFor } = require('./client.js')
 
 /**
  * @typedef {import('./inventory.js').BoomackServer} BoomackServer
@@ -19,6 +18,198 @@ function playgroundCommand() {
     return async () => {
         console.log('Use for protoyping...')
     }
+}
+
+/**
+ * @template T
+ * @param {vscode.QuickPickItem[]} items
+ * @param {function(string):T} labelMapper
+ * @param {Object} [options]
+ * @returns {Promise<T|undefined>}
+ */
+function quickPick(items, labelMapper, options) {
+    const quickPick = vscode.window.createQuickPick()
+    quickPick.canSelectMany = false
+    quickPick.items = items
+    for (const k in options) {
+        quickPick[k] = options[k]
+    }
+    return new Promise(resolve => {
+        let resolved = false
+        quickPick.onDidHide(() => {
+            if (!resolved) resolve(undefined)
+            quickPick.dispose()
+        })
+        quickPick.onDidAccept(() => {
+            const selectedLabel = quickPick.selectedItems[0]?.label
+            if (selectedLabel) {
+                resolve(labelMapper(selectedLabel))
+            } else {
+                resolve(undefined)
+            }
+            quickPick.dispose()
+        })
+        quickPick.show()
+    })
+}
+
+/**
+ * @param {Navigator} navigator
+ * @param {string} title
+ * @param {{ step: number, totalSteps: number }} [multiStep]
+ * @returns {Promise<ServerUIState|undefined>}
+ */
+function userChooseServer(navigator, title, multiStep) {
+    const servers = navigator.getServerStates()
+    const items = servers.map(s => ({
+        label: s.name,
+        description: s.server.url,
+        iconPath: new vscode.ThemeIcon('server-environment'),
+        picked: navigator.getSelectedServerState()?.name === s.name,
+    }))
+    return quickPick(
+        items,
+        label => servers.find(s => s.name === label),
+        {
+            title,
+            placeholder: 'Server Name',
+            step: multiStep?.step,
+            totalSteps: multiStep?.totalSteps,
+        })
+}
+
+/**
+ * @param {?PanelUIState} item
+ * @param {Navigator} navigator
+ * @returns {PanelUIState|null}
+ */
+function resolvePanel(item, navigator) {
+    if (item) return item
+    let serverState = navigator.getSelectedServerState()
+    if (!serverState) {
+        const serverStates = navigator.getServerStates()
+        if (serverStates.length === 1) serverState = serverStates[0]
+    }
+    if (!serverState) return null
+    let panelState = navigator.getSelectedPanelState(serverState)
+    if (!panelState) {
+        const panelStates = navigator.getPanelStates(serverState)
+        if (panelStates.length === 1) panelState = panelStates[0]
+    }
+    return panelState
+}
+
+/**
+ * @param {Navigator} navigator
+ * @param {ServerUIState} serverState
+ * @param {string} title
+ * @param {{ step: number, totalSteps: number }} [multiStep]
+ * @returns {Promise<PanelUIState|undefined>}
+ */
+function userChoosePanelForServer(navigator, serverState, title, multiStep) {
+    const panelStates = navigator.getPanelStates(serverState)
+    const items = panelStates.map(p => ({
+        label: p.id,
+        description: p.definition?.title,
+        iconPath: new vscode.ThemeIcon('window'),
+        picked: navigator.getSelectedPanelState(serverState)?.id === p.id,
+    }))
+    return quickPick(
+        items,
+        label => panelStates.find(s => s.id === label),
+        {
+            title,
+            placeholder: 'Panel ID',
+            step: multiStep?.step,
+            totalSteps: multiStep?.totalSteps,
+        })
+}
+
+/**
+ * @param {Navigator} navigator
+ * @param {string} title
+ * @param {boolean} [chooseContext]
+ * @returns {Promise<PanelUIState|undefined>}
+ */
+async function userChoosePanel(navigator, title, chooseContext) {
+    const serverState = navigator.getServerStates().length > 1
+        ? chooseContext
+            ? await userChooseServer(navigator, title, { step: 1, totalSteps: 2 })
+            : navigator.getSelectedServerState()
+        : navigator.getServerStates()[0]
+    if (!serverState) return undefined
+    return await userChoosePanelForServer(navigator, serverState, title,
+        chooseContext ? { step: 2, totalSteps: 2 } : undefined)
+}
+
+/**
+ * @param {?SlotUIState} item
+ * @param {Navigator} navigator
+ * @returns {SlotUIState|null}
+ */
+function resolveSlot(item, navigator) {
+    if (item) return item
+    let serverState = navigator.getSelectedServerState()
+    if (!serverState) {
+        const serverStates = navigator.getServerStates()
+        if (serverStates.length === 1) serverState = serverStates[0]
+    }
+    if (!serverState) return null
+    let panelState = navigator.getSelectedPanelState(serverState)
+    if (!panelState) {
+        const panelStates = navigator.getPanelStates(serverState)
+        if (panelStates.length === 1) panelState = panelStates[0]
+    }
+    let slotState = navigator.getSelectedSlotState(panelState)
+    if (!slotState) {
+        const slotStates = navigator.getSlotStates(panelState)
+        if (slotStates.length === 1) slotState = slotStates[0]
+    }
+    return slotState
+}
+
+/**
+ * @param {Navigator} navigator
+ * @param {PanelUIState} panelState
+ * @param {string} title
+ * @param {{ step: number, totalSteps: number }} [multiStep]
+ * @returns {Promise<SlotUIState|undefined>}
+ */
+function userChooseSlotForPanel(navigator, panelState, title, multiStep) {
+    const slotStates = navigator.getSlotStates(panelState)
+    const items = slotStates.map(p => ({
+        label: p.id,
+        iconPath: new vscode.ThemeIcon('symbol-constant'),
+        picked: navigator.getSelectedSlotState(panelState)?.id === p.id,
+    }))
+    return quickPick(
+        items,
+        label => slotStates.find(s => s.id === label),
+        {
+            title,
+            placeholder: 'Slot ID',
+            step: multiStep?.step,
+            totalSteps: multiStep?.totalSteps,
+        })
+}
+
+/**
+ * @param {Navigator} navigator
+ * @param {string} title
+ * @param {boolean} [chooseContext]
+ * @returns {Promise<SlotUIState|undefined>}
+ */
+async function userChooseSlot(navigator, title, chooseContext) {
+    const serverState = chooseContext
+        ? await userChooseServer(navigator, title, { step: 1, totalSteps: 3 })
+        : navigator.getSelectedServerState()
+    if (!serverState) return undefined
+    const panelState = chooseContext
+        ? await userChoosePanelForServer(navigator, serverState, title, { step: 2, totalSteps: 3 })
+        : navigator.getSelectedPanelState(serverState)
+    if (!panelState) return undefined
+    return await userChooseSlotForPanel(navigator, panelState, title,
+        chooseContext ? { step: 3, totalSteps: 3 } : undefined)
 }
 
 /**
@@ -71,24 +262,6 @@ function addServerCommand(context) {
 
 /**
  * @param {Navigator} navigator
- * @param {string} title
- * @returns {Promise<ServerUIState|undefined>}
- */
-async function chooseServer(navigator, title) {
-    const servers = navigator.getServerStates()
-    const items = servers.map(s => ({
-        label: s.name,
-        description: s.server.url,
-        serverName: s.name,
-        iconPath: new vscode.ThemeIcon('server-environment'),
-    }))
-    const selection = await vscode.window.showQuickPick(items, { title })
-    if (!selection) return undefined
-    return servers.find(s => s.name === selection.serverName)
-}
-
-/**
- * @param {Navigator} navigator
  * @param {string} serverName
  */
 function removeServer(navigator, serverName) {
@@ -107,22 +280,21 @@ function removeServer(navigator, serverName) {
  */
 function removeServerCommand(navigator) {
     return async server => {
-        if (!server) server = await chooseServer(navigator, 'Remove Boomack Server')
+        if (!server) server = await userChooseServer(navigator, 'Remove Boomack Server')
         if (!server) return
         removeServer(navigator, server.name)
     }
 }
 
 /**
- * @param {vscode.ExtensionContext} context
- * @param {vscode.TreeView} serverTreeView
- * @returns {function(?inventory.BoomackServer):(void | Promise<void>)}
+ * @param {Navigator} navigator
+ * @returns {function(?ServerUIState):(void | Promise<void>)}
  */
-function selectServerCommand(context, serverTreeView) {
-    return async server => {
-        if (!server) server = await chooseServer(context, 'Select Boomack Server')
-        if (!server) return
-        serverTreeView.reveal(server, { select: true })
+function selectServerCommand(navigator) {
+    return async serverState => {
+        if (!serverState) serverState = await userChooseServer(navigator, 'Select Boomack Server')
+        if (!serverState) return
+        await navigator.selectServer(serverState)
     }
 }
 
@@ -134,155 +306,91 @@ function refreshPanelsCommand(navigator) {
     return () => {
         const serverState = navigator.getSelectedServerState()
         if (serverState) {
-            navigator.refreshServerState(serverState.name)
+            navigator.refreshServerState(serverState)
         }
     }
 }
 
 /**
- * @param {PanelUIState?} item
  * @param {Navigator} navigator
- * @returns {Promise<PanelItem|undefined>}
+ * @returns {function(?PanelUIState):(void | Promise<void>)}
  */
-async function resolvePanel(item, navigator) {
-    if (item) return item
-    if (panelTreeView.selection.length > 0) {
-        item = panelTreeView.selection[0]
-    }
-    if (panelItemProvider) {
-        const items = await panelItemProvider.getChildren(null)
-        return items.find(item => item.panelId === 'default')
-    }
-    return undefined
-}
-
-/**
- * @param {PanelTreeItemProvider} panelItemProvider
- * @param {string} title
- * @returns {Promise<PanelItem | undefined>}
- */
-async function choosePanel(panelItemProvider, title) {
-    const panelItems = await panelItemProvider.getChildren(null)
-    const items = panelItems.map(x => ({
-        label: x.panelId,
-        panelId: x.panelId,
-        iconPath: new vscode.ThemeIcon('window'),
-    }))
-    const selection = await vscode.window.showQuickPick(items, { title })
-    if (!selection) return undefined
-    return panelItems.find(x => x.panelId === selection.panelId)
-}
-
-/**
- * @param {PanelTreeItemProvider} panelItemProvider
- * @param {vscode.TreeView} panelTreeView
- * @returns {function(?PanelItem):(void | Promise<void>)}
- */
-function selectPanelCommand(panelItemProvider, panelTreeView) {
-    return async panelItem => {
-        if (!panelItem) panelItem = await choosePanel(panelItemProvider, 'Select Boomack Panel')
-        if (!panelItem) return
-        panelTreeView.reveal(panelItem, { select: true })
+function selectPanelCommand(navigator) {
+    return async panelState => {
+        if (!panelState) panelState = await userChoosePanel(navigator, 'Select Boomack Panel', true)
+        if (!panelState) return
+        await navigator.selectPanel(panelState.server, panelState)
     }
 }
 
 /**
- * @param {vscode.ExtensionContext} context
- * @param {PanelItem} panelItem
+ * @param {Navigator} navigator
+ * @param {PanelUIState} panelState
  */
-async function clearPanel(context, panelItem) {
-    const { server, panelId } = panelItem
-    const client = await getClientFor(context, server)
+async function clearPanel(navigator, panelState) {
+    const { server: serverState, id: panelId } = panelState
+    const serverName = serverState.name
+    const client = await navigator.clientFor(serverState.server)
     try {
         var response = await client.clearPanel(panelId)
         if (response.success) {
-            vscode.window.showInformationMessage(`Cleared panel "${panelId}" on Boomack server "${server.name}".`)
+            vscode.window.showInformationMessage(`Cleared panel "${panelId}" on Boomack server "${serverName}".`)
         } else {
-            vscode.window.showErrorMessage(`Failed to clear panel "${panelId}" on Boomack server "${server.name}". HTTP Status ${response.statusCode}.`)
+            vscode.window.showErrorMessage(`Failed to clear panel "${panelId}" on Boomack server "${serverName}". HTTP Status ${response.statusCode}.`)
         }
     } catch (err) {
         console.error("Failed to clear panel:", err)
-        vscode.window.showErrorMessage(`Failed to clear panel "${panelId}" on Boomack server "${server.name}"`)
+        vscode.window.showErrorMessage(`Failed to clear panel "${panelId}" on Boomack server "${serverName}"`)
     }
 }
 
 /**
- * @param {vscode.ExtensionContext} context
- * @param {PanelTreeItemProvider} panelItemProvider
- * @param {vscode.TreeView} panelTreeView
- * @returns {function(?PanelItem):(void | Promise<void>)}
+ * @param {Navigator} navigator
+ * @returns {function(?PanelUIState):(void | Promise<void>)}
  */
-function clearPanelCommand(context, panelTreeView, panelItemProvider) {
+function clearPanelCommand(navigator) {
     return async panelItem => {
-        panelItem = await resolvePanelItem(panelItem, panelTreeView, panelItemProvider)
+        panelItem = resolvePanel(panelItem, navigator)
+        if (!panelItem) panelItem = await userChoosePanel(navigator, 'Clear Panel', true)
         if (!panelItem) return
-        await clearPanel(context, panelItem)
+        await clearPanel(navigator, panelItem)
     }
 }
 
 /**
- * @param {SlotTreeItemProvider} treeItemProvider
- * @returns {function():(void | Promise<void>)}
+ * @param {Navigator} navigator
+ * @returns {function(?PanelUIState):(void | Promise<void>)}
  */
-function refreshSlotsCommand(treeItemProvider) {
-    return () => treeItemProvider.refresh()
-}
-
-/**
- * @param {SlotItem?} item
- * @param {vscode.TreeView} slotTreeView
- * @param {SlotTreeItemProvider} [slotItemProvider]
- * @returns {Promise<SlotItem|undefined>}
- */
-async function resolveSlotItem(item, slotTreeView, slotItemProvider) {
-    if (item) return item
-    if (slotTreeView.selection.length > 0) {
-        item = slotTreeView.selection[0]
-    }
-    if (slotItemProvider) {
-        const items = await slotItemProvider.getChildren(null)
-        return items.find(item => item.defaultSlot)
-    }
-    return undefined
-}
-
-/**
- * @param {SlotTreeItemProvider} slotItemProvider
- * @param {string} title
- * @returns {Promise<SlotItem | undefined>}
- */
-async function chooseSlot(slotItemProvider, title) {
-    const slotItems = await slotItemProvider.getChildren(null)
-    const items = slotItems.map(x => ({
-        label: x.slotId,
-        slotId: x.slotId,
-        iconPath: new vscode.ThemeIcon('symbol-constant'),
-    }))
-    const selection = await vscode.window.showQuickPick(items, { title })
-    if (!selection) return undefined
-    return slotItems.find(x => x.slotId === selection.slotId)
-}
-
-/**
- * @param {SlotTreeItemProvider} slotItemProvider
- * @param {vscode.TreeView} slotTreeView
- * @returns {function(?SlotItem):(void | Promise<void>)}
- */
-function selectSlotCommand(slotItemProvider, slotTreeView) {
-    return async slotItem => {
-        if (!slotItem) slotItem = await chooseSlot(slotItemProvider, 'Select Boomack Slot')
-        if (!slotItem) return
-        slotTreeView.reveal(slotItem, { select: true })
+function refreshSlotsCommand(navigator) {
+    return async panelState => {
+        panelState = resolvePanel(panelState, navigator)
+        if (!panelState) panelState = await userChoosePanel(navigator, 'Refresh Panel', true)
+        if (!panelState) return
+        await navigator.refreshPanelState(panelState)
     }
 }
 
 /**
- * @param {vscode.ExtensionContext} context
- * @param {SlotItem} slotItem
+ * @param {Navigator} navigator
+ * @returns {function(?SlotUIState):(void | Promise<void>)}
  */
-async function clearSlot(context, slotItem) {
-    const { server, panelId, slotId } = slotItem
-    const client = await getClientFor(context, server)
+function selectSlotCommand(navigator) {
+    return async slotState => {
+        if (!slotState) slotState = resolveSlot(slotState, navigator)
+        if (!slotState) slotState = await userChooseSlot(navigator, 'Select Boomack Slot')
+        if (!slotState) return
+        navigator.selectSlot(slotState.panel, slotState)
+    }
+}
+
+/**
+ * @param {Navigator} navigator
+ * @param {?SlotUIState} slotState
+ */
+async function clearSlot(navigator, slotState) {
+    const { panel: panelState, id: slotId } = slotState
+    const { server: serverState, id: panelId } = panelState
+    const client = await navigator.clientFor(serverState.server)
     try {
         var response = await client.clearSlot(panelId, slotId)
         if (response.success) {
@@ -297,16 +405,15 @@ async function clearSlot(context, slotItem) {
 }
 
 /**
- * @param {vscode.ExtensionContext} context
- * @param {vscode.TreeView} slotTreeView
- * @param {SlotTreeItemProvider} slotItemProvider
- * @returns {function(?SlotItem):(void | Promise<void>)}
+ * @param {Navigator} navigator
+ * @returns {function(?SlotUIState):(void | Promise<void>)}
  */
-function clearSlotCommand(context, slotItemProvider, slotTreeView) {
-    return async slotItem => {
-        slotItem = await resolveSlotItem(slotItem, slotTreeView, slotItemProvider)
-        if (!slotItem) return
-        await clearSlot(context, slotItem)
+function clearSlotCommand(navigator) {
+    return async slotState => {
+        slotState = resolveSlot(slotState, navigator)
+        if (!slotState) slotState = await userChooseSlot(navigator, 'Clear Slot', true)
+        if (!slotState) return
+        await clearSlot(navigator, slotState)
     }
 }
 
@@ -379,7 +486,7 @@ async function displayFile(context, server, panelId, slotId, filename, mediaType
  */
 function displayInSlotCommand(context, slotTreeView) {
     return async slotItem => {
-        slotItem = await resolveSlotItem(slotItem, slotTreeView)
+        slotItem = await resolveSlot(slotItem, slotTreeView)
         if (!slotItem) {
             vscode.window.showErrorMessage("No target slot selected")
             return
@@ -411,7 +518,7 @@ function displayFileCommand(context, slotItemProvider, slotTreeView) {
             vscode.window.showErrorMessage("Command expects a file resource or editor document as argument")
             return
         }
-        const slotItem = await resolveSlotItem(null, slotTreeView, slotItemProvider)
+        const slotItem = await resolveSlot(null, slotTreeView, slotItemProvider)
         if (slotItem === undefined) return
         const { server, panelId, slotId } = slotItem
         const filename = resource.fsPath
@@ -427,7 +534,7 @@ function displayFileCommand(context, slotItemProvider, slotTreeView) {
  */
 function slotZoomCommand(context, slotItemProvider, slotTreeView, direction) {
     return async slotItem => {
-        slotItem = await resolveSlotItem(slotItem, slotTreeView, slotItemProvider)
+        slotItem = await resolveSlot(slotItem, slotTreeView, slotItemProvider)
         if (slotItem === undefined) return
         const { server, panelId, slotId } = slotItem
         const client = await getClientFor(context, server)
