@@ -316,6 +316,7 @@ class Navigator {
         serverState.server = server
 
         if (serverState.running === false) {
+            // can only be the case for workspace server
             serverState.panelIds = []
             // preserve panel state and selection
             serverState.invalid = false
@@ -401,6 +402,7 @@ class Navigator {
      * @param {?ServerUIState} serverState
      */
     async selectServer(serverState) {
+        if (!serverState) throw new Error("Missing argument serverState")
         const serverName = serverState?.name || null
         if (this.selectedServerName === serverName) return
         let panelState = null
@@ -428,6 +430,7 @@ class Navigator {
      * @param {ServerUIState} serverState
      */
     _updatePanelStateCollection(serverState) {
+        if (!serverState) throw new Error("Missing argument serverState")
         for (const panelId of serverState.panelIds) {
             let state = serverState.panels[panelId]
             if (!state) {
@@ -455,6 +458,7 @@ class Navigator {
      * @param {PanelUIState} panelState
      */
     async _updatePanelState(panelState) {
+        if (!panelState) throw new Error("Missing argument panelState")
         const client = await this.clientFor(panelState.server.server)
         const response = await client.getPanel(panelState.id)
         if (response.success) {
@@ -487,6 +491,7 @@ class Navigator {
      * @param {PanelUIState} panelState
      */
     async refreshPanelState(panelState) {
+        if (!panelState) throw new Error("Missing argument panelState")
         panelState.invalid = true
         await this._updatePanelState(panelState)
         this._panelChangedEmitter.fire({ panelState })
@@ -517,6 +522,7 @@ class Navigator {
      * @param {?PanelUIState} panelState
      */
     async selectPanel(serverState, panelState) {
+        if (!serverState) throw new Error("Missing argument serverState")
         const panelId = panelState?.id || null
         if (serverState.selectedPanelId === panelId) return
         let slotState = null
@@ -561,6 +567,7 @@ class Navigator {
      * @param {?SlotUIState} slotState
      */
     selectSlot(panelState, slotState) {
+        if (!panelState) throw new Error("Missing argument panelState")
         const slotId = slotState?.id || null
         if (panelState.selectedSlotId === slotId) return
         panelState.selectedSlotId = slotId
@@ -825,6 +832,9 @@ class SlotTreeItemProvider {
      */
     getTreeItem(element) {
         const item = new vscode.TreeItem(element.id, vscode.TreeItemCollapsibleState.None)
+        if (element.defaultSlot) {
+            item.description = '(default)'
+        }
         item.iconPath = new vscode.ThemeIcon('symbol-constant')
         return item
     }
