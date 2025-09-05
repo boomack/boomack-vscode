@@ -11,7 +11,8 @@
 			"request": "launch",
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}",
-				"--profile=Empty"
+				"--profile=Empty",
+				"${workspaceFolder}/../boomack-server/demo/"
 			]
 		}
 	]
