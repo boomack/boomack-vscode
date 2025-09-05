@@ -11,6 +11,7 @@ const inventory = require('./inventory.js')
  * @typedef {import('./model.js').ServerUIState} ServerUIState
  * @typedef {import('./model.js').PanelUIState} PanelUIState
  * @typedef {import('./model.js').SlotUIState} SlotUIState
+ * @typedef {import('./model.js').BoomackTarget} BoomackTarget
  * @typedef {import('./navigation.js').Navigator} Navigator
  */
 
@@ -213,10 +214,10 @@ async function userChooseSlot(navigator, title, chooseContext) {
 }
 
 /**
- * @param {vscode.ExtensionContext} context
+ * @param {Navigator} navigator
  * @returns {function():(void | Promise<void>)}
  */
-function addServerCommand(context) {
+function addServerCommand(navigator) {
     return async () => {
         const defaultName = 'default'
         const defaultUrl = 'http://127.0.0.1:3000/'
@@ -250,7 +251,7 @@ function addServerCommand(context) {
         if (token === undefined) return
         if (!token) token = null
 
-        if (inventory.addServer(context, { name, url, token })) {
+        if (inventory.addServer(navigator.getContext(), { name, url, token })) {
             vscode.window.showInformationMessage(
                 `Added Boomack server "${name}" to the inventory`)
         } else {
@@ -390,17 +391,18 @@ function selectSlotCommand(navigator) {
 async function clearSlot(navigator, slotState) {
     const { panel: panelState, id: slotId } = slotState
     const { server: serverState, id: panelId } = panelState
+    const serverName = serverState.name
     const client = await navigator.clientFor(serverState.server)
     try {
         var response = await client.clearSlot(panelId, slotId)
         if (response.success) {
-            vscode.window.showInformationMessage(`Cleared slot "${panelId}/${slotId}" on Boomack server "${server.name}".`)
+            vscode.window.showInformationMessage(`Cleared slot "${panelId}/${slotId}" on Boomack server "${serverName}".`)
         } else {
-            vscode.window.showErrorMessage(`Failed to clear slot "${panelId}/${slotId}" on Boomack server "${server.name}". HTTP Status ${response.statusCode}.`)
+            vscode.window.showErrorMessage(`Failed to clear slot "${panelId}/${slotId}" on Boomack server "${serverName}". HTTP Status ${response.statusCode}.`)
         }
     } catch (err) {
         console.error("Failed to clear slot:", err)
-        vscode.window.showErrorMessage(`Failed to clear slot "${panelId}/${slotId}" on Boomack server "${server.name}"`)
+        vscode.window.showErrorMessage(`Failed to clear slot "${panelId}/${slotId}" on Boomack server "${serverName}"`)
     }
 }
 
@@ -437,18 +439,15 @@ function lookupMediaType(types, filename) {
 }
 
 /**
- * @param {vscode.ExtensionContext} context
- * @param {BoomackServer} server
- * @param {?string} panelId
- * @param {?string} slotId
+ * @param {Navigator} navigator
+ * @param {BoomackTarget} target
  * @param {string} filename
  * @param {?string} [mediaType]
  * @param {?string[]} [presets]
  * @param {?Object} [options]
  */
-async function displayFile(context, server, panelId, slotId, filename, mediaType, presets, options) {
-    if (!panelId) panelId = 'default'
-    const boomackClient = await getClientFor(context, server)
+async function displayFile(navigator, target, filename, mediaType, presets, options) {
+    const boomackClient = await navigator.clientFor(target.server)
     if (!mediaType) {
         mediaType = lookupMediaType(boomackClient.config.client.types, filename)
     }
@@ -464,13 +463,13 @@ async function displayFile(context, server, panelId, slotId, filename, mediaType
     const fileStat = await fs.stat(filename)
     const fd = await fs.open(filename)
     const s = fd.createReadStream()
-    const result = slotId
+    const result = target.slotId
         ? await boomackClient.streamMediaItemToSlot(
-            panelId, slotId,
+            target.panelId, target.slotId,
             mediaType, s, fileStat.size,
             title, presets, options)
         : await boomackClient.streamMediaItemToPanel(
-            panelId,
+            target.panelId,
             mediaType, s, fileStat.size,
             title, presets, options)
     fd.close()
@@ -480,35 +479,32 @@ async function displayFile(context, server, panelId, slotId, filename, mediaType
 }
 
 /**
- * @param {vscode.ExtensionContext} context
- * @param {vscode.TreeView} slotTreeView
- * @returns {function(?SlotItem):(void | Promise<void>)}
+ * @param {Navigator} navigator
+ * @returns {function(?SlotUIState):(void | Promise<void>)}
  */
-function displayInSlotCommand(context, slotTreeView) {
-    return async slotItem => {
-        slotItem = await resolveSlot(slotItem, slotTreeView)
-        if (!slotItem) {
+function displayInSlotCommand(navigator) {
+    return async slotState => {
+        slotState = resolveSlot(slotState, navigator)
+        if (!slotState) {
             vscode.window.showErrorMessage("No target slot selected")
             return
         }
-        const { server, panelId, slotId } = slotItem
+        const target = navigator.targetFromSlot(slotState)
         const editor = vscode.window.activeTextEditor
         if (!editor) {
             vscode.window.showErrorMessage("No active text editor")
             return
         }
         const filename = editor.document.uri.fsPath
-        await displayFile(context, server, panelId, slotId, filename)
+        await displayFile(navigator, target, filename)
     }
 }
 
 /**
- * @param {vscode.ExtensionContext} context
- * @param {SlotTreeItemProvider} slotItemProvider
- * @param {vscode.TreeView} slotTreeView
+ * @param {Navigator} navigator
  * @returns {function({fsPath: string}):(void | Promise<void>)}
  */
-function displayFileCommand(context, slotItemProvider, slotTreeView) {
+function displayFileCommand(navigator) {
     return async resource => {
         if (!resource) {
             vscode.window.showErrorMessage("Command requires argument")
@@ -518,26 +514,30 @@ function displayFileCommand(context, slotItemProvider, slotTreeView) {
             vscode.window.showErrorMessage("Command expects a file resource or editor document as argument")
             return
         }
-        const slotItem = await resolveSlot(null, slotTreeView, slotItemProvider)
-        if (slotItem === undefined) return
-        const { server, panelId, slotId } = slotItem
+        const target = navigator.getCurrentTarget()
+        if (!target) {
+            vscode.window.showErrorMessage("No target slot selected")
+        }
         const filename = resource.fsPath
-        await displayFile(context, server, panelId, slotId, filename)
+        await displayFile(navigator, target, filename)
     }
 }
 
 /**
- * @param {vscode.ExtensionContext} context
- * @param {SlotTreeItemProvider} slotItemProvider
- * @param {vscode.TreeView<any>} slotTreeView
+ * @param {Navigator} navigator
  * @param {'in'|'out'} direction
+ * @returns {function(SlotUIState):(void | Promise<void>)}
  */
-function slotZoomCommand(context, slotItemProvider, slotTreeView, direction) {
-    return async slotItem => {
-        slotItem = await resolveSlot(slotItem, slotTreeView, slotItemProvider)
-        if (slotItem === undefined) return
-        const { server, panelId, slotId } = slotItem
-        const client = await getClientFor(context, server)
+function slotZoomCommand(navigator, direction) {
+    return async slotState => {
+        slotState = resolveSlot(slotState, navigator)
+        if (slotState === undefined) return
+        if (!slotState) {
+            vscode.window.showErrorMessage("No target slot selected")
+            return
+        }
+        const { server, panelId, slotId } = navigator.targetFromSlot(slotState)
+        const client = await navigator.clientFor(server)
         let dirWord = null
         if (direction === 'in') dirWord = 'In'
         else if (direction === 'out') dirWord = 'Out'

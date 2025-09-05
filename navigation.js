@@ -273,14 +273,23 @@ class Navigator {
 
     _updateServerStateCollection() {
         if (!this.serverStates[WORKSPACE_SERVER_NAME]) {
-            this.serverStates[WORKSPACE_SERVER_NAME] = { ...SERVER_UI_STATE_TEMPLATE }
+            this.serverStates[WORKSPACE_SERVER_NAME] = {
+                ...SERVER_UI_STATE_TEMPLATE,
+                name: WORKSPACE_SERVER_NAME,
+                server: this._workspaceServerConfig,
+                panels: {},
+            }
         }
-        const servers = this.getServerStates()
+        const servers = this._inventoryServerConfigs
         for (const server of servers) {
             let state = this.serverStates[server.name]
             if (!state) {
-                state = { ...SERVER_UI_STATE_TEMPLATE }
-                state.panels = {}
+                state = {
+                    ...SERVER_UI_STATE_TEMPLATE,
+                    name: server.name,
+                    server,
+                    panels: {},
+                }
                 this.serverStates[server.name] = state
             }
         }
@@ -418,7 +427,11 @@ class Navigator {
         for (const panelId of serverState.panelIds) {
             let state = serverState.panels[panelId]
             if (!state) {
-                state = { ...PANEL_UI_STATE_TEMPLATE, server: serverState }
+                state = {
+                    ...PANEL_UI_STATE_TEMPLATE,
+                    id: panelId,
+                    server: serverState,
+                }
                 serverState.panels[panelId] = state
             }
         }
@@ -547,6 +560,83 @@ class Navigator {
         panelState.selectedSlotId = slotId
         this._selectedSlotChangedEmitter.fire({ panelState, slotState })
     }
+
+    /**
+     * @param {ServerUIState} serverState
+     * @returns {PanelUIState|null}
+     */
+    defaultPanelForServer(serverState) {
+        return serverState.panels['default'] || null
+    }
+
+    /**
+     * @param {PanelUIState} panelState
+     * @returns {SlotUIState|null}
+     */
+    defaultSlotForPanel(panelState) {
+        return panelState.slots[panelState.defaultSlotId] || null
+    }
+
+    /**
+     * @param {ServerUIState} serverState
+     * @returns {BoomackTarget}
+     */
+    targetFromServer(serverState) {
+        const panelState = this.defaultPanelForServer(serverState)
+        const panelId = panelState?.id
+        const slotState = panelState ? this.defaultSlotForPanel(panelState) : null
+        const slotId = slotState?.id
+        const server = serverState.server
+        return { server, panelId, slotId }
+    }
+
+    /**
+     * @param {PanelUIState} panelState
+     * @returns {BoomackTarget}
+     */
+    targetFromPanel(panelState) {
+        const { server: serverState, id: panelId } = panelState
+        const server = serverState.server
+        const slotState = this.defaultSlotForPanel(panelState)
+        const slotId = slotState?.id
+        return { server, panelId, slotId }
+    }
+
+    /**
+     * @param {SlotUIState} slotState
+     * @returns {BoomackTarget}
+     */
+    targetFromSlot(slotState) {
+        const { panel: panelState, id: slotId } = slotState
+        const { server: serverState, id: panelId } = panelState
+        const server = serverState.server
+        return { server, panelId, slotId }
+    }
+
+    /**
+     * @returns {BoomackTarget|null}
+     */
+    getCurrentTarget() {
+        let serverState = this.getSelectedServerState()
+        if (!serverState) {
+            serverState = this.serverStates[WORKSPACE_SERVER_NAME] || null
+        }
+        if (!serverState) return null
+        let panelState = this.getSelectedPanelState(serverState)
+        if (!panelState) {
+            return this.targetFromServer(serverState)
+        }
+        let slotState = this.getSelectedSlotState(panelState)
+        if (!slotState) {
+            return this.targetFromPanel(panelState)
+        }
+        if (!slotState) return null
+        return {
+            server: serverState.server,
+            panelId: panelState.id,
+            slotId: slotState.id,
+        }
+    }
 }
 
 /**
@@ -591,11 +681,13 @@ class ServerTreeItemProvider {
         const server = element.server
         const item = new vscode.TreeItem(element.name, vscode.TreeItemCollapsibleState.None)
         item.iconPath = new vscode.ThemeIcon('server-environment')
-        const url = new URL(server.url)
-        item.description =
-            url.host
-            + (server.token ? '  🔑' : '')
-            + (server.token && url.protocol === 'http:' ? ' ⚠️' : '')
+        if (server) {
+            const url = new URL(server.url)
+            item.description =
+                url.host
+                + (server.token ? '  🔑' : '')
+                + (server.token && url.protocol === 'http:' ? ' ⚠️' : '')
+        }
         return item
     }
 

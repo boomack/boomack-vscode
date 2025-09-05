@@ -47,7 +47,7 @@ function updateContextActiveTextEditor() {
 function activate(context) {
 
     // Use the console to output diagnostic information (console.log) and errors (console.error)
-    console.log('Boomack VS Code extension intializing...')
+    console.log('Boomack VS Code extension initializing...')
 
     updateContextActiveTextEditor()
     const activeTextEditorChangeSubs = vscode.window.onDidChangeActiveTextEditor(() =>
@@ -99,72 +99,72 @@ function activate(context) {
 
     const addServerCmdSubs = vscode.commands.registerCommand(
         'boomack.server.add',
-        commands.addServerCommand(context))
+        commands.addServerCommand(navigator))
     context.subscriptions.push(addServerCmdSubs)
 
     const removeServerCmdSubs = vscode.commands.registerCommand(
         'boomack.server.remove',
-        commands.removeServerCommand(context))
+        commands.removeServerCommand(navigator))
     context.subscriptions.push(removeServerCmdSubs)
 
     const selectServerCmdSubs = vscode.commands.registerCommand(
         'boomack.server.select',
-        commands.selectServerCommand(context, serversView))
+        commands.selectServerCommand(navigator))
     context.subscriptions.push(selectServerCmdSubs)
 
     const refreshPanelsCmdSubs = vscode.commands.registerCommand(
         'boomack.refreshPanelList',
-        commands.refreshPanelsCommand(panelItemProvider))
+        commands.refreshPanelsCommand(navigator))
     context.subscriptions.push(refreshPanelsCmdSubs)
 
     const selectPanelCmdSubs = vscode.commands.registerCommand(
         'boomack.panel.select',
-        commands.selectPanelCommand(panelItemProvider, panelsView))
+        commands.selectPanelCommand(navigator))
     context.subscriptions.push(selectPanelCmdSubs)
 
     const clearPanelCmdSubs = vscode.commands.registerCommand(
         'boomack.panel.clear',
-        commands.clearPanelCommand(context, panelsView, panelItemProvider))
+        commands.clearPanelCommand(navigator))
     context.subscriptions.push(clearPanelCmdSubs)
 
     const refreshSlotsCmdSubs = vscode.commands.registerCommand(
         'boomack.refreshSlotList',
-        commands.refreshSlotsCommand(slotItemProvider))
+        commands.refreshSlotsCommand(navigator))
     context.subscriptions.push(refreshSlotsCmdSubs)
 
     const selectSlotCmdSubs = vscode.commands.registerCommand(
         'boomack.slot.select',
-        commands.selectSlotCommand(slotItemProvider, slotsView))
+        commands.selectSlotCommand(navigator))
     context.subscriptions.push(selectSlotCmdSubs)
 
     const slotZoomInCmdSubs = vscode.commands.registerCommand(
         'boomack.slot.zoomIn',
-        commands.slotZoomCommand(context, slotItemProvider, slotsView, 'in'))
+        commands.slotZoomCommand(navigator, 'in'))
     context.subscriptions.push(slotZoomInCmdSubs)
 
     const slotZoomOutCmdSubs = vscode.commands.registerCommand(
         'boomack.slot.zoomOut',
-        commands.slotZoomCommand(context, slotItemProvider, slotsView, 'out'))
+        commands.slotZoomCommand(navigator, 'out'))
     context.subscriptions.push(slotZoomOutCmdSubs)
 
     const clearSlotCmdSubs = vscode.commands.registerCommand(
         'boomack.slot.clear',
-        commands.clearSlotCommand(context, slotItemProvider, slotsView))
+        commands.clearSlotCommand(navigator))
     context.subscriptions.push(clearSlotCmdSubs)
 
     const displayInSlotCmdSubs = vscode.commands.registerCommand(
         'boomack.display.inSlot',
-        commands.displayInSlotCommand(context, slotsView))
+        commands.displayInSlotCommand(navigator))
     context.subscriptions.push(displayInSlotCmdSubs)
 
     const displayDocumentCmdSubs = vscode.commands.registerCommand(
         'boomack.display.document',
-        commands.displayFileCommand(context, slotItemProvider, slotsView))
+        commands.displayFileCommand(navigator))
     context.subscriptions.push(displayDocumentCmdSubs)
 
     const displayFileResourceCmdSubs = vscode.commands.registerCommand(
         'boomack.display.fileResource',
-        commands.displayFileCommand(context, slotItemProvider, slotsView))
+        commands.displayFileCommand(navigator))
     context.subscriptions.push(displayFileResourceCmdSubs)
 }
 
