@@ -402,7 +402,6 @@ class Navigator {
      * @param {?ServerUIState} serverState
      */
     async selectServer(serverState) {
-        if (!serverState) throw new Error("Missing argument serverState")
         const serverName = serverState?.name || null
         if (this.selectedServerName === serverName) return
         let panelState = null
@@ -692,8 +691,16 @@ class ServerTreeItemProvider {
      */
     getTreeItem(element) {
         const server = element.server
-        const item = new vscode.TreeItem(element.name, vscode.TreeItemCollapsibleState.None)
+        const label = element.name === WORKSPACE_SERVER_NAME
+            ? 'Project Server'
+            : element.name
+        const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.None)
         item.iconPath = new vscode.ThemeIcon('server-environment')
+        item.contextValue = element.name === WORKSPACE_SERVER_NAME
+            ? element.running
+                ? 'workspaceServer.running'
+                : 'workspaceServer.stopped'
+            : 'inventoryServer'
         if (server) {
             const url = new URL(server.url)
             item.description =
