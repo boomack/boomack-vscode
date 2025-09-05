@@ -301,14 +301,13 @@ function selectServerCommand(navigator) {
 
 /**
  * @param {Navigator} navigator
- * @returns {function():(void | Promise<void>)}
+ * @returns {function(?ServerUIState):(void | Promise<void>)}
  */
 function refreshPanelsCommand(navigator) {
-    return () => {
-        const serverState = navigator.getSelectedServerState()
-        if (serverState) {
-            navigator.refreshServerState(serverState)
-        }
+    return async serverState => {
+        if (!serverState) serverState = navigator.getSelectedServerState()
+        if (!serverState) return
+        await navigator.refreshServerState(serverState)
     }
 }
 
@@ -320,6 +319,7 @@ function selectPanelCommand(navigator) {
     return async panelState => {
         if (!panelState) panelState = await userChoosePanel(navigator, 'Select Boomack Panel', true)
         if (!panelState) return
+        await navigator.selectServer(panelState.server)
         await navigator.selectPanel(panelState.server, panelState)
     }
 }
@@ -377,10 +377,13 @@ function refreshSlotsCommand(navigator) {
  */
 function selectSlotCommand(navigator) {
     return async slotState => {
-        if (!slotState) slotState = resolveSlot(slotState, navigator)
-        if (!slotState) slotState = await userChooseSlot(navigator, 'Select Boomack Slot')
+        if (!slotState) slotState = await userChooseSlot(navigator, 'Select Boomack Slot', true)
         if (!slotState) return
-        navigator.selectSlot(slotState.panel, slotState)
+        const panelState = slotState.panel
+        await navigator.selectServer(slotState.panel.server)
+        await navigator.selectPanel(slotState.panel.server, slotState.panel)
+        slotState = panelState.slots[slotState.id]
+        navigator.selectSlot(panelState, slotState)
     }
 }
 
