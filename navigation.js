@@ -297,7 +297,7 @@ class Navigator {
             .filter(name =>
                 name !== WORKSPACE_SERVER_NAME
                 && !_.some(servers, s => s.name === name))
-        for (const name in obsoleteServerNames) {
+        for (const name of obsoleteServerNames) {
             delete this.serverStates[name]
         }
         this._updateWorkspaceServerRunningState()
