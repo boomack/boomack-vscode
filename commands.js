@@ -214,6 +214,15 @@ async function userChooseSlot(navigator, title, chooseContext) {
         chooseContext ? { step: 3, totalSteps: 3 } : undefined)
 }
 
+/**
+ * @param {string} url
+ * @returns {Promise<void>}
+ */
+async function openInBrowser(url) {
+    const open = await import('open')
+    open.default(url)
+}
+
 /** @type {vscode.Terminal | null} */
 let workspaceServerTerminal = null
 
@@ -350,6 +359,20 @@ function selectServerCommand(navigator) {
  * @param {Navigator} navigator
  * @returns {function(?ServerUIState):(void | Promise<void>)}
  */
+function openServerInBrowserCommand(navigator) {
+    return async serverItem => {
+        if (!serverItem) serverItem = await userChooseServer(navigator, 'Open Server in Browser')
+        if (!serverItem) return
+        let url = serverItem.server.url
+        if (!url.endsWith('/')) url += '/'
+        await openInBrowser(url)
+    }
+}
+
+/**
+ * @param {Navigator} navigator
+ * @returns {function(?ServerUIState):(void | Promise<void>)}
+ */
 function refreshPanelsCommand(navigator) {
     return async serverState => {
         if (!serverState) serverState = navigator.getSelectedServerState()
@@ -402,6 +425,22 @@ function clearPanelCommand(navigator) {
         if (!panelItem) panelItem = await userChoosePanel(navigator, 'Clear Panel', true)
         if (!panelItem) return
         await clearPanel(navigator, panelItem)
+    }
+}
+
+/**
+ * @param {Navigator} navigator
+ * @returns {function(?PanelUIState):(void | Promise<void>)}
+ */
+function openPanelInBrowserCommand(navigator) {
+    return async panelItem => {
+        panelItem = resolvePanel(panelItem, navigator)
+        if (!panelItem) panelItem = await userChoosePanel(navigator, 'Open Panel in Browser', true)
+        if (!panelItem) return
+        let url = panelItem.server.server.url
+        if (!url.endsWith('/')) url += '/'
+        url += `panels/${panelItem.id}`
+        await openInBrowser(url)
     }
 }
 
@@ -466,6 +505,23 @@ function clearSlotCommand(navigator) {
         if (!slotState) slotState = await userChooseSlot(navigator, 'Clear Slot', true)
         if (!slotState) return
         await clearSlot(navigator, slotState)
+    }
+}
+
+/**
+ * @param {Navigator} navigator
+ * @returns {function(?SlotUIState):(void | Promise<void>)}
+ */
+function openSlotInBrowserCommand(navigator) {
+    return async slotItem => {
+        slotItem = resolveSlot(slotItem, navigator)
+        if (!slotItem) slotItem = await userChooseSlot(navigator, 'Open Slot in Browser', true)
+        if (!slotItem) return
+        const panelItem = slotItem.panel
+        let url = panelItem.server.server.url
+        if (!url.endsWith('/')) url += '/'
+        url += `panels/${panelItem.id}/slots/${slotItem.id}`
+        await openInBrowser(url)
     }
 }
 
@@ -626,14 +682,17 @@ module.exports = {
     addServerCommand,
     removeServerCommand,
     selectServerCommand,
+    openServerInBrowserCommand,
     refreshPanelsCommand,
     selectPanelCommand,
     clearPanelCommand,
+    openPanelInBrowserCommand,
     refreshSlotsCommand,
     selectSlotCommand,
     clearSlotCommand,
     slotZoomCommand,
     slotToggleMaximizeCommand,
+    openSlotInBrowserCommand,
     displayInSlotCommand,
     displayFileCommand,
 }

@@ -20,7 +20,6 @@ let navigator = null
 // - json schema for panel layout
 // - json schema for display request
 // - json schema for playbook
-// - open server, panel, slot in browser (configurable command with URL placeholder)
 // - use file:/// references instead of streaming requests for workspace server
 // - allow opt-in streaming requests for workspace server
 
@@ -114,6 +113,11 @@ function activate(context) {
         commands.selectServerCommand(navigator))
     context.subscriptions.push(selectServerCmdSubs)
 
+    const openServerInBrowserCmdSubs = vscode.commands.registerCommand(
+        'boomack.server.openInBrowser',
+        commands.openServerInBrowserCommand(navigator))
+    context.subscriptions.push(openServerInBrowserCmdSubs)
+
     const refreshPanelsCmdSubs = vscode.commands.registerCommand(
         'boomack.refreshPanelList',
         commands.refreshPanelsCommand(navigator))
@@ -128,6 +132,11 @@ function activate(context) {
         'boomack.panel.clear',
         commands.clearPanelCommand(navigator))
     context.subscriptions.push(clearPanelCmdSubs)
+
+    const openPanelInBrowserCmdSubs = vscode.commands.registerCommand(
+        'boomack.panel.openInBrowser',
+        commands.openPanelInBrowserCommand(navigator))
+    context.subscriptions.push(openPanelInBrowserCmdSubs)
 
     const refreshSlotsCmdSubs = vscode.commands.registerCommand(
         'boomack.refreshSlotList',
@@ -158,6 +167,11 @@ function activate(context) {
         'boomack.slot.clear',
         commands.clearSlotCommand(navigator))
     context.subscriptions.push(clearSlotCmdSubs)
+
+    const openSlotInBrowserCmdSubs = vscode.commands.registerCommand(
+        'boomack.slot.openInBrowser',
+        commands.openSlotInBrowserCommand(navigator))
+    context.subscriptions.push(openSlotInBrowserCmdSubs)
 
     const displayInSlotCmdSubs = vscode.commands.registerCommand(
         'boomack.display.inSlot',

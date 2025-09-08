@@ -82,6 +82,13 @@
         "title": "Select Server"
       },
       {
+        "command": "boomack.server.openInBrowser",
+        "category": "Boomack",
+        "title": "Open Server in Browser",
+        "shortTitle": "Open",
+        "icon": "$(link-external)"
+      },
+      {
         "command": "boomack.refreshPanelList",
         "category": "Boomack",
         "title": "Refresh Panel List",
@@ -99,6 +106,13 @@
         "title": "Clear Panel",
         "shortTitle": "Clear",
         "icon": "$(trash)"
+      },
+      {
+        "command": "boomack.panel.openInBrowser",
+        "category": "Boomack",
+        "title": "Open Panel in Browser",
+        "shortTitle": "Open",
+        "icon": "$(link-external)"
       },
       {
         "command": "boomack.refreshSlotList",
@@ -136,6 +150,13 @@
         "category": "Boomack",
         "title": "Slot toggle maximize",
         "icon": "$(screen-full)"
+      },
+      {
+        "command": "boomack.slot.openInBrowser",
+        "category": "Boomack",
+        "title": "Open Slot in Browser",
+        "shortTitle": "Open",
+        "icon": "$(link-external)"
       },
       {
         "command": "boomack.display.inSlot",
@@ -224,6 +245,11 @@
           "group": "inline@2"
         },
         {
+          "command": "boomack.server.openInBrowser",
+          "when": "view == boomack-servers && (viewItem == inventoryServer || boomack.workspaceServer.running)",
+          "group": "inline@3"
+        },
+        {
           "command": "boomack.refreshSlotList",
           "when": "view == boomack-panels",
           "group": "inline@1"
@@ -232,6 +258,11 @@
           "command": "boomack.panel.clear",
           "when": "view == boomack-panels",
           "group": "inline@2"
+        },
+        {
+          "command": "boomack.panel.openInBrowser",
+          "when": "view == boomack-panels",
+          "group": "inline@3"
         },
         {
           "command": "boomack.display.inSlot",
@@ -253,7 +284,12 @@
         {
           "command": "boomack.slot.clear",
           "when": "view == boomack-slots",
-          "group": "inline@4"
+          "group": "inline@2"
+        },
+        {
+          "command": "boomack.slot.openInBrowser",
+          "when": "view == boomack-slots",
+          "group": "inline@3"
         }
       ],
       "editor/title/run": [
@@ -280,7 +316,8 @@
     "boomack": "0.14.9",
     "boomack-js": "0.11.3",
     "lodash": "^4.17.21",
-    "mime": "^3.0.0"
+    "mime": "^3.0.0",
+    "open": "^10.2.0"
   },
   "devDependencies": {
     "@types/vscode": "^1.103.0",
