@@ -56,3 +56,4 @@
  */
 
 exports.WORKSPACE_SERVER_NAME = '<workspace>'
+exports.WORKSPACE_SERVER_LABEL = 'Project Server'

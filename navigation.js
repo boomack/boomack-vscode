@@ -1,6 +1,6 @@
 const _ = require('lodash')
 const vscode = require('vscode')
-const { WORKSPACE_SERVER_NAME } = require('./model.js')
+const { WORKSPACE_SERVER_NAME, WORKSPACE_SERVER_LABEL } = require('./model.js')
 const inventory = require('./inventory.js')
 const { getClientFor } = require('./client.js')
 
@@ -692,7 +692,7 @@ class ServerTreeItemProvider {
     getTreeItem(element) {
         const server = element.server
         const label = element.name === WORKSPACE_SERVER_NAME
-            ? 'Project Server'
+            ? WORKSPACE_SERVER_LABEL
             : element.name
         const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.None)
         item.iconPath = new vscode.ThemeIcon('server-environment')

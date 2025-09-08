@@ -2,7 +2,7 @@ const fs = require('node:fs/promises')
 const path = require('node:path')
 const vscode = require('vscode')
 const mime = require('mime')
-const { WORKSPACE_SERVER_NAME } = require('./model.js')
+const { WORKSPACE_SERVER_NAME, WORKSPACE_SERVER_LABEL } = require('./model.js')
 const { config } = require('./config.js')
 const inventory = require('./inventory.js')
 const tools = require('./tools.js')
@@ -64,7 +64,9 @@ function quickPick(items, labelMapper, options) {
 function userChooseServer(navigator, title, multiStep) {
     const servers = navigator.getServerStates()
     const items = servers.map(s => ({
-        label: s.name,
+        label: s.name === WORKSPACE_SERVER_NAME
+            ? WORKSPACE_SERVER_LABEL
+            : s.name,
         description: s.server.url,
         iconPath: new vscode.ThemeIcon('server-environment'),
         picked: navigator.getSelectedServerState()?.name === s.name,
