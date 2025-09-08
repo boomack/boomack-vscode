@@ -16,7 +16,6 @@ let navigator = null
 // - setup from playbook
 // - setup from assets in directory structure (types, presets, layouts, actions, initial content)
 // - detect workspace server config
-// - run server in workspace (replaces default server)
 // - json schema for server config
 // - json schema for panel layout
 // - json schema for display request
@@ -92,12 +91,13 @@ function activate(context) {
         'boomack.playground', commands.playgroundCommand())
     context.subscriptions.push(playgroundCmdSubs)
 
-    const startServerCmdSubs = vscode.commands.registerCommand(
-        'boomack.server.start',
-        () => {
-            vscode.window.showWarningMessage('Not Implemented: Start Boomack server for workspace')
-        })
-    context.subscriptions.push(startServerCmdSubs)
+    const startWorkspaceServerCmdSubs = vscode.commands.registerCommand(
+        'boomack.workspaceServer.start', commands.startWorkspaceServerCommand(navigator))
+    context.subscriptions.push(startWorkspaceServerCmdSubs)
+
+    const stopWorkspaceServerCmdSubs = vscode.commands.registerCommand(
+        'boomack.workspaceServer.stop', commands.stopWorkspaceServerCommand())
+    context.subscriptions.push(stopWorkspaceServerCmdSubs)
 
     const addServerCmdSubs = vscode.commands.registerCommand(
         'boomack.server.add',

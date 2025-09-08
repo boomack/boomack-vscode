@@ -697,9 +697,7 @@ class ServerTreeItemProvider {
         const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.None)
         item.iconPath = new vscode.ThemeIcon('server-environment')
         item.contextValue = element.name === WORKSPACE_SERVER_NAME
-            ? element.running
-                ? 'workspaceServer.running'
-                : 'workspaceServer.stopped'
+            ? 'workspaceServer'
             : 'inventoryServer'
         if (server) {
             const url = new URL(server.url)

@@ -52,10 +52,16 @@
         "title": "Playground"
       },
       {
-        "command": "boomack.server.start",
+        "command": "boomack.workspaceServer.start",
         "category": "Boomack",
         "title": "Start Workspace Server",
         "icon": "$(run)"
+      },
+      {
+        "command": "boomack.workspaceServer.stop",
+        "category": "Boomack",
+        "title": "Stop Workspace Server",
+        "icon": "$(debug-stop)"
       },
       {
         "command": "boomack.server.add",
@@ -203,8 +209,13 @@
           "group": "inline@1"
         },
         {
-          "command": "boomack.server.start",
-          "when": "view == boomack-servers && viewItem == workspaceServer.stopped",
+          "command": "boomack.workspaceServer.start",
+          "when": "view == boomack-servers && viewItem == workspaceServer && !boomack.workspaceServer.running",
+          "group": "inline@2"
+        },
+        {
+          "command": "boomack.workspaceServer.stop",
+          "when": "view == boomack-servers && viewItem == workspaceServer && boomack.workspaceServer.running",
           "group": "inline@2"
         },
         {

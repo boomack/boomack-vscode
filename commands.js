@@ -5,6 +5,7 @@ const mime = require('mime')
 const { WORKSPACE_SERVER_NAME } = require('./model.js')
 const { config } = require('./config.js')
 const inventory = require('./inventory.js')
+const tools = require('./tools.js')
 
 /**
  * @typedef {import('./inventory.js').BoomackServer} BoomackServer
@@ -211,6 +212,52 @@ async function userChooseSlot(navigator, title, chooseContext) {
     if (!panelState) return undefined
     return await userChooseSlotForPanel(navigator, panelState, title,
         chooseContext ? { step: 3, totalSteps: 3 } : undefined)
+}
+
+/** @type {vscode.Terminal | null} */
+let workspaceServerTerminal = null
+
+/**
+ *
+ * @param {Navigator} navigator
+ * @returns {function():(void | Promise<void>)}
+ */
+function startWorkspaceServerCommand(navigator) {
+    return () => {
+        if (workspaceServerTerminal) {
+            vscode.window.showWarningMessage("Boomack server is already running")
+            return
+        }
+        workspaceServerTerminal = tools.runToolInTerminal(
+            navigator.getContext(),
+            'Boomack Server',
+            'boomack', [],
+            vscode.workspace.workspaceFolders[0].uri.fsPath,
+            () => {
+                vscode.commands.executeCommand('setContext',
+                    'boomack.workspaceServer.running', false)
+                navigator.setWorkspaceServerRunning(false)
+                workspaceServerTerminal = null
+                vscode.window.showInformationMessage("Project Boomack server stopped")
+            })
+        navigator.setWorkspaceServerRunning(true)
+        vscode.commands.executeCommand('setContext',
+                'boomack.workspaceServer.running', true)
+        vscode.window.showInformationMessage("Project Boomack server started")
+    }
+}
+
+/**
+ * @returns {function():(void | Promise<void>)}
+ */
+function stopWorkspaceServerCommand() {
+    return () => {
+        if (!workspaceServerTerminal) {
+            vscode.window.showWarningMessage("Project Boomack server is not running")
+            return
+        }
+        workspaceServerTerminal.dispose()
+    }
 }
 
 /**
@@ -574,6 +621,8 @@ function slotToggleMaximizeCommand(navigator) {
 
 module.exports = {
     playgroundCommand,
+    startWorkspaceServerCommand,
+    stopWorkspaceServerCommand,
     addServerCommand,
     removeServerCommand,
     selectServerCommand,
