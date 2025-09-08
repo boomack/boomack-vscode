@@ -6,6 +6,8 @@ This extensions allows to interact with a Boomack server.
 
 * Select server, panel, and slot as current target
 * Clear content from panel or slot
+* Open server, panel, or slot in default browser
+* Start and stop project server
 
 ## Extension Settings
 
