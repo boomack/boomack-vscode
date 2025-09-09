@@ -36,13 +36,13 @@
       {
         "command": "boomack.workspaceServer.start",
         "category": "Boomack",
-        "title": "Start Workspace Server",
+        "title": "Start Project Server",
         "icon": "$(run)"
       },
       {
         "command": "boomack.workspaceServer.stop",
         "category": "Boomack",
-        "title": "Stop Workspace Server",
+        "title": "Stop Project Server",
         "icon": "$(debug-stop)"
       },
       {
@@ -71,7 +71,14 @@
         "icon": "$(link-external)"
       },
       {
-        "command": "boomack.refreshPanelList",
+        "command": "boomack.server.refresh",
+        "category": "Boomack",
+        "title": "Refresh Panel List",
+        "shortTitle": "Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "boomack.server.refreshSelected",
         "category": "Boomack",
         "title": "Refresh Panel List",
         "shortTitle": "Refresh",
@@ -188,6 +195,25 @@
       ]
     },
     "menus": {
+      "commandPalette": [
+        { "command": "boomack.server.add" },
+        { "command": "boomack.server.remove" },
+        { "command": "boomack.server.select" },
+        {
+          "command": "boomack.workspaceServer.start",
+          "when": "!boomack.workspaceServer.running"
+        },
+        {
+          "command": "boomack.workspaceServer.stop",
+          "when": "boomack.workspaceServer.running"
+        },
+        { "command": "boomack.server.openInBrowser" },
+        { "command": "boomack.server.refresh" },
+        {
+          "command": "boomack.server.refreshSelected",
+          "when": "false"
+        }
+      ],
       "view/title": [
         {
           "command": "boomack.server.add",
@@ -195,7 +221,7 @@
           "group": "navigation"
         },
         {
-          "command": "boomack.refreshPanelList",
+          "command": "boomack.server.refreshSelected",
           "when": "view == boomack-panels && boomack.serverSelected",
           "group": "navigation"
         },
@@ -207,8 +233,8 @@
       ],
       "view/item/context": [
         {
-          "command": "boomack.refreshPanelList",
-          "when": "view == boomack-servers",
+          "command": "boomack.server.refresh",
+          "when": "view == boomack-servers && (viewItem != workspaceServer || boomack.workspaceServer.running)",
           "group": "inline@1"
         },
         {

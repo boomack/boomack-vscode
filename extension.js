@@ -104,10 +104,15 @@ function activate(context) {
         commands.openServerInBrowserCommand(navigator))
     context.subscriptions.push(openServerInBrowserCmdSubs)
 
-    const refreshPanelsCmdSubs = vscode.commands.registerCommand(
-        'boomack.refreshPanelList',
-        commands.refreshPanelsCommand(navigator))
-    context.subscriptions.push(refreshPanelsCmdSubs)
+    const refreshServerCmdSubs = vscode.commands.registerCommand(
+        'boomack.server.refresh',
+        commands.refreshPanelsCommand(navigator, false))
+    context.subscriptions.push(refreshServerCmdSubs)
+
+    const refreshSelectedServerCmdSubs = vscode.commands.registerCommand(
+        'boomack.server.refreshSelected',
+        commands.refreshPanelsCommand(navigator, true))
+    context.subscriptions.push(refreshSelectedServerCmdSubs)
 
     const selectPanelCmdSubs = vscode.commands.registerCommand(
         'boomack.panel.select',

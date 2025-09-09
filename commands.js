@@ -1,3 +1,4 @@
+const _ = require('lodash')
 const fs = require('node:fs/promises')
 const path = require('node:path')
 const vscode = require('vscode')
@@ -34,6 +35,11 @@ function quickPick(items, labelMapper, options) {
     const quickPick = vscode.window.createQuickPick()
     quickPick.canSelectMany = false
     quickPick.items = items
+    // Preselecting a single item without canSelectMany
+    // is currently not supported by the VS Code API.
+    // IQuickPickItem.picked is ignored if canSelectMany is not set.
+    // Setting selectedItems with an array containing one element
+    // immediately closes the QuickPick if canSelectMany is not set.
     for (const k in options) {
         quickPick[k] = options[k]
     }
@@ -60,21 +66,34 @@ function quickPick(items, labelMapper, options) {
  * @param {Navigator} navigator
  * @param {string} title
  * @param {{ step: number, totalSteps: number }} [multiStep]
+ * @param {boolean} [excludeWorkspaceServer]
  * @returns {Promise<ServerUIState|undefined>}
  */
-function userChooseServer(navigator, title, multiStep) {
-    const servers = navigator.getServerStates()
+function userChooseServer(navigator, title, multiStep, excludeWorkspaceServer) {
+    let servers = navigator.getServerStates()
+    if (excludeWorkspaceServer) {
+        servers = servers.filter(s => s.name !== WORKSPACE_SERVER_NAME)
+    }
+    if (servers.length === 0) {
+        vscode.window.showWarningMessage("There is no Boomack server to choose from")
+        return Promise.resolve(undefined)
+    }
+    const preselectedServer = navigator.getSelectedServerState()
+        || (excludeWorkspaceServer
+            ? undefined
+            : navigator.serverStates[WORKSPACE_SERVER_NAME])
     const items = servers.map(s => ({
         label: s.name === WORKSPACE_SERVER_NAME
             ? WORKSPACE_SERVER_LABEL
             : s.name,
         description: s.server.url,
         iconPath: new vscode.ThemeIcon('server-environment'),
-        picked: navigator.getSelectedServerState()?.name === s.name,
+        picked: preselectedServer?.name === s.name,
     }))
     return quickPick(
         items,
-        label => servers.find(s => s.name === label),
+        label => servers.find(s => s.name === label
+            || s.name === WORKSPACE_SERVER_NAME && label === WORKSPACE_SERVER_LABEL),
         {
             title,
             placeholder: 'Server Name',
@@ -83,26 +102,26 @@ function userChooseServer(navigator, title, multiStep) {
         })
 }
 
-/**
- * @param {?PanelUIState} item
- * @param {Navigator} navigator
- * @returns {PanelUIState|null}
- */
-function resolvePanel(item, navigator) {
-    if (item) return item
-    let serverState = navigator.getSelectedServerState()
-    if (!serverState) {
-        const serverStates = navigator.getServerStates()
-        if (serverStates.length === 1) serverState = serverStates[0]
-    }
-    if (!serverState) return null
-    let panelState = navigator.getSelectedPanelState(serverState)
-    if (!panelState) {
-        const panelStates = navigator.getPanelStates(serverState)
-        if (panelStates.length === 1) panelState = panelStates[0]
-    }
-    return panelState
-}
+// /**
+//  * @param {?PanelUIState} item
+//  * @param {Navigator} navigator
+//  * @returns {PanelUIState|null}
+//  */
+// function resolvePanel(item, navigator) {
+//     if (item) return item
+//     let serverState = navigator.getSelectedServerState()
+//     if (!serverState) {
+//         const serverStates = navigator.getServerStates()
+//         if (serverStates.length === 1) serverState = serverStates[0]
+//     }
+//     if (!serverState) return null
+//     let panelState = navigator.getSelectedPanelState(serverState)
+//     if (!panelState) {
+//         const panelStates = navigator.getPanelStates(serverState)
+//         if (panelStates.length === 1) panelState = panelStates[0]
+//     }
+//     return panelState
+// }
 
 /**
  * @param {Navigator} navigator
@@ -113,11 +132,13 @@ function resolvePanel(item, navigator) {
  */
 function userChoosePanelForServer(navigator, serverState, title, multiStep) {
     const panelStates = navigator.getPanelStates(serverState)
+    const preselectedPanelState = navigator.getSelectedPanelState(serverState)
+        || serverState.panels['default']
     const items = panelStates.map(p => ({
         label: p.id,
         description: p.definition?.title,
         iconPath: new vscode.ThemeIcon('window'),
-        picked: navigator.getSelectedPanelState(serverState)?.id === p.id,
+        picked: preselectedPanelState?.id === p.id,
     }))
     return quickPick(
         items,
@@ -133,45 +154,42 @@ function userChoosePanelForServer(navigator, serverState, title, multiStep) {
 /**
  * @param {Navigator} navigator
  * @param {string} title
- * @param {boolean} [chooseContext]
  * @returns {Promise<PanelUIState|undefined>}
  */
-async function userChoosePanel(navigator, title, chooseContext) {
-    const serverState = navigator.getServerStates().length > 1
-        ? chooseContext
-            ? await userChooseServer(navigator, title, { step: 1, totalSteps: 2 })
-            : navigator.getSelectedServerState()
-        : navigator.getServerStates()[0]
+async function userChoosePanel(navigator, title) {
+    const serverState = await userChooseServer(
+        navigator, title, { step: 1, totalSteps: 2 })
     if (!serverState) return undefined
-    return await userChoosePanelForServer(navigator, serverState, title,
-        chooseContext ? { step: 2, totalSteps: 2 } : undefined)
+    const panelState = await userChoosePanelForServer(
+        navigator, serverState, title, { step: 2, totalSteps: 2 })
+    return panelState
 }
 
-/**
- * @param {?SlotUIState} item
- * @param {Navigator} navigator
- * @returns {SlotUIState|null}
- */
-function resolveSlot(item, navigator) {
-    if (item) return item
-    let serverState = navigator.getSelectedServerState()
-    if (!serverState) {
-        const serverStates = navigator.getServerStates()
-        if (serverStates.length === 1) serverState = serverStates[0]
-    }
-    if (!serverState) return null
-    let panelState = navigator.getSelectedPanelState(serverState)
-    if (!panelState) {
-        const panelStates = navigator.getPanelStates(serverState)
-        if (panelStates.length === 1) panelState = panelStates[0]
-    }
-    let slotState = navigator.getSelectedSlotState(panelState)
-    if (!slotState) {
-        const slotStates = navigator.getSlotStates(panelState)
-        if (slotStates.length === 1) slotState = slotStates[0]
-    }
-    return slotState
-}
+// /**
+//  * @param {?SlotUIState} item
+//  * @param {Navigator} navigator
+//  * @returns {SlotUIState|null}
+//  */
+// function resolveSlot(item, navigator) {
+//     if (item) return item
+//     let serverState = navigator.getSelectedServerState()
+//     if (!serverState) {
+//         const serverStates = navigator.getServerStates()
+//         if (serverStates.length === 1) serverState = serverStates[0]
+//     }
+//     if (!serverState) return null
+//     let panelState = navigator.getSelectedPanelState(serverState)
+//     if (!panelState) {
+//         const panelStates = navigator.getPanelStates(serverState)
+//         if (panelStates.length === 1) panelState = panelStates[0]
+//     }
+//     let slotState = navigator.getSelectedSlotState(panelState)
+//     if (!slotState) {
+//         const slotStates = navigator.getSlotStates(panelState)
+//         if (slotStates.length === 1) slotState = slotStates[0]
+//     }
+//     return slotState
+// }
 
 /**
  * @param {Navigator} navigator
@@ -182,10 +200,12 @@ function resolveSlot(item, navigator) {
  */
 function userChooseSlotForPanel(navigator, panelState, title, multiStep) {
     const slotStates = navigator.getSlotStates(panelState)
+    const preselectedSlot = navigator.getSelectedSlotState(panelState)
+        || panelState.slots[panelState.definition?.defaultSlot]
     const items = slotStates.map(p => ({
         label: p.id,
         iconPath: new vscode.ThemeIcon('symbol-constant'),
-        picked: navigator.getSelectedSlotState(panelState)?.id === p.id,
+        picked: preselectedSlot?.id === p.id,
     }))
     return quickPick(
         items,
@@ -201,20 +221,18 @@ function userChooseSlotForPanel(navigator, panelState, title, multiStep) {
 /**
  * @param {Navigator} navigator
  * @param {string} title
- * @param {boolean} [chooseContext]
  * @returns {Promise<SlotUIState|undefined>}
  */
-async function userChooseSlot(navigator, title, chooseContext) {
-    const serverState = chooseContext
-        ? await userChooseServer(navigator, title, { step: 1, totalSteps: 3 })
-        : navigator.getSelectedServerState()
+async function userChooseSlot(navigator, title) {
+    const serverState = await userChooseServer(
+        navigator, title, { step: 1, totalSteps: 3 })
     if (!serverState) return undefined
-    const panelState = chooseContext
-        ? await userChoosePanelForServer(navigator, serverState, title, { step: 2, totalSteps: 3 })
-        : navigator.getSelectedPanelState(serverState)
+    const panelState = await userChoosePanelForServer(
+        navigator, serverState, title, { step: 2, totalSteps: 3 })
     if (!panelState) return undefined
-    return await userChooseSlotForPanel(navigator, panelState, title,
-        chooseContext ? { step: 3, totalSteps: 3 } : undefined)
+    const slotState = await userChooseSlotForPanel(
+        navigator, panelState, title, { step: 3, totalSteps: 3 })
+    return slotState
 }
 
 /**
@@ -342,7 +360,7 @@ function removeServer(navigator, serverName) {
  */
 function removeServerCommand(navigator) {
     return async server => {
-        if (!server) server = await userChooseServer(navigator, 'Remove Boomack Server')
+        if (!server) server = await userChooseServer(navigator, 'Remove Boomack Server', null, true)
         if (!server) return
         removeServer(navigator, server.name)
     }
@@ -350,14 +368,24 @@ function removeServerCommand(navigator) {
 
 /**
  * @param {Navigator} navigator
- * @returns {function(?ServerUIState):(void | Promise<void>)}
+ * @returns {function(?ServerUIState, ?string):(Promise<ServerUIState|undefined>)}
  */
 function selectServerCommand(navigator) {
-    return async serverState => {
-        if (!serverState) serverState = await userChooseServer(navigator, 'Select Boomack Server')
-        if (!serverState) return
+    return async (serverState, title) => {
+        if (!title) title = 'Select Boomack Server'
+        if (!serverState) serverState = await userChooseServer(navigator, title)
+        if (!serverState) return undefined
         await navigator.selectServer(serverState)
+        return serverState
     }
+}
+
+/**
+ * @param {?string} title
+ * @returns {Promise<ServerUIState|undefined>}
+ */
+async function retroactivelySelectServer(title) {
+    return await vscode.commands.executeCommand('boomack.server.select', null, title)
 }
 
 /**
@@ -376,13 +404,20 @@ function openServerInBrowserCommand(navigator) {
 
 /**
  * @param {Navigator} navigator
+ * @param {boolean} targetSelected
  * @returns {function(?ServerUIState):(void | Promise<void>)}
  */
-function refreshPanelsCommand(navigator) {
+function refreshPanelsCommand(navigator, targetSelected) {
     return async serverState => {
-        if (!serverState) serverState = navigator.getSelectedServerState()
+        if (!serverState && targetSelected) serverState = navigator.getSelectedServerState()
+        if (!serverState) serverState = await retroactivelySelectServer('Refresh Panels')
         if (!serverState) return
-        await navigator.refreshServerState(serverState)
+        try {
+            await navigator.refreshServerState(serverState)
+        } catch (err) {
+            vscode.window.showWarningMessage(`Failed to connect to Boomack server "${serverState.name}"`)
+            console.warn('Failed to refresh server state', serverState.name, err)
+        }
     }
 }
 
@@ -392,7 +427,7 @@ function refreshPanelsCommand(navigator) {
  */
 function selectPanelCommand(navigator) {
     return async panelState => {
-        if (!panelState) panelState = await userChoosePanel(navigator, 'Select Boomack Panel', true)
+        if (!panelState) panelState = await userChoosePanel(navigator, 'Select Boomack Panel')
         if (!panelState) return
         await navigator.selectServer(panelState.server)
         await navigator.selectPanel(panelState.server, panelState)
@@ -468,7 +503,7 @@ function refreshSlotsCommand(navigator) {
  */
 function selectSlotCommand(navigator) {
     return async slotState => {
-        if (!slotState) slotState = await userChooseSlot(navigator, 'Select Boomack Slot', true)
+        if (!slotState) slotState = await userChooseSlot(navigator, 'Select Boomack Slot')
         if (!slotState) return
         const panelState = slotState.panel
         await navigator.selectServer(slotState.panel.server)

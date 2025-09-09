@@ -408,7 +408,12 @@ class Navigator {
         let slotState = null
         this.selectedServerName = serverName
         if (serverState) {
+            try {
             await this._updateServerState(serverState)
+            } catch (err) {
+                vscode.window.showWarningMessage(`Failed to connect to Boomack server "${serverName}"`)
+                console.warn('Failed to refresh panels on', serverName, err)
+            }
             if (serverState.selectedPanelId) {
                 panelState = serverState.panels[serverState.selectedPanelId] || null
             }
