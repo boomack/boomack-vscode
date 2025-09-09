@@ -101,7 +101,7 @@ function activate(context) {
 
     const openServerInBrowserCmdSubs = vscode.commands.registerCommand(
         'boomack.server.openInBrowser',
-        commands.openServerInBrowserCommand(navigator))
+        commands.openServerInBrowserCommand())
     context.subscriptions.push(openServerInBrowserCmdSubs)
 
     const refreshServerCmdSubs = vscode.commands.registerCommand(
@@ -144,6 +144,16 @@ function activate(context) {
         commands.selectSlotCommand(navigator))
     context.subscriptions.push(selectSlotCmdSubs)
 
+    const clearSlotCmdSubs = vscode.commands.registerCommand(
+        'boomack.slot.clear',
+        commands.clearSlotCommand(navigator))
+    context.subscriptions.push(clearSlotCmdSubs)
+
+    const openSlotInBrowserCmdSubs = vscode.commands.registerCommand(
+        'boomack.slot.openInBrowser',
+        commands.openSlotInBrowserCommand())
+    context.subscriptions.push(openSlotInBrowserCmdSubs)
+
     const slotZoomInCmdSubs = vscode.commands.registerCommand(
         'boomack.slot.zoomIn',
         commands.slotZoomCommand(navigator, 'in'))
@@ -158,16 +168,6 @@ function activate(context) {
         'boomack.slot.toggleMaximize',
         commands.slotToggleMaximizeCommand(navigator))
     context.subscriptions.push(slotToggleMaximizeCmdSubs)
-
-    const clearSlotCmdSubs = vscode.commands.registerCommand(
-        'boomack.slot.clear',
-        commands.clearSlotCommand(navigator))
-    context.subscriptions.push(clearSlotCmdSubs)
-
-    const openSlotInBrowserCmdSubs = vscode.commands.registerCommand(
-        'boomack.slot.openInBrowser',
-        commands.openSlotInBrowserCommand(navigator))
-    context.subscriptions.push(openSlotInBrowserCmdSubs)
 
     const displayInSlotCmdSubs = vscode.commands.registerCommand(
         'boomack.display.inSlot',

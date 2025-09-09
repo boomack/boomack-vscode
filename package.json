@@ -130,19 +130,19 @@
       {
         "command": "boomack.slot.zoomIn",
         "category": "Boomack",
-        "title": "Slot zoom in",
+        "title": "Slot Zoom In",
         "icon": "$(zoom-in)"
       },
       {
         "command": "boomack.slot.zoomOut",
         "category": "Boomack",
-        "title": "Slot zoom out",
+        "title": "Slot Zoom Out",
         "icon": "$(zoom-out)"
       },
       {
         "command": "boomack.slot.toggleMaximize",
         "category": "Boomack",
-        "title": "Slot toggle maximize",
+        "title": "Toggle Maximize Slot",
         "icon": "$(screen-full)"
       },
       {
@@ -225,7 +225,13 @@
         {
           "command": "boomack.panel.refreshSelected",
           "when": "false"
-        }
+        },
+        { "command": "boomack.slot.select" },
+        { "command": "boomack.slot.clear" },
+        { "command": "boomack.slot.openInBrowser" },
+        { "command": "boomack.slot.zoomIn" },
+        { "command": "boomack.slot.zoomOut" },
+        { "command": "boomack.slot.toggleMaximize" }
       ],
       "view/title": [
         {

@@ -329,23 +329,36 @@ class Navigator {
             return
         }
 
-        const client = await this.clientFor(server)
-        const panelIdsResponse = await client.listPanels()
-        if (panelIdsResponse.success) {
-            const panelIds = /** @type {string[]} */ (panelIdsResponse.body)
-            serverState.panelIds = [ ...panelIds ]
-        }
-        this._updatePanelStateCollection(serverState)
+        vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            cancellable: false,
+            title: `Boomack ${serverState.name}`
+        }, async progress => {
+            progress.report({ increment: 0, message: 'Loading panel list' })
+            const client = await this.clientFor(server)
+            const panelIdsResponse = await client.listPanels()
+            if (panelIdsResponse.success) {
+                const panelIds = /** @type {string[]} */ (panelIdsResponse.body)
+                serverState.panelIds = [ ...panelIds ]
+            }
+            this._updatePanelStateCollection(serverState)
 
-        // const defaultPanelState = serverState.panels['default']
-        // if (defaultPanelState) {
-        //     await this._updatePanelState(defaultPanelState)
-        // }
-        for (const panelState of _.values(serverState.panels)) {
-            await this._updatePanelState(panelState)
-        }
+            // const defaultPanelState = serverState.panels['default']
+            // if (defaultPanelState) {
+            //     await this._updatePanelState(defaultPanelState)
+            // }
+            const panelStates = _.values(serverState.panels)
+            let progressValue = 10
+            for (const panelState of panelStates) {
+                progress.report({ increment: progressValue, message: `Loading panel "${panelState.id}"` })
+                await this._updatePanelState(panelState)
+                progressValue += 90 / panelStates.length
+            }
 
-        serverState.invalid = false
+            progress.report({ increment: 100 })
+
+            serverState.invalid = false
+        })
     }
 
     /**

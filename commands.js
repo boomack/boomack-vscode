@@ -19,6 +19,54 @@ const tools = require('./tools.js')
  * @typedef {import('./navigation.js').Navigator} Navigator
  */
 
+/**
+ * @param {any} uiState
+ * @return {ServerUIState|undefined}
+ */
+function resolveServerState(uiState) {
+    if (!uiState) return undefined
+    if (isServerState(uiState)) {
+        const serverState = /** @type {ServerUIState} */ (uiState)
+        return serverState
+    } else if (isPanelState(uiState)) {
+        const panelState = /** @type {PanelUIState} */ (uiState)
+        return panelState.server
+    } else if (isSlotState(uiState)) {
+        const slotState = /** @type {SlotUIState} */ (uiState)
+        return slotState.panel?.server
+    }
+    return undefined
+}
+
+/**
+ * @param {any} uiState
+ * @return {PanelUIState|undefined}
+ */
+function resolvePanelState(uiState) {
+    if (!uiState) return undefined
+    if (isPanelState(uiState)) {
+        const panelState = /** @type {PanelUIState} */ (uiState)
+        return panelState
+    } else if (isSlotState(uiState)) {
+        const slotState = /** @type {SlotUIState} */ (uiState)
+        return slotState.panel
+    }
+    return undefined
+}
+
+/**
+ * @param {any} uiState
+ * @return {SlotUIState|undefined}
+ */
+function resolveSlotState(uiState) {
+    if (!uiState) return undefined
+    if (isSlotState(uiState)) {
+        const slotState = /** @type {SlotUIState} */ (uiState)
+        return slotState
+    }
+    return undefined
+}
+
 function playgroundCommand() {
     return async () => {
         console.log('Use for protoyping...')
@@ -310,13 +358,14 @@ function removeServer(navigator, serverName) {
 
 /**
  * @param {Navigator} navigator
- * @returns {function(ServerUIState):(void | Promise<void>)}
+ * @returns {function(?ServerUIState):(void | Promise<void>)}
  */
 function removeServerCommand(navigator) {
-    return async server => {
-        if (!server) server = await userChooseServer(navigator, 'Remove Boomack Server', null, true)
-        if (!server) return
-        removeServer(navigator, server.name)
+    return async serverState => {
+        if (serverState && !isServerState(serverState)) throw new Error('Expected server state or nothing as argument')
+        if (!serverState) serverState = await userChooseServer(navigator, 'Remove Boomack Server', null, true)
+        if (!serverState) return
+        removeServer(navigator, serverState.name)
     }
 }
 
@@ -327,6 +376,7 @@ function removeServerCommand(navigator) {
 function selectServerCommand(navigator) {
     return async (serverState, title) => {
         if (!title) title = 'Select Boomack Server'
+        if (serverState && !isServerState(serverState)) throw new Error('Expected server state or nothing as argument')
         if (!serverState) serverState = await userChooseServer(navigator, title)
         if (!serverState) return undefined
         await navigator.selectServer(serverState)
@@ -343,14 +393,14 @@ async function retroactivelySelectServer(title) {
 }
 
 /**
- * @param {Navigator} navigator
  * @returns {function(?ServerUIState):(void | Promise<void>)}
  */
-function openServerInBrowserCommand(navigator) {
-    return async serverItem => {
-        if (!serverItem) serverItem = await userChooseServer(navigator, 'Open Server in Browser')
-        if (!serverItem) return
-        let url = serverItem.server.url
+function openServerInBrowserCommand() {
+    return async serverState => {
+        if (serverState && !isServerState(serverState)) throw new Error('Expected server state or nothing as argument')
+        if (!serverState) serverState = await retroactivelySelectServer('Open Server in Browser')
+        if (!serverState) return
+        let url = serverState.server.url
         if (!url.endsWith('/')) url += '/'
         await openInBrowser(url)
     }
@@ -359,17 +409,11 @@ function openServerInBrowserCommand(navigator) {
 /**
  * @param {Navigator} navigator
  * @param {boolean} targetSelected
- * @returns {function(?UIState):(void | Promise<void>)}
+ * @returns {function(any):(void | Promise<void>)}
  */
 function refreshPanelsCommand(navigator, targetSelected) {
-    return async state => {
-        let serverState = undefined
-        if (isServerState(state)) {
-            serverState = /** @type {ServerUIState} */ (state)
-        } else if (isPanelState(state)) {
-            const panelState = /** @type {PanelUIState} */ (state)
-            serverState = panelState.server
-        }
+    return async element => {
+        let serverState = resolveServerState(element)
         if (!serverState && targetSelected) serverState = navigator.getSelectedServerState()
         if (!serverState) serverState = await retroactivelySelectServer('Refresh Panels')
         if (!serverState) return
@@ -388,6 +432,7 @@ function refreshPanelsCommand(navigator, targetSelected) {
  */
 function selectPanelCommand(navigator) {
     return async panelState => {
+        if (panelState && !isPanelState(panelState)) throw new Error('Expected panel state or nothing as argument')
         if (!panelState) panelState = await userChoosePanel(navigator, 'Select Boomack Panel')
         if (!panelState) return
         await navigator.selectServer(panelState.server)
@@ -430,10 +475,11 @@ async function clearPanel(navigator, panelState) {
  * @returns {function(?PanelUIState):(void | Promise<void>)}
  */
 function clearPanelCommand(navigator) {
-    return async panelItem => {
-        if (!panelItem) panelItem = await retroactivelySelectPanel('Clear Panel')
-        if (!panelItem) return
-        await clearPanel(navigator, panelItem)
+    return async panelState => {
+        if (panelState && !isPanelState(panelState)) throw new Error('Expected panel state or nothing as argument')
+        if (!panelState) panelState = await retroactivelySelectPanel('Clear Panel')
+        if (!panelState) return
+        await clearPanel(navigator, panelState)
     }
 }
 
@@ -441,12 +487,13 @@ function clearPanelCommand(navigator) {
  * @returns {function(?PanelUIState):(void | Promise<void>)}
  */
 function openPanelInBrowserCommand() {
-    return async panelItem => {
-        if (!panelItem) panelItem = await retroactivelySelectPanel('Open Panel in Browser')
-        if (!panelItem) return
-        let url = panelItem.server.server.url
+    return async panelState => {
+        if (panelState && !isPanelState(panelState)) throw new Error('Expected panel state or nothing as argument')
+        if (!panelState) panelState = await retroactivelySelectPanel('Open Panel in Browser')
+        if (!panelState) return
+        let url = panelState.server.server.url
         if (!url.endsWith('/')) url += '/'
-        url += `panels/${panelItem.id}`
+        url += `panels/${panelState.id}`
         await openInBrowser(url)
     }
 }
@@ -457,7 +504,8 @@ function openPanelInBrowserCommand() {
  * @returns {function(?PanelUIState):(void | Promise<void>)}
  */
 function refreshSlotsCommand(navigator, targetSelected) {
-    return async panelState => {
+    return async element => {
+        let panelState = resolvePanelState(element)
         if (!panelState && targetSelected) {
             const selectedServerState = navigator.getSelectedServerState()
             if (selectedServerState) {
@@ -481,6 +529,7 @@ function refreshSlotsCommand(navigator, targetSelected) {
  */
 function selectSlotCommand(navigator) {
     return async slotState => {
+        if (slotState && !isSlotState(slotState)) throw new Error('Expected slot state or nothing as argument')
         if (!slotState) slotState = await userChooseSlot(navigator, 'Select Boomack Slot')
         if (!slotState) return
         const panelState = slotState.panel
@@ -528,10 +577,49 @@ async function clearSlot(navigator, slotState) {
  */
 function clearSlotCommand(navigator) {
     return async slotState => {
-        slotState = resolveSlot(slotState, navigator)
-        if (!slotState) slotState = await userChooseSlot(navigator, 'Clear Slot', true)
+        if (slotState && !isSlotState(slotState)) throw new Error('Expected slot state or nothing as argument')
+        if (!slotState) slotState = await retroactivelySelectSlot('Clear Slot')
         if (!slotState) return
         await clearSlot(navigator, slotState)
+    }
+}
+
+/**
+ * @returns {function(?SlotUIState):(void | Promise<void>)}
+ */
+function openSlotInBrowserCommand() {
+    return async slotState => {
+        if (slotState && !isSlotState(slotState)) throw new Error('Expected slot state or nothing as argument')
+        if (!slotState) slotState = await retroactivelySelectSlot('Open Slot in Browser')
+        if (!slotState) return
+        const panelItem = slotState.panel
+        let url = panelItem.server.server.url
+        if (!url.endsWith('/')) url += '/'
+        url += `panels/${panelItem.id}/slots/${slotState.id}`
+        await openInBrowser(url)
+    }
+}
+
+
+/**
+ * @param {Navigator} navigator
+ * @param {'in'|'out'} direction
+ * @returns {function(?SlotUIState):(void | Promise<void>)}
+ */
+function slotZoomCommand(navigator, direction) {
+    return async slotState => {
+        if (slotState && !isSlotState(slotState)) throw new Error('Expected slot state or nothing as argument')
+        if (!slotState) slotState = await retroactivelySelectSlot('Zoom Slot')
+        if (!slotState) return
+        const { server, panelId, slotId } = navigator.targetFromSlot(slotState)
+        const client = await navigator.clientFor(server)
+        let dirWord = null
+        if (direction === 'in') dirWord = 'In'
+        else if (direction === 'out') dirWord = 'Out'
+        await client.evaluateCode([{
+            panelId,
+            script: `boomack.cmdSlotZoom${dirWord}('${slotId}')`
+        }])
     }
 }
 
@@ -539,16 +627,17 @@ function clearSlotCommand(navigator) {
  * @param {Navigator} navigator
  * @returns {function(?SlotUIState):(void | Promise<void>)}
  */
-function openSlotInBrowserCommand(navigator) {
-    return async slotItem => {
-        slotItem = resolveSlot(slotItem, navigator)
-        if (!slotItem) slotItem = await userChooseSlot(navigator, 'Open Slot in Browser', true)
-        if (!slotItem) return
-        const panelItem = slotItem.panel
-        let url = panelItem.server.server.url
-        if (!url.endsWith('/')) url += '/'
-        url += `panels/${panelItem.id}/slots/${slotItem.id}`
-        await openInBrowser(url)
+function slotToggleMaximizeCommand(navigator) {
+    return async slotState => {
+        if (slotState && !isSlotState(slotState)) throw new Error('Expected slot state or nothing as argument')
+        if (!slotState) slotState = await retroactivelySelectSlot('Toggle Maximize Slot')
+        if (!slotState) return
+        const { server, panelId, slotId } = navigator.targetFromSlot(slotState)
+        const client = await navigator.clientFor(server)
+        await client.evaluateCode([{
+            panelId,
+            script: `boomack.cmdToggleMaximize('${slotId}')`
+        }])
     }
 }
 
@@ -653,52 +742,6 @@ function displayFileCommand(navigator) {
         }
         const filename = resource.fsPath
         await displayFile(navigator, target, filename)
-    }
-}
-
-/**
- * @param {Navigator} navigator
- * @param {'in'|'out'} direction
- * @returns {function(SlotUIState):(void | Promise<void>)}
- */
-function slotZoomCommand(navigator, direction) {
-    return async slotState => {
-        slotState = resolveSlot(slotState, navigator)
-        if (slotState === undefined) return
-        if (!slotState) {
-            vscode.window.showErrorMessage("No target slot selected")
-            return
-        }
-        const { server, panelId, slotId } = navigator.targetFromSlot(slotState)
-        const client = await navigator.clientFor(server)
-        let dirWord = null
-        if (direction === 'in') dirWord = 'In'
-        else if (direction === 'out') dirWord = 'Out'
-        await client.evaluateCode([{
-            panelId,
-            script: `boomack.cmdSlotZoom${dirWord}('${slotId}')`
-        }])
-    }
-}
-
-/**
- * @param {Navigator} navigator
- * @returns {function(SlotUIState):(void | Promise<void>)}
- */
-function slotToggleMaximizeCommand(navigator) {
-    return async slotState => {
-        slotState = resolveSlot(slotState, navigator)
-        if (!slotState) slotState == await userChooseSlot(navigator, 'Slot Toggle Maximize')
-        if (!slotState) {
-            vscode.window.showErrorMessage("No target slot selected")
-            return
-        }
-        const { server, panelId, slotId } = navigator.targetFromSlot(slotState)
-        const client = await navigator.clientFor(server)
-        await client.evaluateCode([{
-            panelId,
-            script: `boomack.cmdToggleMaximize('${slotId}')`
-        }])
     }
 }
 

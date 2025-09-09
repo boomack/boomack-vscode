@@ -68,23 +68,28 @@ const WORKSPACE_SERVER_LABEL = 'Project Server'
 
 
 /**
- * @param {?UIState} state
+ * @param {any} state
  * @returns {boolean}
  */
-function isServerState(state) { return state?.stateType === 'server' }
+function isServerState(state) {
+    return typeof(state) === 'object' && state?.stateType === 'server'
+}
 
 /**
- * @param {?UIState} state
+ * @param {any} state
  * @returns {boolean}
  */
-function isPanelState(state) { return state?.stateType === 'panel' }
+function isPanelState(state) {
+    return typeof(state) === 'object' && state?.stateType === 'panel'
+}
 
 /**
- * @param {?UIState} state
+ * @param {any} state
  * @returns {boolean}
  */
-function isSlotState(state) { return state?.stateType === 'slot' }
-
+function isSlotState(state) {
+    return typeof(state) === 'object' && state?.stateType === 'slot'
+}
 
 module.exports = {
     WORKSPACE_SERVER_NAME,
