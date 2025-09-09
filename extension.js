@@ -126,13 +126,18 @@ function activate(context) {
 
     const openPanelInBrowserCmdSubs = vscode.commands.registerCommand(
         'boomack.panel.openInBrowser',
-        commands.openPanelInBrowserCommand(navigator))
+        commands.openPanelInBrowserCommand())
     context.subscriptions.push(openPanelInBrowserCmdSubs)
 
-    const refreshSlotsCmdSubs = vscode.commands.registerCommand(
-        'boomack.refreshSlotList',
-        commands.refreshSlotsCommand(navigator))
-    context.subscriptions.push(refreshSlotsCmdSubs)
+    const refreshPanelCmdSubs = vscode.commands.registerCommand(
+        'boomack.panel.refresh',
+        commands.refreshSlotsCommand(navigator, false))
+    context.subscriptions.push(refreshPanelCmdSubs)
+
+    const refreshSelectedPanelCmdSubs = vscode.commands.registerCommand(
+        'boomack.panel.refreshSelected',
+        commands.refreshSlotsCommand(navigator, true))
+    context.subscriptions.push(refreshSelectedPanelCmdSubs)
 
     const selectSlotCmdSubs = vscode.commands.registerCommand(
         'boomack.slot.select',

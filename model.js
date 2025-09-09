@@ -20,7 +20,13 @@
  */
 
 /**
+ * @typedef {Object} UIState
+ * @property {string} stateType
+ */
+
+/**
  * @typedef {Object} SlotUIState
+ * @extends {UIState}
  * @property {?PanelUIState} panel
  * @property {string} id
  * @property {boolean} defaultSlot
@@ -28,6 +34,7 @@
 
 /**
  * @typedef {Object} PanelUIState
+ * @extends {UIState}
  * @property {?ServerUIState} server
  * @property {boolean} invalid
  * @property {string} id
@@ -39,6 +46,7 @@
 
 /**
  * @typedef {Object} ServerUIState
+ * @extends {UIState}
  * @property {boolean} invalid
  * @property {?BoomackServer} server
  * @property {string} name
@@ -55,5 +63,33 @@
  * @property {?string} slotId
  */
 
-exports.WORKSPACE_SERVER_NAME = '<workspace>'
-exports.WORKSPACE_SERVER_LABEL = 'Project Server'
+const WORKSPACE_SERVER_NAME = '<workspace>'
+const WORKSPACE_SERVER_LABEL = 'Project Server'
+
+
+/**
+ * @param {?UIState} state
+ * @returns {boolean}
+ */
+function isServerState(state) { return state?.stateType === 'server' }
+
+/**
+ * @param {?UIState} state
+ * @returns {boolean}
+ */
+function isPanelState(state) { return state?.stateType === 'panel' }
+
+/**
+ * @param {?UIState} state
+ * @returns {boolean}
+ */
+function isSlotState(state) { return state?.stateType === 'slot' }
+
+
+module.exports = {
+    WORKSPACE_SERVER_NAME,
+    WORKSPACE_SERVER_LABEL,
+    isServerState,
+    isPanelState,
+    isSlotState,
+}

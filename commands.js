@@ -4,13 +4,14 @@ const path = require('node:path')
 const vscode = require('vscode')
 const mime = require('mime')
 const { removeItemOnce } = require('./utils.js')
-const { WORKSPACE_SERVER_NAME, WORKSPACE_SERVER_LABEL } = require('./model.js')
+const { WORKSPACE_SERVER_NAME, WORKSPACE_SERVER_LABEL, isServerState, isPanelState, isSlotState } = require('./model.js')
 const { config } = require('./config.js')
 const inventory = require('./inventory.js')
 const tools = require('./tools.js')
 
 /**
  * @typedef {import('./inventory.js').BoomackServer} BoomackServer
+ * @typedef {import('./model.js').UIState} UIState
  * @typedef {import('./model.js').ServerUIState} ServerUIState
  * @typedef {import('./model.js').PanelUIState} PanelUIState
  * @typedef {import('./model.js').SlotUIState} SlotUIState
@@ -102,27 +103,6 @@ function userChooseServer(navigator, title, multiStep, excludeWorkspaceServer) {
         })
 }
 
-// /**
-//  * @param {?PanelUIState} item
-//  * @param {Navigator} navigator
-//  * @returns {PanelUIState|null}
-//  */
-// function resolvePanel(item, navigator) {
-//     if (item) return item
-//     let serverState = navigator.getSelectedServerState()
-//     if (!serverState) {
-//         const serverStates = navigator.getServerStates()
-//         if (serverStates.length === 1) serverState = serverStates[0]
-//     }
-//     if (!serverState) return null
-//     let panelState = navigator.getSelectedPanelState(serverState)
-//     if (!panelState) {
-//         const panelStates = navigator.getPanelStates(serverState)
-//         if (panelStates.length === 1) panelState = panelStates[0]
-//     }
-//     return panelState
-// }
-
 /**
  * @param {Navigator} navigator
  * @param {ServerUIState} serverState
@@ -164,32 +144,6 @@ async function userChoosePanel(navigator, title) {
         navigator, serverState, title, { step: 2, totalSteps: 2 })
     return panelState
 }
-
-// /**
-//  * @param {?SlotUIState} item
-//  * @param {Navigator} navigator
-//  * @returns {SlotUIState|null}
-//  */
-// function resolveSlot(item, navigator) {
-//     if (item) return item
-//     let serverState = navigator.getSelectedServerState()
-//     if (!serverState) {
-//         const serverStates = navigator.getServerStates()
-//         if (serverStates.length === 1) serverState = serverStates[0]
-//     }
-//     if (!serverState) return null
-//     let panelState = navigator.getSelectedPanelState(serverState)
-//     if (!panelState) {
-//         const panelStates = navigator.getPanelStates(serverState)
-//         if (panelStates.length === 1) panelState = panelStates[0]
-//     }
-//     let slotState = navigator.getSelectedSlotState(panelState)
-//     if (!slotState) {
-//         const slotStates = navigator.getSlotStates(panelState)
-//         if (slotStates.length === 1) slotState = slotStates[0]
-//     }
-//     return slotState
-// }
 
 /**
  * @param {Navigator} navigator
@@ -405,10 +359,17 @@ function openServerInBrowserCommand(navigator) {
 /**
  * @param {Navigator} navigator
  * @param {boolean} targetSelected
- * @returns {function(?ServerUIState):(void | Promise<void>)}
+ * @returns {function(?UIState):(void | Promise<void>)}
  */
 function refreshPanelsCommand(navigator, targetSelected) {
-    return async serverState => {
+    return async state => {
+        let serverState = undefined
+        if (isServerState(state)) {
+            serverState = /** @type {ServerUIState} */ (state)
+        } else if (isPanelState(state)) {
+            const panelState = /** @type {PanelUIState} */ (state)
+            serverState = panelState.server
+        }
         if (!serverState && targetSelected) serverState = navigator.getSelectedServerState()
         if (!serverState) serverState = await retroactivelySelectServer('Refresh Panels')
         if (!serverState) return
@@ -423,7 +384,7 @@ function refreshPanelsCommand(navigator, targetSelected) {
 
 /**
  * @param {Navigator} navigator
- * @returns {function(?PanelUIState):(void | Promise<void>)}
+ * @returns {function(?PanelUIState):(Promise<PanelUIState|undefined>)}
  */
 function selectPanelCommand(navigator) {
     return async panelState => {
@@ -431,7 +392,16 @@ function selectPanelCommand(navigator) {
         if (!panelState) return
         await navigator.selectServer(panelState.server)
         await navigator.selectPanel(panelState.server, panelState)
+        return panelState
     }
+}
+
+/**
+ * @param {?string} title
+ * @returns {Promise<PanelUIState|undefined>}
+ */
+async function retroactivelySelectPanel(title) {
+    return await vscode.commands.executeCommand('boomack.panel.select', null, title)
 }
 
 /**
@@ -461,21 +431,18 @@ async function clearPanel(navigator, panelState) {
  */
 function clearPanelCommand(navigator) {
     return async panelItem => {
-        panelItem = resolvePanel(panelItem, navigator)
-        if (!panelItem) panelItem = await userChoosePanel(navigator, 'Clear Panel', true)
+        if (!panelItem) panelItem = await retroactivelySelectPanel('Clear Panel')
         if (!panelItem) return
         await clearPanel(navigator, panelItem)
     }
 }
 
 /**
- * @param {Navigator} navigator
  * @returns {function(?PanelUIState):(void | Promise<void>)}
  */
-function openPanelInBrowserCommand(navigator) {
+function openPanelInBrowserCommand() {
     return async panelItem => {
-        panelItem = resolvePanel(panelItem, navigator)
-        if (!panelItem) panelItem = await userChoosePanel(navigator, 'Open Panel in Browser', true)
+        if (!panelItem) panelItem = await retroactivelySelectPanel('Open Panel in Browser')
         if (!panelItem) return
         let url = panelItem.server.server.url
         if (!url.endsWith('/')) url += '/'
@@ -486,20 +453,31 @@ function openPanelInBrowserCommand(navigator) {
 
 /**
  * @param {Navigator} navigator
+ * @param {boolean} targetSelected
  * @returns {function(?PanelUIState):(void | Promise<void>)}
  */
-function refreshSlotsCommand(navigator) {
-    return async element => {
-        element = resolvePanel(element, navigator)
-        if (!element) element = await userChoosePanel(navigator, 'Refresh Panel', true)
-        if (!element) return
-        await navigator.refreshPanelState(element)
+function refreshSlotsCommand(navigator, targetSelected) {
+    return async panelState => {
+        if (!panelState && targetSelected) {
+            const selectedServerState = navigator.getSelectedServerState()
+            if (selectedServerState) {
+                panelState = navigator.getSelectedPanelState(selectedServerState)
+            }
+        }
+        if (!panelState) panelState = await retroactivelySelectPanel('Refresh Panel')
+        if (!panelState) return
+        try {
+            await navigator.refreshPanelState(panelState)
+        } catch (err) {
+            vscode.window.showWarningMessage(`Failed to refresh slots of Boomack panel "${panelState.id}" on server "${panelState.server.name}"`)
+            console.warn('Failed to refresh slots of panel', panelState.id, panelState.server.name, err)
+        }
     }
 }
 
 /**
  * @param {Navigator} navigator
- * @returns {function(?SlotUIState):(void | Promise<void>)}
+ * @returns {function(?SlotUIState):(Promise<SlotUIState|undefined>)}
  */
 function selectSlotCommand(navigator) {
     return async slotState => {
@@ -510,7 +488,16 @@ function selectSlotCommand(navigator) {
         await navigator.selectPanel(slotState.panel.server, slotState.panel)
         slotState = panelState.slots[slotState.id]
         navigator.selectSlot(panelState, slotState)
+        return slotState
     }
+}
+
+/**
+ * @param {?string} title
+ * @returns {Promise<SlotUIState|undefined>}
+ */
+async function retroactivelySelectSlot(title) {
+    return await vscode.commands.executeCommand('boomack.slot.select', null, title)
 }
 
 /**

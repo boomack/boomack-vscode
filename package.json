@@ -80,8 +80,7 @@
       {
         "command": "boomack.server.refreshSelected",
         "category": "Boomack",
-        "title": "Refresh Panel List",
-        "shortTitle": "Refresh",
+        "title": "Refresh",
         "icon": "$(refresh)"
       },
       {
@@ -104,10 +103,16 @@
         "icon": "$(link-external)"
       },
       {
-        "command": "boomack.refreshSlotList",
+        "command": "boomack.panel.refresh",
         "category": "Boomack",
         "title": "Refresh Slot List",
         "shortTitle": "Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "boomack.panel.refreshSelected",
+        "category": "Boomack",
+        "title": "Refresh",
         "icon": "$(refresh)"
       },
       {
@@ -212,6 +217,14 @@
         {
           "command": "boomack.server.refreshSelected",
           "when": "false"
+        },
+        { "command": "boomack.panel.select" },
+        { "command": "boomack.panel.clear" },
+        { "command": "boomack.panel.openInBrowser" },
+        { "command": "boomack.panel.refresh" },
+        {
+          "command": "boomack.panel.refreshSelected",
+          "when": "false"
         }
       ],
       "view/title": [
@@ -226,7 +239,7 @@
           "group": "navigation"
         },
         {
-          "command": "boomack.refreshSlotList",
+          "command": "boomack.panel.refreshSelected",
           "when": "view == boomack-slots && boomack.panelSelected",
           "group": "navigation"
         }
@@ -258,7 +271,7 @@
           "group": "inline@3"
         },
         {
-          "command": "boomack.refreshSlotList",
+          "command": "boomack.panel.refresh",
           "when": "view == boomack-panels",
           "group": "inline@1"
         },

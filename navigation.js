@@ -56,6 +56,7 @@ const WORKSPACE_SERVER_CONFIG = {
 
 /** @type {ServerUIState} */
 const SERVER_UI_STATE_TEMPLATE = {
+    stateType: 'server',
     invalid: true,
     name: '<unknown>',
     server: undefined,
@@ -67,6 +68,7 @@ const SERVER_UI_STATE_TEMPLATE = {
 
 /** @type {PanelUIState} */
 const PANEL_UI_STATE_TEMPLATE = {
+    stateType: 'panel',
     server: undefined,
     invalid: true,
     id: '<unknown>',
@@ -74,6 +76,14 @@ const PANEL_UI_STATE_TEMPLATE = {
     slots: undefined,
     defaultSlotId: undefined,
     selectedSlotId: null,
+}
+
+/** @type {SlotUIState} */
+const SLOT_UI_STATE_TEMPLATE = {
+    stateType: 'slot',
+    id: '<unknown>',
+    defaultSlot: false,
+    panel: undefined,
 }
 
 /** @implements {vscode.Disposable} */
@@ -181,8 +191,7 @@ class Navigator {
             this.onSelectedServerChanged(async e => {
                 if (blockEvent) return
                 await treeView.reveal(e.serverState, { select: true })
-            })
-        )
+            }))
         return treeView
     }
 
@@ -210,8 +219,7 @@ class Navigator {
                 if (blockEvent) return
                 if (e.serverState.name !== this.panelItemProvider.serverState?.name) return
                 await treeView.reveal(e.panelState, { select: true })
-            })
-        )
+            }))
         return treeView
     }
 
@@ -240,8 +248,7 @@ class Navigator {
                 if (e.panelState.server.name !== this.slotItemProvider.serverState?.name) return
                 if (e.panelState.id !== this.slotItemProvider.panelState?.id) return
                 await treeView.reveal(e.slotState, { select: true })
-            })
-        )
+            }))
         return treeView
     }
 
@@ -308,8 +315,7 @@ class Navigator {
      */
     async _updateServerState(serverState) {
         const server = this.serverConfig(serverState.name)
-        console.assert(server,
-            "Server '%s' unknown", serverState.name)
+        if (!server) throw new Error(`Server '%s' is unknown`)
 
         if (!serverState.invalid) return
 
@@ -476,6 +482,7 @@ class Navigator {
             }
             panelState.slots = _.keyBy(
                 _.map(panelState.definition.slots, s => ({
+                    ...SLOT_UI_STATE_TEMPLATE,
                     panel: panelState,
                     id: s.id,
                     defaultSlot: s.id === panelState.defaultSlotId,
@@ -769,6 +776,7 @@ class PanelTreeItemProvider {
      * @returns {vscode.TreeItem}
      */
     getTreeItem(element) {
+        if (!element.server) throw new Error('Showing tree item for disposed panel state')
         const item = new vscode.TreeItem(element.id, vscode.TreeItemCollapsibleState.None)
         item.iconPath = new vscode.ThemeIcon('window')
         item.description = element.definition?.title
@@ -841,6 +849,7 @@ class SlotTreeItemProvider {
      * @returns {vscode.TreeItem}
      */
     getTreeItem(element) {
+        if (!element.panel) throw new Error('Showing tree item for disposed slot state')
         const item = new vscode.TreeItem(element.id, vscode.TreeItemCollapsibleState.None)
         if (element.defaultSlot) {
             item.description = '(default)'
