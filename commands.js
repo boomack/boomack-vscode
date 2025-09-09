@@ -1,6 +1,7 @@
 const _ = require('lodash')
 const fs = require('node:fs/promises')
 const path = require('node:path')
+const waitOn = require('wait-on')
 const vscode = require('vscode')
 const mime = require('mime')
 const { removeItemOnce } = require('./utils.js')
@@ -267,29 +268,56 @@ function reloadWorkspaceServerConfig(navigator) {
 function startWorkspaceServerCommand(navigator) {
     return async () => {
         if (workspaceServerTerminal) {
-            vscode.window.showWarningMessage("Boomack server is already running")
+            vscode.window.showWarningMessage("Boomack Project Server is already running")
             return
         }
-        const config = await loadWorkspaceServerConfig()
-        navigator.updateWorkspaceServer(config)
-        workspaceServerTerminal = tools.runToolInTerminal(
-            navigator.getContext(),
-            'Boomack Server',
-            'boomack', ['-h', config.server.host, '-p', `${config.server.port}`],
-            vscode.workspace.workspaceFolders[0].uri.fsPath,
-            () => {
-                vscode.commands.executeCommand('setContext',
-                    'boomack.workspaceServer.running', false)
-                navigator.setWorkspaceServerRunning(false)
-                removeItemOnce(navigator.getContext().subscriptions, workspaceServerTerminal)
-                workspaceServerTerminal = null
-                vscode.window.showInformationMessage("Project Boomack server stopped")
-            })
-        navigator.setWorkspaceServerRunning(true)
-        navigator.getContext().subscriptions.push(workspaceServerTerminal)
-        vscode.commands.executeCommand('setContext',
-                'boomack.workspaceServer.running', true)
-        vscode.window.showInformationMessage("Project Boomack server started")
+        await vscode.window.withProgress({
+            title: 'Boomack Project Server',
+            cancellable: false,
+            location: vscode.ProgressLocation.Window,
+        }, async progress => {
+            progress.report({ increment: 10, message: 'Reloading configuration' })
+            const url = navigator.serverConfig(WORKSPACE_SERVER_NAME).url
+            const config = await loadWorkspaceServerConfig()
+            navigator.updateWorkspaceServer(config)
+            progress.report({ increment: 20, message: 'Starting...' })
+            workspaceServerTerminal = tools.runToolInTerminal(
+                navigator.getContext(),
+                'Boomack Server',
+                'boomack', ['-h', config.server.host, '-p', `${config.server.port}`],
+                vscode.workspace.workspaceFolders[0].uri.fsPath,
+                () => {
+                    vscode.commands.executeCommand('setContext',
+                        'boomack.workspaceServer.running', false)
+                    navigator.setWorkspaceServerRunning(false)
+                    removeItemOnce(navigator.getContext().subscriptions, workspaceServerTerminal)
+                    workspaceServerTerminal = null
+                    vscode.window.showInformationMessage("Boomack Project Server stopped")
+                })
+            try {
+                await waitOn({
+                    resources: [url],
+                    delay: 500,
+                    interval: 500,
+                    timeout: 10000,
+                    tcpTimeout: 1000,
+                    httpTimeout: 1000,
+                    followRedirect: true,
+                    validateStatus: status => status === 200 || status === 401,
+                })
+                progress.report({ increment: 100, message: 'Started' })
+            } catch (err) {
+                progress.report({ increment: 100, message: 'Error' })
+                vscode.window.showErrorMessage(`Failed to start Boomack Project Server: ${err}`)
+                console.error('Failed to start Boomack server', err)
+                return
+            }
+            navigator.setWorkspaceServerRunning(true)
+            navigator.getContext().subscriptions.push(workspaceServerTerminal)
+            vscode.commands.executeCommand('setContext',
+                    'boomack.workspaceServer.running', true)
+            vscode.window.showInformationMessage("Boomack Project Server started")
+        })
     }
 }
 
@@ -299,7 +327,7 @@ function startWorkspaceServerCommand(navigator) {
 function stopWorkspaceServerCommand() {
     return () => {
         if (!workspaceServerTerminal) {
-            vscode.window.showWarningMessage("Project Boomack server is not running")
+            vscode.window.showWarningMessage("Boomack Project Server is not running")
             return
         }
         workspaceServerTerminal.dispose()
