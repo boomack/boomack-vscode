@@ -1,7 +1,5 @@
 const vscode = require('vscode')
-const { config } = require('./config.js')
 const { clearClientCache } = require('./client.js')
-const { WORKSPACE_SERVER_NAME } = require('./model.js')
 const { Navigator } = require('./navigation.js')
 const commands = require('./commands.js')
 
@@ -23,22 +21,31 @@ let navigator = null
 // - use file:/// references instead of streaming requests for workspace server
 // - allow opt-in streaming requests for workspace server
 
-/**
- * @param {Navigator} navigator
- * @param {vscode.TreeView} serversView
- */
-function autoselectServer(navigator, serversView) {
-    if (serversView.selection.length > 0) return
-    if (!config('autoSelect.server')) return
-    const servers = navigator.getServerStates()
-    if (servers.length === 0) return
-    const defaultItem = servers.find(x => x.name === WORKSPACE_SERVER_NAME) || servers[0]
-    return serversView.reveal(defaultItem, { select: true })
-}
-
 function updateContextActiveTextEditor() {
     return vscode.commands.executeCommand('setContext',
             'boomack.activeTextEditor', !!vscode.window.activeTextEditor)
+}
+
+/**
+ * @param {Navigator} navigator
+ */
+function setupContextUpdateForSelectionState(navigator) {
+    const context = navigator.getContext()
+    context.subscriptions.push(
+        navigator.onSelectedServerChanged(e =>
+            vscode.commands.executeCommand('setContext',
+                'boomack.serverSelected', !!e.serverState)))
+
+    context.subscriptions.push(
+        navigator.onSelectedPanelChanged(e =>
+            vscode.commands.executeCommand('setContext',
+                'boomack.panelSelected', !!e.panelState)))
+
+    context.subscriptions.push(
+        navigator.onSelectedSlotChanged(e =>
+            vscode.commands.executeCommand('setContext',
+                'boomack.slotSelected', !!e.slotState)))
+
 }
 
 /**
@@ -57,32 +64,11 @@ function activate(context) {
     if (navigator) throw new Error("Possible multiple parallel activations of the extension")
     navigator = new Navigator(context)
 
-    // register tree data providers for tree views, defined in package.json
+    navigator.createServerTreeView()
+    navigator.createPanelTreeView()
+    navigator.createSlotTreeView()
 
-    const serversView = navigator.createServerTreeView()
-    const panelsView = navigator.createPanelTreeView()
-    const slotsView = navigator.createSlotTreeView()
-
-    const serverViewVisibilityChangeSubs = serversView.onDidChangeVisibility(async e => {
-        if (!e.visible) return
-        await autoselectServer(navigator, serversView)
-    })
-    context.subscriptions.push(serverViewVisibilityChangeSubs)
-
-    const serverSelectionChangeSubs = navigator.onSelectedServerChanged(e =>
-        vscode.commands.executeCommand('setContext',
-            'boomack.serverSelected', !!e.serverState))
-    context.subscriptions.push(serverSelectionChangeSubs)
-
-    const panelSelectionChangeSubs = navigator.onSelectedPanelChanged(async e =>
-        vscode.commands.executeCommand('setContext',
-            'boomack.panelSelected', !!e.panelState))
-    context.subscriptions.push(panelSelectionChangeSubs)
-
-    const slotSelectionChangeSubs = navigator.onSelectedSlotChanged(async e =>
-        vscode.commands.executeCommand('setContext',
-            'boomack.slotSelected', !!e.slotState))
-    context.subscriptions.push(slotSelectionChangeSubs)
+    setupContextUpdateForSelectionState(navigator)
 
     // register commands, defined in the package.json
 

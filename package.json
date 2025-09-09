@@ -16,24 +16,6 @@
       "title": "Boomack",
       "type": "object",
       "properties": {
-        "boomack.autoSelect.server": {
-          "type": "boolean",
-          "default": false,
-          "description": "Automatically select default server",
-          "order": 1
-        },
-        "boomack.autoSelect.panel": {
-          "type": "boolean",
-          "default": false,
-          "description": "Automatically select default panel",
-          "order": 2
-        },
-        "boomack.autoSelect.slot": {
-          "type": "boolean",
-          "default": false,
-          "description": "Automatically select default slot",
-          "order": 3
-        },
         "boomack.displayTitle": {
           "type": "string",
           "default": "filename",

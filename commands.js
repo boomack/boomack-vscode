@@ -2,6 +2,7 @@ const fs = require('node:fs/promises')
 const path = require('node:path')
 const vscode = require('vscode')
 const mime = require('mime')
+const { removeItemOnce } = require('./utils.js')
 const { WORKSPACE_SERVER_NAME, WORKSPACE_SERVER_LABEL } = require('./model.js')
 const { config } = require('./config.js')
 const inventory = require('./inventory.js')
@@ -248,10 +249,12 @@ function startWorkspaceServerCommand(navigator) {
                 vscode.commands.executeCommand('setContext',
                     'boomack.workspaceServer.running', false)
                 navigator.setWorkspaceServerRunning(false)
+                removeItemOnce(navigator.getContext().subscriptions, workspaceServerTerminal)
                 workspaceServerTerminal = null
                 vscode.window.showInformationMessage("Project Boomack server stopped")
             })
         navigator.setWorkspaceServerRunning(true)
+        navigator.getContext().subscriptions.push(workspaceServerTerminal)
         vscode.commands.executeCommand('setContext',
                 'boomack.workspaceServer.running', true)
         vscode.window.showInformationMessage("Project Boomack server started")
