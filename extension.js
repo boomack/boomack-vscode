@@ -1,4 +1,5 @@
 const vscode = require('vscode')
+const { loadWorkspaceServerConfig } = require('./config.js')
 const { clearClientCache } = require('./client.js')
 const { Navigator } = require('./navigation.js')
 const commands = require('./commands.js')
@@ -64,6 +65,10 @@ function activate(context) {
     if (navigator) throw new Error("Possible multiple parallel activations of the extension")
     navigator = new Navigator(context)
 
+    loadWorkspaceServerConfig().then(config => {
+        navigator.updateWorkspaceServer(config)
+    })
+
     navigator.createServerTreeView()
     navigator.createPanelTreeView()
     navigator.createSlotTreeView()
@@ -75,6 +80,10 @@ function activate(context) {
     const playgroundCmdSubs = vscode.commands.registerCommand(
         'boomack.playground', commands.playgroundCommand())
     context.subscriptions.push(playgroundCmdSubs)
+
+    const reloadWorkspaceServerConfigCmdSubs = vscode.commands.registerCommand(
+        'boomack.workspaceServer.reloadConfig', commands.reloadWorkspaceServerConfig(navigator))
+    context.subscriptions.push(reloadWorkspaceServerConfigCmdSubs)
 
     const startWorkspaceServerCmdSubs = vscode.commands.registerCommand(
         'boomack.workspaceServer.start', commands.startWorkspaceServerCommand(navigator))

@@ -34,6 +34,12 @@
         "title": "Playground"
       },
       {
+        "command": "boomack.workspaceServer.reloadConfig",
+        "category": "Boomack",
+        "title": "Reload Project Server Configuration",
+        "icon": "$(refresh)"
+      },
+      {
         "command": "boomack.workspaceServer.start",
         "category": "Boomack",
         "title": "Start Project Server",
@@ -205,6 +211,10 @@
         { "command": "boomack.server.remove" },
         { "command": "boomack.server.select" },
         {
+          "command": "boomack.workspaceServer.reloadConfig",
+          "when": "!boomack.workspaceServer.running"
+        },
+        {
           "command": "boomack.workspaceServer.start",
           "when": "!boomack.workspaceServer.running"
         },
@@ -251,6 +261,11 @@
         }
       ],
       "view/item/context": [
+        {
+          "command": "boomack.workspaceServer.reloadConfig",
+          "when": "view == boomack-servers && viewItem == workspaceServer && !boomack.workspaceServer.running",
+          "group": "inline@1"
+        },
         {
           "command": "boomack.server.refresh",
           "when": "view == boomack-servers && (viewItem != workspaceServer || boomack.workspaceServer.running)",

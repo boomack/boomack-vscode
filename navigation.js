@@ -1,6 +1,6 @@
 const _ = require('lodash')
 const vscode = require('vscode')
-const { WORKSPACE_SERVER_NAME, WORKSPACE_SERVER_LABEL } = require('./model.js')
+const { WORKSPACE_SERVER_NAME, WORKSPACE_SERVER_LABEL, isServerState } = require('./model.js')
 const inventory = require('./inventory.js')
 const { getClientFor } = require('./client.js')
 
@@ -270,20 +270,13 @@ class Navigator {
         return await getClientFor(this._extContext, server)
     }
 
-    _updateWorkspaceServerRunningState() {
-        const state = this.serverStates[WORKSPACE_SERVER_NAME]
-        console.assert(state,
-            "No UI state for workspace server")
-        console.warn("Detection of workspace server state NOT IMPLEMENTED")
-        state.running = false
-    }
-
     _updateServerStateCollection() {
         if (!this.serverStates[WORKSPACE_SERVER_NAME]) {
             this.serverStates[WORKSPACE_SERVER_NAME] = {
                 ...SERVER_UI_STATE_TEMPLATE,
                 name: WORKSPACE_SERVER_NAME,
                 server: this._workspaceServerConfig,
+                running: false,
                 panels: {},
             }
         }
@@ -307,15 +300,17 @@ class Navigator {
         for (const name of obsoleteServerNames) {
             delete this.serverStates[name]
         }
-        this._updateWorkspaceServerRunningState()
     }
 
     /**
      * @param {ServerUIState} serverState
      */
     async _updateServerState(serverState) {
-        const server = this.serverConfig(serverState.name)
-        if (!server) throw new Error(`Server '%s' is unknown`)
+        if (!isServerState(serverState)) throw new Error("Expected server state as first argument")
+        let server = serverState.name === WORKSPACE_SERVER_NAME
+            ? this._workspaceServerConfig
+            : this._inventoryServerConfigs.find(s => s.name === serverState.name)
+        if (!server) throw new Error(`Config for server '${serverState.name}' is missing`)
 
         if (!serverState.invalid) return
 
@@ -329,7 +324,7 @@ class Navigator {
             return
         }
 
-        vscode.window.withProgress({
+        await vscode.window.withProgress({
             location: vscode.ProgressLocation.Notification,
             cancellable: false,
             title: `Boomack ${serverState.name}`
@@ -371,12 +366,15 @@ class Navigator {
     }
 
     /**
-     * @param {{ url: string, token: ?string }} serverConfig
+     * @param {{server: Object, client: Object}} config
      */
-    async updateWorkspaceServer(serverConfig) {
-        this._workspaceServerConfig.url = serverConfig.url
-        this._workspaceServerConfig.token = serverConfig.token
-        await this.refreshServerState(this.serverStates[WORKSPACE_SERVER_NAME])
+    updateWorkspaceServer(config) {
+        this._workspaceServerConfig.url = config.server.url
+            || `http://${config.server.host}:${config.server.port}/`
+        this._workspaceServerConfig.token = config.client.token
+            || null
+        // this.serverStates[WORKSPACE_SERVER_NAME].server = this._workspaceServerConfig
+        this._serverChangedEmitter.fire({ serverState: this.serverStates[WORKSPACE_SERVER_NAME] })
     }
 
     /**

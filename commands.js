@@ -5,7 +5,7 @@ const vscode = require('vscode')
 const mime = require('mime')
 const { removeItemOnce } = require('./utils.js')
 const { WORKSPACE_SERVER_NAME, WORKSPACE_SERVER_LABEL, isServerState, isPanelState, isSlotState } = require('./model.js')
-const { config } = require('./config.js')
+const { config, loadWorkspaceServerConfig } = require('./config.js')
 const inventory = require('./inventory.js')
 const tools = require('./tools.js')
 
@@ -54,18 +54,18 @@ function resolvePanelState(uiState) {
     return undefined
 }
 
-/**
- * @param {any} uiState
- * @return {SlotUIState|undefined}
- */
-function resolveSlotState(uiState) {
-    if (!uiState) return undefined
-    if (isSlotState(uiState)) {
-        const slotState = /** @type {SlotUIState} */ (uiState)
-        return slotState
-    }
-    return undefined
-}
+// /**
+//  * @param {any} uiState
+//  * @return {SlotUIState|undefined}
+//  */
+// function resolveSlotState(uiState) {
+//     if (!uiState) return undefined
+//     if (isSlotState(uiState)) {
+//         const slotState = /** @type {SlotUIState} */ (uiState)
+//         return slotState
+//     }
+//     return undefined
+// }
 
 function playgroundCommand() {
     return async () => {
@@ -250,20 +250,32 @@ async function openInBrowser(url) {
 let workspaceServerTerminal = null
 
 /**
- *
  * @param {Navigator} navigator
- * @returns {function():(void | Promise<void>)}
+ * @returns {function():(Promise<void>)}
+ */
+function reloadWorkspaceServerConfig(navigator) {
+    return async () => {
+        const config = await loadWorkspaceServerConfig()
+        navigator.updateWorkspaceServer(config)
+    }
+}
+
+/**
+ * @param {Navigator} navigator
+ * @returns {function():(Promise<void>)}
  */
 function startWorkspaceServerCommand(navigator) {
-    return () => {
+    return async () => {
         if (workspaceServerTerminal) {
             vscode.window.showWarningMessage("Boomack server is already running")
             return
         }
+        const config = await loadWorkspaceServerConfig()
+        navigator.updateWorkspaceServer(config)
         workspaceServerTerminal = tools.runToolInTerminal(
             navigator.getContext(),
             'Boomack Server',
-            'boomack', [],
+            'boomack', ['-h', config.server.host, '-p', `${config.server.port}`],
             vscode.workspace.workspaceFolders[0].uri.fsPath,
             () => {
                 vscode.commands.executeCommand('setContext',
@@ -747,6 +759,7 @@ function displayFileCommand(navigator) {
 
 module.exports = {
     playgroundCommand,
+    reloadWorkspaceServerConfig,
     startWorkspaceServerCommand,
     stopWorkspaceServerCommand,
     addServerCommand,

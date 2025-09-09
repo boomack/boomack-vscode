@@ -15,6 +15,9 @@ const clients = {}
  */
 async function getClientFor(context, server) {
     let client = clients[server.name]
+    if (client && (client.apiUrl !== server.url || client.token !== server.token)) {
+        client = null
+    }
     if (!client) {
         client = await boomack.withConfig({
             loadDefaultFiles: false,

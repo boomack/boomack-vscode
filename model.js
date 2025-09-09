@@ -21,12 +21,12 @@
 
 /**
  * @typedef {Object} UIState
- * @property {string} stateType
+ * @property {'server'|'panel'|'slot'} stateType
  */
 
 /**
  * @typedef {Object} SlotUIState
- * @extends {UIState}
+ * @property {'slot'} stateType
  * @property {?PanelUIState} panel
  * @property {string} id
  * @property {boolean} defaultSlot
@@ -34,7 +34,7 @@
 
 /**
  * @typedef {Object} PanelUIState
- * @extends {UIState}
+ * @property {'panel'} stateType
  * @property {?ServerUIState} server
  * @property {boolean} invalid
  * @property {string} id
@@ -46,7 +46,7 @@
 
 /**
  * @typedef {Object} ServerUIState
- * @extends {UIState}
+ * @property {'server'} stateType
  * @property {boolean} invalid
  * @property {?BoomackServer} server
  * @property {string} name
