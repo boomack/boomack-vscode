@@ -100,7 +100,6 @@ class Navigator {
         /** @type {vscode.Disposable[]} */
         this._subscriptions = []
 
-        // TODO get actual workspace server configuration
         /** @type {BoomackServer} */
         this._workspaceServerConfig = { ...WORKSPACE_SERVER_CONFIG }
 
