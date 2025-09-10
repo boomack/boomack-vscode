@@ -5,8 +5,19 @@ const waitOn = require('wait-on')
 const vscode = require('vscode')
 const mime = require('mime')
 const { removeItemOnce } = require('./utils.js')
-const { WORKSPACE_SERVER_NAME, WORKSPACE_SERVER_LABEL, isServerState, isPanelState, isSlotState } = require('./model.js')
-const { config, loadWorkspaceServerConfig } = require('./config.js')
+const {
+    WORKSPACE_SERVER_NAME,
+    WORKSPACE_SERVER_LABEL,
+    isServerState,
+    isPanelState,
+    isSlotState,
+} = require('./model.js')
+const {
+    config,
+    loadWorkspaceServerConfig,
+    loadWorkspaceServerRunConfig,
+    getFileSrcRootsFromRunConfig,
+} = require('./config.js')
 const inventory = require('./inventory.js')
 const tools = require('./tools.js')
 
@@ -276,16 +287,29 @@ function startWorkspaceServerCommand(navigator) {
             cancellable: false,
             location: vscode.ProgressLocation.Window,
         }, async progress => {
-            progress.report({ increment: 10, message: 'Reloading configuration' })
+            progress.report({ increment: 10, message: 'Loading configuration' })
             const url = navigator.serverConfig(WORKSPACE_SERVER_NAME).url
             const config = await loadWorkspaceServerConfig()
+            const runConfig = await loadWorkspaceServerRunConfig()
+            const fileSrcRoots = getFileSrcRootsFromRunConfig(runConfig)
+            const projectRoot = vscode.workspace.workspaceFolders[0].uri.fsPath
+            fileSrcRoots.push(projectRoot)
             navigator.updateWorkspaceServer(config)
             progress.report({ increment: 20, message: 'Starting...' })
+            const args = [
+                '-v',
+                '-h', config.server.host,
+                '-p', `${config.server.port}`,
+                '-o'
+            ]
+            for (let i = 0; i < fileSrcRoots.length; i++) {
+                args.push(`api.request.fileSrcRoots.${i}=${fileSrcRoots[i]}`)
+            }
             workspaceServerTerminal = tools.runToolInTerminal(
                 navigator.getContext(),
                 'Boomack Server',
-                'boomack', ['-h', config.server.host, '-p', `${config.server.port}`],
-                vscode.workspace.workspaceFolders[0].uri.fsPath,
+                'boomack', args,
+                projectRoot,
                 () => {
                     vscode.commands.executeCommand('setContext',
                         'boomack.workspaceServer.running', false)
@@ -299,7 +323,7 @@ function startWorkspaceServerCommand(navigator) {
                     resources: [url],
                     delay: 500,
                     interval: 500,
-                    timeout: 10000,
+                    timeout: 30000,
                     tcpTimeout: 1000,
                     httpTimeout: 1000,
                     followRedirect: true,

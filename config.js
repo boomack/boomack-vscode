@@ -1,6 +1,7 @@
-const _ = require('lodash')
 const path = require('node:path')
+const os = require('node:os')
 const fs = require('node:fs')
+const _ = require('lodash')
 const vscode = require('vscode')
 const YAML = require('yaml')
 
@@ -43,6 +44,14 @@ async function loadOptionalYamlFile(fileName) {
     return YAML.parse(text)
 }
 
+/**
+ * Loads the config parts, relevant for the client,
+ * merged from defaults,
+ * `boomack-server[.json|.yaml|.yml]` in the workspace root directory,
+ * and `boomack[.json|.yaml|.yml]` in the workspace root directory.
+ *
+ * @returns {Promise<Object>}
+ */
 async function loadWorkspaceServerConfig() {
     const defaultConfig = {
         server: {
@@ -69,7 +78,38 @@ async function loadWorkspaceServerConfig() {
         ['server', 'client'])
 }
 
+/**
+ * Loads the complete file-based configuration used by the workspace server.
+ * The configuration is merged from
+ * `.boomack-server[.json|.yaml|.yml]` in the users home directory
+ * and `boomack-server[.json|.yaml|.yml]` in the workspace root directory.
+ *
+ * @returns {Promise<Object>}
+ */
+async function loadWorkspaceServerRunConfig() {
+    if (vscode.workspace.workspaceFolders.length === 0) return {}
+    const projectRoot = vscode.workspace.workspaceFolders[0].uri.fsPath
+    const workspaceConfig = await loadOptionalYamlFile(
+        path.join(projectRoot, 'boomack-server'))
+    const userConfig = await loadOptionalYamlFile(
+        path.join(os.homedir(), '.boomack-server'))
+    return _.defaultsDeep({}, userConfig, workspaceConfig)
+}
+
+/**
+ * @param {Object} runConfig
+ * @returns {string[]}
+ */
+function getFileSrcRootsFromRunConfig(runConfig) {
+    let roots = _.get(runConfig, 'api.request.fileSrcRoots', [])
+    if (_.isString(roots)) roots = [roots]
+    if (!_.isArray(roots)) roots = []
+    return roots
+}
+
 module.exports = {
     config,
     loadWorkspaceServerConfig,
+    loadWorkspaceServerRunConfig,
+    getFileSrcRootsFromRunConfig,
 }
