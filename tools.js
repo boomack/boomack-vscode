@@ -10,13 +10,13 @@ function platformSpecificExecutable(scriptName) {
     // The wrapper is a .ps1 or .cmd file on Windows
     // On Linux/MacOS it is a plain executable file
     if (process.platform === 'win32') {
-        const pwshScriptName = `${scriptName}.ps1`
-        if (fs.existsSync(pwshScriptName)) {
-            return pwshScriptName
-        }
         const batchFileName = `${scriptName}.cmd`
         if (fs.existsSync(batchFileName)) {
             return batchFileName
+        }
+        const pwshScriptName = `${scriptName}.ps1`
+        if (fs.existsSync(pwshScriptName)) {
+            return pwshScriptName
         }
     } else {
         if (fs.existsSync(scriptName)) {
@@ -51,47 +51,48 @@ function getToolPath(context, toolName) {
 /**
  * @param {vscode.ExtensionContext} context
  * @param {string} label
+ * @param {?string} message
  * @param {string} toolName
  * @param {string[]} args
  * @param {string} [cwd]
  * @param {function (): void} [endCb]
  * @returns {vscode.Terminal}
  */
-function runToolInTerminal(context, label, toolName, args, cwd, endCb) {
+function runToolInTerminal(context, label, message, toolName, args, cwd, endCb) {
     const execPath = getToolPath(context, toolName);
+
+    // TODO run JavaScript package without a shell
+    // TODO rename 'tool' into 'jsScript'
+
+    /** @type {?string} */
+    let cmd = null
+    let cmdArgs = []
+    if (execPath.toLowerCase().endsWith('.cmd')) {
+        cmd = 'cmd.exe'
+        cmdArgs.push('/C')
+        cmdArgs.push(execPath)
+    } else if (execPath.toLowerCase().endsWith('.ps1')) {
+        cmd = 'powershell.exe'
+        cmdArgs.push('-NoLogo')
+        cmdArgs.push('-NoProfile')
+        cmdArgs.push('-ExecutionPolicy')
+        cmdArgs.push('ByPass')
+        cmdArgs.push('-File')
+        cmdArgs.push(execPath)
+    } else {
+        cmd = execPath
+    }
+    for (const arg of args) { cmdArgs.push(arg) }
+
     const terminal = vscode.window.createTerminal({
         iconPath: vscode.Uri.joinPath(context.extensionUri, 'res', 'boomack-logo.svg'),
         name: label,
         cwd: cwd ?? vscode.workspace.workspaceFolders[0].uri.fsPath,
         env: process.env,
-        message: 'Starting projects Boomack server...',
+        message: message,
+        shellPath: cmd,
+        shellArgs: cmdArgs,
     })
-
-    let cmd = `"${execPath}"`
-    if (process.platform === 'win32') {
-        cmd = '& ' + cmd
-    }
-
-    /**
-     * @param {string} s
-     * @returns {string}
-     */
-    function escapeArgument(s) {
-        let quote = false
-        quote = s.includes(' ')
-            || s.includes('|')
-            || s.includes(';')
-            || s.includes('>')
-            || s.includes('<')
-        return quote ? `"${s}"` : s
-    }
-
-    if (args && args.length > 0) {
-        cmd += ' '
-        cmd += args.map(escapeArgument).join(' ')
-    }
-
-    terminal.sendText(cmd, true)
 
     terminal.processId.then(pid => {
         if (!pid) return

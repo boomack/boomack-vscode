@@ -309,7 +309,7 @@ function startWorkspaceServerCommand(navigator) {
 
             workspaceServerTerminal = tools.runToolInTerminal(
                 navigator.getContext(),
-                'Boomack Server',
+                'Boomack Server', null,
                 'boomack', args,
                 projectRoot,
                 () => {
@@ -351,11 +351,18 @@ function startWorkspaceServerCommand(navigator) {
  * @returns {function():(void | Promise<void>)}
  */
 function stopWorkspaceServerCommand() {
-    return () => {
+    return async () => {
         if (!workspaceServerTerminal) {
             vscode.window.showWarningMessage("Boomack Project Server is not running")
             return
         }
+        // TODO kill process directly, if NodeJS is run without a shell
+        // const pid = await workspaceServerTerminal.processId
+        // if (pid) {
+        //     process.kill(pid, 'SIGINT')
+        // } else {
+        //     workspaceServerTerminal.dispose()
+        // }
         workspaceServerTerminal.dispose()
     }
 }
