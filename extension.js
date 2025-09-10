@@ -1,5 +1,5 @@
 const vscode = require('vscode')
-const { loadWorkspaceServerConfig } = require('./config.js')
+const { loadWorkspaceClientConfig } = require('./config.js')
 const { clearClientCache } = require('./client.js')
 const { Navigator } = require('./navigation.js')
 const commands = require('./commands.js')
@@ -65,7 +65,7 @@ function activate(context) {
     if (navigator) throw new Error("Possible multiple parallel activations of the extension")
     navigator = new Navigator(context)
 
-    loadWorkspaceServerConfig().then(config => {
+    loadWorkspaceClientConfig().then(config => {
         navigator.updateWorkspaceServer(config)
     })
 

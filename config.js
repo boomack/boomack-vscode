@@ -52,7 +52,7 @@ async function loadOptionalYamlFile(fileName) {
  *
  * @returns {Promise<Object>}
  */
-async function loadWorkspaceServerConfig() {
+async function loadWorkspaceClientConfig() {
     const defaultConfig = {
         server: {
             host: '127.0.0.1',
@@ -86,7 +86,7 @@ async function loadWorkspaceServerConfig() {
  *
  * @returns {Promise<Object>}
  */
-async function loadWorkspaceServerRunConfig() {
+async function loadWorkspaceServerConfig() {
     if (vscode.workspace.workspaceFolders.length === 0) return {}
     const projectRoot = vscode.workspace.workspaceFolders[0].uri.fsPath
     const workspaceConfig = await loadOptionalYamlFile(
@@ -109,7 +109,7 @@ function getFileSrcRootsFromRunConfig(runConfig) {
 
 module.exports = {
     config,
+    loadWorkspaceClientConfig,
     loadWorkspaceServerConfig,
-    loadWorkspaceServerRunConfig,
     getFileSrcRootsFromRunConfig,
 }

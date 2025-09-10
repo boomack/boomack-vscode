@@ -14,8 +14,8 @@ const {
 } = require('./model.js')
 const {
     config,
+    loadWorkspaceClientConfig,
     loadWorkspaceServerConfig,
-    loadWorkspaceServerRunConfig,
     getFileSrcRootsFromRunConfig,
 } = require('./config.js')
 const inventory = require('./inventory.js')
@@ -267,7 +267,7 @@ let workspaceServerTerminal = null
  */
 function reloadWorkspaceServerConfig(navigator) {
     return async () => {
-        const config = await loadWorkspaceServerConfig()
+        const config = await loadWorkspaceClientConfig()
         navigator.updateWorkspaceServer(config)
     }
 }
@@ -289,22 +289,24 @@ function startWorkspaceServerCommand(navigator) {
         }, async progress => {
             progress.report({ increment: 10, message: 'Loading configuration' })
             const url = navigator.serverConfig(WORKSPACE_SERVER_NAME).url
-            const config = await loadWorkspaceServerConfig()
-            const runConfig = await loadWorkspaceServerRunConfig()
-            const fileSrcRoots = getFileSrcRootsFromRunConfig(runConfig)
+            const clientConfig = await loadWorkspaceClientConfig()
+            const serverRunConfig = await loadWorkspaceServerConfig()
+            const fileSrcRoots = getFileSrcRootsFromRunConfig(serverRunConfig)
             const projectRoot = vscode.workspace.workspaceFolders[0].uri.fsPath
             fileSrcRoots.push(projectRoot)
-            navigator.updateWorkspaceServer(config)
+            navigator.updateWorkspaceServer(clientConfig)
             progress.report({ increment: 20, message: 'Starting...' })
-            const args = [
-                '-v',
-                '-h', config.server.host,
-                '-p', `${config.server.port}`,
-                '-o'
-            ]
+            const args = []
+            if (config('server.verbose')) { args.push('-v') }
+
+            args.push('-h'); args.push(clientConfig.server.host)
+            args.push('-p'); args.push(`${clientConfig.server.port}`)
+
+            args.push('-o')
             for (let i = 0; i < fileSrcRoots.length; i++) {
                 args.push(`api.request.fileSrcRoots.${i}=${fileSrcRoots[i]}`)
             }
+
             workspaceServerTerminal = tools.runToolInTerminal(
                 navigator.getContext(),
                 'Boomack Server',

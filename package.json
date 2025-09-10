@@ -16,6 +16,12 @@
       "title": "Boomack",
       "type": "object",
       "properties": {
+        "boomack.server.verbose": {
+          "type": "boolean",
+          "default": false,
+          "description": "Run the Boomack Project Server with verbose output",
+          "order": 1
+        },
         "boomack.displayTitle": {
           "type": "string",
           "default": "filename",
@@ -23,7 +29,7 @@
           "enumItemLabels": ["None", "Filename", "Path"],
           "enumDescriptions": [null, "The name of the file", "The full path of the file"],
           "description": "The title for display requests to Boomack",
-          "order": 4
+          "order": 2
         }
       }
     },
