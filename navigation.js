@@ -826,6 +826,13 @@ class SlotTreeItemProvider {
                     this._changeEmitter.fire(null)
                 }))
         navigator.registerSubscription(
+            navigator.onServerChanged(
+                e => {
+                    if (e.serverState.name !== this.serverState?.name) return
+                    this.serverState = e.serverState
+                    this._changeEmitter.fire(null)
+                }))
+        navigator.registerSubscription(
             navigator.onSelectedPanelChanged(
                 e => {
                     this.serverState = e.serverState
