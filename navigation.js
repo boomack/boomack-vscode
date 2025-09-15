@@ -372,7 +372,6 @@ class Navigator {
             || `http://${config.server.host}:${config.server.port}/`
         this._workspaceServerConfig.token = config.client.token
             || null
-        // this.serverStates[WORKSPACE_SERVER_NAME].server = this._workspaceServerConfig
         this._serverChangedEmitter.fire({ serverState: this.serverStates[WORKSPACE_SERVER_NAME] })
     }
 

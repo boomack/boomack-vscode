@@ -178,20 +178,70 @@ function activate(context) {
         commands.slotToggleMaximizeCommand(navigator))
     context.subscriptions.push(slotToggleMaximizeCmdSubs)
 
-    const displayInSlotCmdSubs = vscode.commands.registerCommand(
-        'boomack.display.inSlot',
-        commands.displayInSlotCommand(navigator))
-    context.subscriptions.push(displayInSlotCmdSubs)
+    const slotRemoveCmdSubs = vscode.commands.registerCommand(
+        'boomack.slot.remove',
+        commands.slotRemoveCommand(navigator))
+    context.subscriptions.push(slotRemoveCmdSubs)
 
     const displayDocumentCmdSubs = vscode.commands.registerCommand(
         'boomack.display.document',
         commands.displayFileCommand(navigator))
     context.subscriptions.push(displayDocumentCmdSubs)
 
-    const displayFileResourceCmdSubs = vscode.commands.registerCommand(
-        'boomack.display.fileResource',
+    const displayDocumentSourceCmdSubs = vscode.commands.registerCommand(
+        'boomack.display.document.source',
+        () => { vscode.window.showInformationMessage("TODO: Display document source") })
+    context.subscriptions.push(displayDocumentSourceCmdSubs)
+
+    const displayDocumentWithMediaTypeCmdSubs = vscode.commands.registerCommand(
+        'boomack.display.document.withMediaType',
+        () => { vscode.window.showInformationMessage("TODO: Display document with media type") })
+    context.subscriptions.push(displayDocumentWithMediaTypeCmdSubs)
+
+    const displaySelectionSourceCmdSubs = vscode.commands.registerCommand(
+        'boomack.display.selection.source',
+        () => { vscode.window.showInformationMessage("TODO: Display selection source") })
+    context.subscriptions.push(displaySelectionSourceCmdSubs)
+
+    const displayDocumentInPanelCmdSubs = vscode.commands.registerCommand(
+        'boomack.display.document.inPanel',
+        commands.displayDocumentInPanelCommand(navigator))
+    context.subscriptions.push(displayDocumentInPanelCmdSubs)
+
+    const displayDocumentSourceInPanelCmdSubs = vscode.commands.registerCommand(
+        'boomack.display.document.source.inPanel',
+        () => { vscode.window.showInformationMessage("TODO: Display document source in panel") })
+    context.subscriptions.push(displayDocumentSourceInPanelCmdSubs)
+
+    const displayInSlotCmdSubs = vscode.commands.registerCommand(
+        'boomack.display.document.inSlot',
+        commands.displayDocumentInSlotCommand(navigator))
+    context.subscriptions.push(displayInSlotCmdSubs)
+
+    const displayDocumentSourceInSlotCmdSubs = vscode.commands.registerCommand(
+        'boomack.display.document.source.inSlot',
+        () => { vscode.window.showInformationMessage("TODO: Display document source in slot") })
+    context.subscriptions.push(displayDocumentSourceInSlotCmdSubs)
+
+    const displayDocumentInSlotWithIdCmdSubs = vscode.commands.registerCommand(
+        'boomack.display.document.inSlot.withId',
+        commands.displayDocumentInSlotWithIdCommand(navigator))
+    context.subscriptions.push(displayDocumentInSlotWithIdCmdSubs)
+
+    const displayDocumentSourceInSlotWithIdCmdSubs = vscode.commands.registerCommand(
+        'boomack.display.document.source.inSlot.withId',
+        () => { vscode.window.showInformationMessage("TODO: Display document source in slot with ID") })
+    context.subscriptions.push(displayDocumentSourceInSlotWithIdCmdSubs)
+
+    const displayFileCmdSubs = vscode.commands.registerCommand(
+        'boomack.display.file',
         commands.displayFileCommand(navigator))
-    context.subscriptions.push(displayFileResourceCmdSubs)
+    context.subscriptions.push(displayFileCmdSubs)
+
+    const displayFileSourceCmdSubs = vscode.commands.registerCommand(
+        'boomack.display.file.source',
+        () => { vscode.window.showInformationMessage("TODO: Display file source") })
+    context.subscriptions.push(displayFileSourceCmdSubs)
 }
 
 // This method is called when your extension is deactivated

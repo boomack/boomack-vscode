@@ -63,7 +63,8 @@ async function loadWorkspaceClientConfig() {
             token: null,
             timeout: 5000,
             retry: 0,
-            types: {},
+            types: [],
+            sourceLanguages: [], // TODO load defaults
         },
     }
     if (vscode.workspace.workspaceFolders.length === 0) return defaultConfig

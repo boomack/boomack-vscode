@@ -715,6 +715,38 @@ function slotToggleMaximizeCommand(navigator) {
 }
 
 /**
+ * @param {Navigator} navigator
+ * @returns {function(?SlotUIState):(void | Promise<void>)}
+ */
+function slotRemoveCommand(navigator) {
+    return async slotState => {
+        if (slotState && !isSlotState(slotState)) throw new Error('Expected slot state or nothing as argument')
+        if (!slotState) slotState = await retroactivelySelectSlot('Remove Slot')
+        if (!slotState) return
+        const panelDefinition = slotState.panel.definition
+        if (panelDefinition.type !== 'document') {
+            vscode.window.showWarningMessage("Removing slots is only possible in panels with document layout")
+            return
+        }
+        const newPanelDefinition = {
+            ...panelDefinition,
+            defaultSlot: panelDefinition.defaultSlot !== slotState.id
+                ? panelDefinition.defaultSlot
+                : null,
+            slots: _.omitBy(panelDefinition.slots, slot => slot.id === slotState.id),
+        }
+        // post new panel definition
+        const client = await navigator.clientFor(slotState.panel.server.server)
+        const response = await client.updatePanel(slotState.panel.id, newPanelDefinition)
+        if (!response.success) {
+            vscode.window.showWarningMessage("Removing the slot failed")
+        } else {
+            await navigator.refreshPanelState(slotState.panel)
+        }
+    }
+}
+
+/**
  * @param {{ predicate: function(string):boolean, type: string }[]} types
  * @param {string} filename
  * @returns {string}
@@ -775,11 +807,31 @@ async function displayFile(navigator, target, filename, mediaType, presets, opti
 
 /**
  * @param {Navigator} navigator
+ * @returns {function(?PanelUIState):(void | Promise<void>)}
+ */
+function displayDocumentInPanelCommand(navigator) {
+    return async panelState => {
+        if (!panelState) {
+            vscode.window.showErrorMessage("No target panel selected")
+            return
+        }
+        const target = navigator.targetFromPanel(panelState)
+        const editor = vscode.window.activeTextEditor
+        if (!editor) {
+            vscode.window.showErrorMessage("No active text editor")
+            return
+        }
+        const filename = editor.document.uri.fsPath
+        await displayFile(navigator, target, filename)
+    }
+}
+
+/**
+ * @param {Navigator} navigator
  * @returns {function(?SlotUIState):(void | Promise<void>)}
  */
-function displayInSlotCommand(navigator) {
+function displayDocumentInSlotCommand(navigator) {
     return async slotState => {
-        slotState = resolveSlot(slotState, navigator)
         if (!slotState) {
             vscode.window.showErrorMessage("No target slot selected")
             return
@@ -790,6 +842,36 @@ function displayInSlotCommand(navigator) {
             vscode.window.showErrorMessage("No active text editor")
             return
         }
+        const filename = editor.document.uri.fsPath
+        await displayFile(navigator, target, filename)
+    }
+}
+
+/**
+ * @param {Navigator} navigator
+ * @returns {function(?SlotUIState):(void | Promise<void>)}
+ */
+function displayDocumentInSlotWithIdCommand(navigator) {
+    return async () => {
+        const editor = vscode.window.activeTextEditor
+        if (!editor) {
+            vscode.window.showErrorMessage("No active text editor")
+            return
+        }
+        const serverState = navigator.getSelectedServerState()
+        const panelState = navigator.getSelectedPanelState(serverState)
+        const autoSlotIdPattern = /^slot-(\d+)$/
+        const autoSlotIds = _.filter(_.map(_.values(panelState.slots), 'id'), id => autoSlotIdPattern.test(id))
+        const autoSlotNumbers = _.map(autoSlotIds, id => Number.parseInt(id.substring(5)))
+        const lastAutoSlotNumber = _.max(autoSlotNumbers)
+        const nextAutoSlotNumber = lastAutoSlotNumber === undefined ? 0 : (lastAutoSlotNumber + 1)
+        const slotId = await vscode.window.showInputBox({
+            title: "Display",
+            prompt: "Panel ID",
+            value: `slot-${nextAutoSlotNumber}`
+        })
+        if (!slotId) return
+        const target = { ...navigator.targetFromPanel(panelState), slotId }
         const filename = editor.document.uri.fsPath
         await displayFile(navigator, target, filename)
     }
@@ -837,6 +919,9 @@ module.exports = {
     slotZoomCommand,
     slotToggleMaximizeCommand,
     openSlotInBrowserCommand,
-    displayInSlotCommand,
+    slotRemoveCommand,
+    displayDocumentInPanelCommand,
+    displayDocumentInSlotCommand,
+    displayDocumentInSlotWithIdCommand,
     displayFileCommand,
 }
