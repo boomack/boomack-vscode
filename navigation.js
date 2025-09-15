@@ -484,7 +484,9 @@ class Navigator {
         if (response.success) {
             panelState.definition = /** @type {PanelDefinition} */ (response.body)
             panelState.defaultSlotId = panelState.definition.defaultSlot
-                || _.sortBy(panelState.definition.slots, 'id')[0]?.id
+            if (!panelState.defaultSlotId && panelState.definition.type === 'grid') {
+                panelState.defaultSlotId = _.sortBy(panelState.definition.slots, 'id')[0]?.id
+            }
             if (panelState.slots) {
                 for (const slotState of _.values(panelState.slots)) {
                     slotState.panel = undefined // reset backlink
@@ -608,6 +610,7 @@ class Navigator {
      * @returns {SlotUIState|null}
      */
     defaultSlotForPanel(panelState) {
+        if (!panelState.defaultSlotId) return null
         return panelState.slots[panelState.defaultSlotId] || null
     }
 
@@ -631,7 +634,9 @@ class Navigator {
     targetFromPanel(panelState) {
         const { server: serverState, id: panelId } = panelState
         const server = serverState.server
-        const slotState = this.defaultSlotForPanel(panelState)
+        const slotState = panelState.definition.type === 'grid'
+            ? this.defaultSlotForPanel(panelState)
+            : null
         const slotId = slotState?.id
         return { server, panelId, slotId }
     }
