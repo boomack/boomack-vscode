@@ -1,15 +1,16 @@
-const path = require('node:path')
-const os = require('node:os')
-const fs = require('node:fs')
-const _ = require('lodash')
-const vscode = require('vscode')
-const YAML = require('yaml')
+import { join } from 'node:path'
+import { homedir } from 'node:os'
+import { promises } from 'node:fs'
+import { map, pick, defaultsDeep, get, isString, isArray } from 'lodash-es'
+import { workspace } from 'vscode'
+import { parse } from 'yaml'
+import { fileTypePredicates } from 'boomack-js/config.js'
 
 /**
  * @param {string} name
  */
-function config(name) {
-    const config = vscode.workspace.getConfiguration('boomack')
+export function config(name) {
+    const config = workspace.getConfiguration('boomack')
     return config.get(name)
 }
 
@@ -19,7 +20,7 @@ const CONFIG_FILE_EXTENSIONS = ['', '.json', '.yaml', '.yml'];
  * @param {string} fileName
  */
 function configFileAlternatives(fileName) {
-    return _.map(CONFIG_FILE_EXTENSIONS, ext => fileName + ext);
+    return map(CONFIG_FILE_EXTENSIONS, ext => fileName + ext);
 }
 
 /**
@@ -29,7 +30,7 @@ async function loadOptionalYamlFile(fileName) {
     let text = null;
     for (const f of configFileAlternatives(fileName)) {
         try {
-            text = await fs.promises.readFile(f, 'utf-8')
+            text = await promises.readFile(f, 'utf-8')
             break
         } catch (err) {
             if (err.code === 'ENOENT')
@@ -41,7 +42,7 @@ async function loadOptionalYamlFile(fileName) {
         }
     }
     if (text === null) return {}
-    return YAML.parse(text)
+    return parse(text)
 }
 
 /**
@@ -52,31 +53,22 @@ async function loadOptionalYamlFile(fileName) {
  *
  * @returns {Promise<Object>}
  */
-async function loadWorkspaceClientConfig() {
-    const defaultConfig = {
-        server: {
-            host: '127.0.0.1',
-            port: 3000,
-            url: null,
-        },
-        client: {
-            token: null,
-            timeout: 5000,
-            retry: 0,
-            types: [],
-            sourceLanguages: [], // TODO load defaults
-        },
-    }
-    if (vscode.workspace.workspaceFolders.length === 0) return defaultConfig
-    const projectRoot = vscode.workspace.workspaceFolders[0].uri.fsPath
+export async function loadWorkspaceClientConfig() {
+    const defaultConfig = await loadOptionalYamlFile(
+        join(import.meta.dirname, 'defaultConfig'))
+    if (workspace.workspaceFolders.length === 0) return defaultConfig
+    const projectRoot = workspace.workspaceFolders[0].uri.fsPath
     const serverConfig = await loadOptionalYamlFile(
-        path.join(projectRoot, 'boomack-server'))
+        join(projectRoot, 'boomack-server'))
     const clientConfig = await loadOptionalYamlFile(
-        path.join(projectRoot, 'boomack'))
-
-    return _.pick(
-        _.defaultsDeep({}, clientConfig, serverConfig, defaultConfig),
+        join(projectRoot, 'boomack'))
+    const mergedConfig = pick(
+        defaultsDeep({}, clientConfig, serverConfig, defaultConfig),
         ['server', 'client'])
+    mergedConfig.client.types = fileTypePredicates(mergedConfig.client.types)
+    mergedConfig.client.sourceTypes = fileTypePredicates(mergedConfig.client.sourceTypes)
+    mergedConfig.client.sourceLanguages = fileTypePredicates(mergedConfig.client.sourceLanguages)
+    return mergedConfig
 }
 
 /**
@@ -87,30 +79,23 @@ async function loadWorkspaceClientConfig() {
  *
  * @returns {Promise<Object>}
  */
-async function loadWorkspaceServerConfig() {
-    if (vscode.workspace.workspaceFolders.length === 0) return {}
-    const projectRoot = vscode.workspace.workspaceFolders[0].uri.fsPath
+export async function loadWorkspaceServerConfig() {
+    if (workspace.workspaceFolders.length === 0) return {}
+    const projectRoot = workspace.workspaceFolders[0].uri.fsPath
     const workspaceConfig = await loadOptionalYamlFile(
-        path.join(projectRoot, 'boomack-server'))
+        join(projectRoot, 'boomack-server'))
     const userConfig = await loadOptionalYamlFile(
-        path.join(os.homedir(), '.boomack-server'))
-    return _.defaultsDeep({}, userConfig, workspaceConfig)
+        join(homedir(), '.boomack-server'))
+    return defaultsDeep({}, userConfig, workspaceConfig)
 }
 
 /**
  * @param {Object} runConfig
  * @returns {string[]}
  */
-function getFileSrcRootsFromRunConfig(runConfig) {
-    let roots = _.get(runConfig, 'api.request.fileSrcRoots', [])
-    if (_.isString(roots)) roots = [roots]
-    if (!_.isArray(roots)) roots = []
+export function getFileSrcRootsFromRunConfig(runConfig) {
+    let roots = get(runConfig, 'api.request.fileSrcRoots', [])
+    if (isString(roots)) roots = [roots]
+    if (!isArray(roots)) roots = []
     return roots
-}
-
-module.exports = {
-    config,
-    loadWorkspaceClientConfig,
-    loadWorkspaceServerConfig,
-    getFileSrcRootsFromRunConfig,
 }

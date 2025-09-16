@@ -1,6 +1,15 @@
-const fs = require('node:fs')
-const path = require('node:path')
-const vscode = require('vscode')
+import { existsSync } from 'node:fs'
+import { join } from 'node:path'
+import {
+    Uri,
+    window,
+    workspace,
+} from 'vscode'
+
+/**
+ * @typedef {import('vscode').ExtensionContext} ExtensionContext
+ * @typedef {import('vscode').Terminal} Terminal
+ */
 
 /**
  * @param {string} scriptName
@@ -11,15 +20,15 @@ function platformSpecificExecutable(scriptName) {
     // On Linux/MacOS it is a plain executable file
     if (process.platform === 'win32') {
         const batchFileName = `${scriptName}.cmd`
-        if (fs.existsSync(batchFileName)) {
+        if (existsSync(batchFileName)) {
             return batchFileName
         }
         const pwshScriptName = `${scriptName}.ps1`
-        if (fs.existsSync(pwshScriptName)) {
+        if (existsSync(pwshScriptName)) {
             return pwshScriptName
         }
     } else {
-        if (fs.existsSync(scriptName)) {
+        if (existsSync(scriptName)) {
             return scriptName
         }
     }
@@ -30,35 +39,35 @@ function platformSpecificExecutable(scriptName) {
  * Returns the absolute path to the executable that ships with the extension.
  * Works for both Windows (`.cmd`/`.ps1`) and *nix (no extension).
  * 
- * @param {vscode.ExtensionContext} context
+ * @param {ExtensionContext} context
  * @param {string} toolName
  * @returns {string}
  */
-function getToolPath(context, toolName) {
+export function getToolPath(context, toolName) {
     // look in shared .bin folder of extensions
     const binPath = platformSpecificExecutable(
-        path.join(context.extensionPath, 'node_modules', '.bin', toolName))
+        join(context.extensionPath, 'node_modules', '.bin', toolName))
     if (binPath) return binPath
 
     // look inside the bin folder of the package itself
     const pkgBinPath = platformSpecificExecutable(
-        path.join(context.extensionPath, 'node_modules', toolName, 'bin', toolName))
+        join(context.extensionPath, 'node_modules', toolName, 'bin', toolName))
     if (pkgBinPath) return pkgBinPath
 
     throw new Error(`Did not find the executable of "${toolName}". Expected at ${binPath} or ${pkgBinPath}`)
 }
 
 /**
- * @param {vscode.ExtensionContext} context
+ * @param {ExtensionContext} context
  * @param {string} label
  * @param {?string} message
  * @param {string} toolName
  * @param {string[]} args
  * @param {string} [cwd]
  * @param {function (): void} [endCb]
- * @returns {vscode.Terminal}
+ * @returns {Terminal}
  */
-function runToolInTerminal(context, label, message, toolName, args, cwd, endCb) {
+export function runToolInTerminal(context, label, message, toolName, args, cwd, endCb) {
     const execPath = getToolPath(context, toolName);
 
     // TODO run JavaScript package without a shell
@@ -84,10 +93,10 @@ function runToolInTerminal(context, label, message, toolName, args, cwd, endCb) 
     }
     for (const arg of args) { cmdArgs.push(arg) }
 
-    const terminal = vscode.window.createTerminal({
-        iconPath: vscode.Uri.joinPath(context.extensionUri, 'res', 'boomack-logo.svg'),
+    const terminal = window.createTerminal({
+        iconPath: Uri.joinPath(context.extensionUri, 'res', 'boomack-logo.svg'),
         name: label,
-        cwd: cwd ?? vscode.workspace.workspaceFolders[0].uri.fsPath,
+        cwd: cwd ?? workspace.workspaceFolders[0].uri.fsPath,
         env: process.env,
         message: message,
         shellPath: cmd,
@@ -108,9 +117,4 @@ function runToolInTerminal(context, label, message, toolName, args, cwd, endCb) 
 
     terminal.show()
     return terminal
-}
-
-module.exports = {
-    getToolPath,
-    runToolInTerminal,
 }

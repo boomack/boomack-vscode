@@ -1,0 +1,24 @@
+{
+    "server": {
+        "host": "127.0.0.1",
+        "port": 3000,
+        "url": null
+    },
+    "client": {
+        "token": null,
+        "timeout": 5000,
+        "retry": 0,
+        "types": {},
+        "sourceTypes": {},
+        "sourceLanguages": {
+            "*.html": "html",
+            "*.htm": "html",
+            "*.md": "markdown",
+            "*.csv": "csv",
+            "*.svg": "xml",
+            "*.vega": "yaml",
+            "*.leaflet": "yaml",
+            "*.mermaid": "mermaid"
+        }
+    }
+}

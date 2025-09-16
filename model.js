@@ -63,15 +63,15 @@
  * @property {?string} slotId
  */
 
-const WORKSPACE_SERVER_NAME = '<workspace>'
-const WORKSPACE_SERVER_LABEL = 'Project Server'
+export const WORKSPACE_SERVER_NAME = '<workspace>'
+export const WORKSPACE_SERVER_LABEL = 'Project Server'
 
 
 /**
  * @param {any} state
  * @returns {boolean}
  */
-function isServerState(state) {
+export function isServerState(state) {
     return typeof(state) === 'object' && state?.stateType === 'server'
 }
 
@@ -79,7 +79,7 @@ function isServerState(state) {
  * @param {any} state
  * @returns {boolean}
  */
-function isPanelState(state) {
+export function isPanelState(state) {
     return typeof(state) === 'object' && state?.stateType === 'panel'
 }
 
@@ -87,14 +87,6 @@ function isPanelState(state) {
  * @param {any} state
  * @returns {boolean}
  */
-function isSlotState(state) {
+export function isSlotState(state) {
     return typeof(state) === 'object' && state?.stateType === 'slot'
-}
-
-module.exports = {
-    WORKSPACE_SERVER_NAME,
-    WORKSPACE_SERVER_LABEL,
-    isServerState,
-    isPanelState,
-    isSlotState,
 }

@@ -1,4 +1,4 @@
-const boomack = require('boomack-js')
+import boomack from 'boomack-js'
 
 /**
  * @typedef {import('vscode').ExtensionContext} ExtensionContext
@@ -9,11 +9,10 @@ const boomack = require('boomack-js')
 const clients = {}
 
 /**
- * @param {ExtensionContext} context
  * @param {BoomackServer} server
  * @returns {Promise<boomack.Boomack>}
  */
-async function getClientFor(context, server) {
+export async function getClientFor(server) {
     let client = clients[server.name]
     if (client && (client.apiUrl !== server.url || client.token !== server.token)) {
         client = null
@@ -38,13 +37,8 @@ async function getClientFor(context, server) {
     return client
 }
 
-function clearClientCache() {
+export function clearClientCache() {
     for (const name in clients) {
         delete clients[name]
     }
-}
-
-module.exports = {
-    getClientFor,
-    clearClientCache,
 }

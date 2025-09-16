@@ -1,26 +1,40 @@
-const _ = require('lodash')
-const fs = require('node:fs/promises')
-const path = require('node:path')
-const waitOn = require('wait-on')
-const vscode = require('vscode')
-const mime = require('mime')
-const { removeItemOnce } = require('./utils.js')
-const {
+import { filter, map, max, omitBy, values } from 'lodash-es'
+import fs from'node:fs/promises'
+import path from 'node:path'
+import waitOn from 'wait-on'
+import {
+    commands,
+    ProgressLocation,
+    ThemeIcon,
+    window,
+    workspace,
+} from 'vscode'
+import mime from 'mime'
+import {
+    removeItemOnce,
+    isFileBinary,
+    textViewOfBinaryFile,
+} from './utils.js'
+import {
     WORKSPACE_SERVER_NAME,
     WORKSPACE_SERVER_LABEL,
     isServerState,
     isPanelState,
     isSlotState,
-} = require('./model.js')
-const {
+} from './model.js'
+import {
     config,
     loadWorkspaceClientConfig,
     loadWorkspaceServerConfig,
     getFileSrcRootsFromRunConfig,
-} = require('./config.js')
-const inventory = require('./inventory.js')
-const tools = require('./tools.js')
+} from './config.js'
+import inventory from './inventory.js'
+import { runToolInTerminal } from './tools.js'
 
+/**
+ * @typedef {import('vscode').Terminal} Terminal
+ * @typedef {import('vscode').QuickPickItem} QuickPickItem
+ */
 /**
  * @typedef {import('./inventory.js').BoomackServer} BoomackServer
  * @typedef {import('./model.js').UIState} UIState
@@ -87,13 +101,13 @@ function playgroundCommand() {
 
 /**
  * @template T
- * @param {vscode.QuickPickItem[]} items
+ * @param {QuickPickItem[]} items
  * @param {function(string):T} labelMapper
  * @param {Object} [options]
  * @returns {Promise<T|undefined>}
  */
 function quickPick(items, labelMapper, options) {
-    const quickPick = vscode.window.createQuickPick()
+    const quickPick = window.createQuickPick()
     quickPick.canSelectMany = false
     quickPick.items = items
     // Preselecting a single item without canSelectMany
@@ -136,7 +150,7 @@ function userChooseServer(navigator, title, multiStep, excludeWorkspaceServer) {
         servers = servers.filter(s => s.name !== WORKSPACE_SERVER_NAME)
     }
     if (servers.length === 0) {
-        vscode.window.showWarningMessage("There is no Boomack server to choose from")
+        window.showWarningMessage("There is no Boomack server to choose from")
         return Promise.resolve(undefined)
     }
     const preselectedServer = navigator.getSelectedServerState()
@@ -148,7 +162,7 @@ function userChooseServer(navigator, title, multiStep, excludeWorkspaceServer) {
             ? WORKSPACE_SERVER_LABEL
             : s.name,
         description: s.server.url,
-        iconPath: new vscode.ThemeIcon('server-environment'),
+        iconPath: new ThemeIcon('server-environment'),
         picked: preselectedServer?.name === s.name,
     }))
     return quickPick(
@@ -177,7 +191,7 @@ function userChoosePanelForServer(navigator, serverState, title, multiStep) {
     const items = panelStates.map(p => ({
         label: p.id,
         description: p.definition?.title,
-        iconPath: new vscode.ThemeIcon('window'),
+        iconPath: new ThemeIcon('window'),
         picked: preselectedPanelState?.id === p.id,
     }))
     return quickPick(
@@ -218,7 +232,7 @@ function userChooseSlotForPanel(navigator, panelState, title, multiStep) {
         || panelState.slots[panelState.definition?.defaultSlot]
     const items = slotStates.map(p => ({
         label: p.id,
-        iconPath: new vscode.ThemeIcon('symbol-constant'),
+        iconPath: new ThemeIcon('symbol-constant'),
         picked: preselectedSlot?.id === p.id,
     }))
     return quickPick(
@@ -258,7 +272,7 @@ async function openInBrowser(url) {
     open.default(url)
 }
 
-/** @type {vscode.Terminal | null} */
+/** @type {Terminal | null} */
 let workspaceServerTerminal = null
 
 /**
@@ -279,20 +293,20 @@ function reloadWorkspaceServerConfig(navigator) {
 function startWorkspaceServerCommand(navigator) {
     return async () => {
         if (workspaceServerTerminal) {
-            vscode.window.showWarningMessage("Boomack Project Server is already running")
+            window.showWarningMessage("Boomack Project Server is already running")
             return
         }
-        await vscode.window.withProgress({
+        await window.withProgress({
             title: 'Boomack Project Server',
             cancellable: false,
-            location: vscode.ProgressLocation.Window,
+            location: ProgressLocation.Window,
         }, async progress => {
             progress.report({ increment: 10, message: 'Loading configuration' })
             const url = navigator.serverConfig(WORKSPACE_SERVER_NAME).url
             const clientConfig = await loadWorkspaceClientConfig()
             const serverRunConfig = await loadWorkspaceServerConfig()
             const fileSrcRoots = getFileSrcRootsFromRunConfig(serverRunConfig)
-            const projectRoot = vscode.workspace.workspaceFolders[0].uri.fsPath
+            const projectRoot = workspace.workspaceFolders[0].uri.fsPath
             fileSrcRoots.push(projectRoot)
             navigator.updateWorkspaceServer(clientConfig)
             progress.report({ increment: 20, message: 'Starting...' })
@@ -307,18 +321,18 @@ function startWorkspaceServerCommand(navigator) {
                 args.push(`api.request.fileSrcRoots.${i}=${fileSrcRoots[i]}`)
             }
 
-            workspaceServerTerminal = tools.runToolInTerminal(
+            workspaceServerTerminal = runToolInTerminal(
                 navigator.getContext(),
                 'Boomack Server', null,
                 'boomack', args,
                 projectRoot,
                 () => {
-                    vscode.commands.executeCommand('setContext',
+                    commands.executeCommand('setContext',
                         'boomack.workspaceServer.running', false)
                     navigator.setWorkspaceServerRunning(false)
                     removeItemOnce(navigator.getContext().subscriptions, workspaceServerTerminal)
                     workspaceServerTerminal = null
-                    vscode.window.showInformationMessage("Boomack Project Server stopped")
+                    window.showInformationMessage("Boomack Project Server stopped")
                 })
             try {
                 await waitOn({
@@ -334,15 +348,15 @@ function startWorkspaceServerCommand(navigator) {
                 progress.report({ increment: 100, message: 'Started' })
             } catch (err) {
                 progress.report({ increment: 100, message: 'Error' })
-                vscode.window.showErrorMessage(`Failed to start Boomack Project Server: ${err}`)
+                window.showErrorMessage(`Failed to start Boomack Project Server: ${err}`)
                 console.error('Failed to start Boomack server', err)
                 return
             }
             navigator.setWorkspaceServerRunning(true)
             navigator.getContext().subscriptions.push(workspaceServerTerminal)
-            vscode.commands.executeCommand('setContext',
+            commands.executeCommand('setContext',
                     'boomack.workspaceServer.running', true)
-            vscode.window.showInformationMessage("Boomack Project Server started")
+            window.showInformationMessage("Boomack Project Server started")
         })
     }
 }
@@ -353,7 +367,7 @@ function startWorkspaceServerCommand(navigator) {
 function stopWorkspaceServerCommand() {
     return async () => {
         if (!workspaceServerTerminal) {
-            vscode.window.showWarningMessage("Boomack Project Server is not running")
+            window.showWarningMessage("Boomack Project Server is not running")
             return
         }
         // TODO kill process directly, if NodeJS is run without a shell
@@ -376,7 +390,7 @@ function addServerCommand(navigator) {
         const defaultName = 'default'
         const defaultUrl = 'http://127.0.0.1:3000/'
 
-        let name = await vscode.window.showInputBox({
+        let name = await window.showInputBox({
             title: 'Boomack Server Name',
             placeHolder: defaultName,
             prompt: 'A user friendly name to identify the server',
@@ -385,11 +399,11 @@ function addServerCommand(navigator) {
         if (!name) name = defaultName
 
         if (name === WORKSPACE_SERVER_NAME) {
-            vscode.window.showErrorMessage("This name is reserved for the workspace server")
+            window.showErrorMessage("This name is reserved for the workspace server")
             return
         }
 
-        let url = await vscode.window.showInputBox({
+        let url = await window.showInputBox({
             title: 'Boomack Server URL',
             placeHolder: defaultUrl,
             prompt: 'Enter the URL of the Boomack server',
@@ -397,7 +411,7 @@ function addServerCommand(navigator) {
         if (url === undefined) return
         if (url === '') url = defaultUrl
 
-        let token = await vscode.window.showInputBox({
+        let token = await window.showInputBox({
             title: 'Boomack API Token',
             placeHolder: 'none',
             prompt: 'Leave empty, if the server does not require an API token',
@@ -406,10 +420,10 @@ function addServerCommand(navigator) {
         if (!token) token = null
 
         if (inventory.addServer(navigator.getContext(), { name, url, token })) {
-            vscode.window.showInformationMessage(
+            window.showInformationMessage(
                 `Added Boomack server "${name}" to the inventory`)
         } else {
-            vscode.window.showInformationMessage(
+            window.showInformationMessage(
                 `Updated Boomack server "${name}" in the inventory`)
         }
     }
@@ -421,10 +435,10 @@ function addServerCommand(navigator) {
  */
 function removeServer(navigator, serverName) {
     if (inventory.removeServer(navigator.getContext(), serverName)) {
-        vscode.window.showInformationMessage(
+        window.showInformationMessage(
             `Removed Boomack server "${serverName}" from the inventory`)
     } else {
-        vscode.window.showWarningMessage(
+        window.showWarningMessage(
             `Removed Boomack server "${serverName}" not found in the inventory`)
     }
 }
@@ -462,7 +476,7 @@ function selectServerCommand(navigator) {
  * @returns {Promise<ServerUIState|undefined>}
  */
 async function retroactivelySelectServer(title) {
-    return await vscode.commands.executeCommand('boomack.server.select', null, title)
+    return await commands.executeCommand('boomack.server.select', null, title)
 }
 
 /**
@@ -493,7 +507,7 @@ function refreshPanelsCommand(navigator, targetSelected) {
         try {
             await navigator.refreshServerState(serverState)
         } catch (err) {
-            vscode.window.showWarningMessage(`Failed to connect to Boomack server "${serverState.name}"`)
+            window.showWarningMessage(`Failed to connect to Boomack server "${serverState.name}"`)
             console.warn('Failed to refresh server state', serverState.name, err)
         }
     }
@@ -519,7 +533,7 @@ function selectPanelCommand(navigator) {
  * @returns {Promise<PanelUIState|undefined>}
  */
 async function retroactivelySelectPanel(title) {
-    return await vscode.commands.executeCommand('boomack.panel.select', null, title)
+    return await commands.executeCommand('boomack.panel.select', null, title)
 }
 
 /**
@@ -533,13 +547,13 @@ async function clearPanel(navigator, panelState) {
     try {
         var response = await client.clearPanel(panelId)
         if (response.success) {
-            vscode.window.showInformationMessage(`Cleared panel "${panelId}" on Boomack server "${serverName}".`)
+            window.showInformationMessage(`Cleared panel "${panelId}" on Boomack server "${serverName}".`)
         } else {
-            vscode.window.showErrorMessage(`Failed to clear panel "${panelId}" on Boomack server "${serverName}". HTTP Status ${response.statusCode}.`)
+            window.showErrorMessage(`Failed to clear panel "${panelId}" on Boomack server "${serverName}". HTTP Status ${response.statusCode}.`)
         }
     } catch (err) {
         console.error("Failed to clear panel:", err)
-        vscode.window.showErrorMessage(`Failed to clear panel "${panelId}" on Boomack server "${serverName}"`)
+        window.showErrorMessage(`Failed to clear panel "${panelId}" on Boomack server "${serverName}"`)
     }
 }
 
@@ -590,7 +604,7 @@ function refreshSlotsCommand(navigator, targetSelected) {
         try {
             await navigator.refreshPanelState(panelState)
         } catch (err) {
-            vscode.window.showWarningMessage(`Failed to refresh slots of Boomack panel "${panelState.id}" on server "${panelState.server.name}"`)
+            window.showWarningMessage(`Failed to refresh slots of Boomack panel "${panelState.id}" on server "${panelState.server.name}"`)
             console.warn('Failed to refresh slots of panel', panelState.id, panelState.server.name, err)
         }
     }
@@ -619,7 +633,7 @@ function selectSlotCommand(navigator) {
  * @returns {Promise<SlotUIState|undefined>}
  */
 async function retroactivelySelectSlot(title) {
-    return await vscode.commands.executeCommand('boomack.slot.select', null, title)
+    return await commands.executeCommand('boomack.slot.select', null, title)
 }
 
 /**
@@ -634,13 +648,13 @@ async function clearSlot(navigator, slotState) {
     try {
         var response = await client.clearSlot(panelId, slotId)
         if (response.success) {
-            vscode.window.showInformationMessage(`Cleared slot "${panelId}/${slotId}" on Boomack server "${serverName}".`)
+            window.showInformationMessage(`Cleared slot "${panelId}/${slotId}" on Boomack server "${serverName}".`)
         } else {
-            vscode.window.showErrorMessage(`Failed to clear slot "${panelId}/${slotId}" on Boomack server "${serverName}". HTTP Status ${response.statusCode}.`)
+            window.showErrorMessage(`Failed to clear slot "${panelId}/${slotId}" on Boomack server "${serverName}". HTTP Status ${response.statusCode}.`)
         }
     } catch (err) {
         console.error("Failed to clear slot:", err)
-        vscode.window.showErrorMessage(`Failed to clear slot "${panelId}/${slotId}" on Boomack server "${serverName}"`)
+        window.showErrorMessage(`Failed to clear slot "${panelId}/${slotId}" on Boomack server "${serverName}"`)
     }
 }
 
@@ -725,7 +739,7 @@ function slotRemoveCommand(navigator) {
         if (!slotState) return
         const panelDefinition = slotState.panel.definition
         if (panelDefinition.type !== 'document') {
-            vscode.window.showWarningMessage("Removing slots is only possible in panels with document layout")
+            window.showWarningMessage("Removing slots is only possible in panels with document layout")
             return
         }
         const newPanelDefinition = {
@@ -733,53 +747,53 @@ function slotRemoveCommand(navigator) {
             defaultSlot: panelDefinition.defaultSlot !== slotState.id
                 ? panelDefinition.defaultSlot
                 : null,
-            slots: _.omitBy(panelDefinition.slots, slot => slot.id === slotState.id),
+            slots: omitBy(panelDefinition.slots, slot => slot.id === slotState.id),
         }
-        // post new panel definition
         const client = await navigator.clientFor(slotState.panel.server.server)
         const response = await client.updatePanel(slotState.panel.id, newPanelDefinition)
         if (!response.success) {
-            vscode.window.showWarningMessage("Removing the slot failed")
-        } else {
-            await navigator.refreshPanelState(slotState.panel)
+            window.showErrorMessage("Removing the slot failed")
+            console.error(`Failed to update panel layout: HTTP status ${response.statusCode} ${response.statusMessage}`)
+            console.log(response.body)
+            return
         }
+        await navigator.refreshPanelState(slotState.panel)
     }
 }
 
 /**
  * @param {{ predicate: function(string):boolean, type: string }[]} types
  * @param {string} filename
+ * @param {{ defaultType?: string, mimeFallback?: boolean }} [options]
  * @returns {string}
  */
-function lookupMediaType(types, filename) {
+function lookupMediaType(
+    types, filename,
+    {
+        defaultType = 'application/octet-stream',
+        mimeFallback = true,
+    } = {}
+) {
     const name = path.basename(filename)
     for (const { predicate, type } of types) {
         if (predicate(name)) return type
     }
-	let ext = path.extname(name)
-    if (ext.startsWith('.')) ext = ext.substring(1)
-	if (ext) {
-		return mime.getType(ext);
-	} else {
-		return 'application/octet-stream';
-	}
+    if (mimeFallback) {
+        let ext = path.extname(name)
+        if (ext.startsWith('.')) ext = ext.substring(1)
+        if (ext) {
+            return mime.getType(ext);
+        }
+    }
+    return defaultType;
 }
 
 /**
- * @param {Navigator} navigator
- * @param {BoomackTarget} target
  * @param {string} filename
- * @param {?string} [mediaType]
- * @param {?string[]} [presets]
- * @param {?Object} [options]
+ * @param {string} [suffix]
+ * @returns {string}
  */
-async function displayFile(navigator, target, filename, mediaType, presets, options) {
-    const boomackClient = await navigator.clientFor(target.server)
-    if (!mediaType) {
-        mediaType = lookupMediaType(boomackClient.config.client.types, filename)
-    }
-    if (!presets) presets = null
-    if (!options) options = null
+function titleForFile(filename, suffix) {
     let title = null
     const titleMode = config('displayTitle')
     if (titleMode === 'filename') {
@@ -787,6 +801,36 @@ async function displayFile(navigator, target, filename, mediaType, presets, opti
     } else if (titleMode === 'filepath') {
         title = filename
     }
+    if (suffix) {
+        title += ' ' + suffix
+    }
+    return title
+}
+
+/**
+ * @param {Navigator} navigator
+ * @param {BoomackTarget} target
+ * @param {string} filename
+ * @param {{
+ *   mediaType?: string,
+ *   titleSuffix?: string,
+ *   options?: Object,
+ * }} [options]
+ */
+async function displayFile(
+    navigator, target, filename,
+    {
+        mediaType,
+        titleSuffix,
+        options,
+    } = {}
+) {
+    const boomackClient = await navigator.clientFor(target.server)
+    if (!mediaType) {
+        mediaType = lookupMediaType(boomackClient.config.client.types, filename)
+    }
+    const presets = null
+    const title = titleForFile(filename, titleSuffix)
     const fileStat = await fs.stat(filename)
     const fd = await fs.open(filename)
     const s = fd.createReadStream()
@@ -801,71 +845,145 @@ async function displayFile(navigator, target, filename, mediaType, presets, opti
             title, presets, options)
     fd.close()
     if (!result.success) {
-        vscode.window.showErrorMessage(`Failed to display file content. HTTP Status ${result.statusCode}.`)
+        window.showErrorMessage(`Failed to display file content. HTTP Status ${result.statusCode}.`)
     }
 }
 
 /**
  * @param {Navigator} navigator
+ * @param {BoomackTarget} target
+ * @param {string} filename
+ */
+async function displayBinaryFileSource(navigator, target, filename) {
+    const text = await textViewOfBinaryFile(filename)
+    const boomackClient = await navigator.clientFor(target.server)
+    const response = await boomackClient.displayMediaItems({
+        panel: target.panelId,
+        slot: target.slotId,
+        type: 'text/plain',
+        text,
+    })
+    if (!response.success) {
+        window.showErrorMessage("Failed to display source of binary file")
+        return
+    }
+}
+
+/**
+ * @param {Navigator} navigator
+ * @param {BoomackTarget} target
+ * @param {string} filename
+ */
+async function displayFileSource(navigator, target, filename) {
+    if (await isFileBinary(filename)) {
+        return await displayBinaryFileSource(navigator, target, filename)
+    }
+    const clientConfig = await loadWorkspaceClientConfig()
+    let mediaType = lookupMediaType(
+        clientConfig.client.sourceTypes,
+        filename,
+        { defaultType: 'text/plain', mimeFallback: false })
+    let language = 'plain'
+     if (mediaType === 'text/plain') {
+        language = lookupMediaType(
+            clientConfig.client.sourceLanguages,
+            filename,
+            { defaultType: 'plain', mimeFallback: false })
+    }
+    const options = language
+        ? { transformation: 'highlight', syntax: language }
+        : null
+    await displayFile(navigator, target, filename, { mediaType, options })
+}
+
+/**
+ * @typedef {Object} DisplayFlags
+ * @property {boolean} [displaySource]
+ */
+
+/**
+ * @param {Navigator} navigator
+ * @param {BoomackTarget} target
+ * @param {string} filename
+ * @param {DisplayFlags} flags
+ */
+async function displayFileWithFlags(
+    navigator, target, filename,
+    {
+        displaySource = false,
+    }
+) {
+    if (displaySource) {
+        await displayFileSource(navigator, target, filename)
+    } else {
+        await displayFile(navigator, target, filename)
+    }
+}
+
+/**
+ * @param {Navigator} navigator
+ * @param {DisplayFlags} flags
  * @returns {function(?PanelUIState):(void | Promise<void>)}
  */
-function displayDocumentInPanelCommand(navigator) {
+function displayDocumentInPanelCommand(navigator, flags) {
     return async panelState => {
         if (!panelState) {
-            vscode.window.showErrorMessage("No target panel selected")
+            window.showErrorMessage("No target panel selected")
             return
         }
         const target = navigator.targetFromPanel(panelState)
-        const editor = vscode.window.activeTextEditor
+        const editor = window.activeTextEditor
         if (!editor) {
-            vscode.window.showErrorMessage("No active text editor")
+            window.showErrorMessage("No active text editor")
             return
         }
         const filename = editor.document.uri.fsPath
-        await displayFile(navigator, target, filename)
+        await displayFileWithFlags(navigator, target, filename, flags)
     }
 }
 
 /**
  * @param {Navigator} navigator
+ * @param {DisplayFlags} flags
  * @returns {function(?SlotUIState):(void | Promise<void>)}
  */
-function displayDocumentInSlotCommand(navigator) {
+function displayDocumentInSlotCommand(navigator, flags) {
     return async slotState => {
         if (!slotState) {
-            vscode.window.showErrorMessage("No target slot selected")
+            window.showErrorMessage("No target slot selected")
             return
         }
         const target = navigator.targetFromSlot(slotState)
-        const editor = vscode.window.activeTextEditor
+        const editor = window.activeTextEditor
         if (!editor) {
-            vscode.window.showErrorMessage("No active text editor")
+            window.showErrorMessage("No active text editor")
             return
         }
         const filename = editor.document.uri.fsPath
-        await displayFile(navigator, target, filename)
+        await displayFileWithFlags(navigator, target, filename, flags)
     }
 }
 
 /**
  * @param {Navigator} navigator
+ * @param {DisplayFlags} flags
  * @returns {function(?SlotUIState):(void | Promise<void>)}
  */
-function displayDocumentInSlotWithIdCommand(navigator) {
+function displayDocumentInSlotWithIdCommand(navigator, flags) {
     return async () => {
-        const editor = vscode.window.activeTextEditor
+        const editor = window.activeTextEditor
         if (!editor) {
-            vscode.window.showErrorMessage("No active text editor")
+            window.showErrorMessage("No active text editor")
             return
         }
         const serverState = navigator.getSelectedServerState()
         const panelState = navigator.getSelectedPanelState(serverState)
         const autoSlotIdPattern = /^slot-(\d+)$/
-        const autoSlotIds = _.filter(_.map(_.values(panelState.slots), 'id'), id => autoSlotIdPattern.test(id))
-        const autoSlotNumbers = _.map(autoSlotIds, id => Number.parseInt(id.substring(5)))
-        const lastAutoSlotNumber = _.max(autoSlotNumbers)
+        const autoSlotIds = filter(map(values(panelState.slots), 'id'), id => autoSlotIdPattern.test(id))
+        const autoSlotNumbers = map(autoSlotIds, id => Number.parseInt(id.substring(5)))
+        const lastAutoSlotNumber = max(autoSlotNumbers)
         const nextAutoSlotNumber = lastAutoSlotNumber === undefined ? 0 : (lastAutoSlotNumber + 1)
-        const slotId = await vscode.window.showInputBox({
+        const slotId = await window.showInputBox({
             title: "Display",
             prompt: "Panel ID",
             value: `slot-${nextAutoSlotNumber}`
@@ -873,34 +991,35 @@ function displayDocumentInSlotWithIdCommand(navigator) {
         if (!slotId) return
         const target = { ...navigator.targetFromPanel(panelState), slotId }
         const filename = editor.document.uri.fsPath
-        await displayFile(navigator, target, filename)
+        await displayFileWithFlags(navigator, target, filename, flags)
     }
 }
 
 /**
  * @param {Navigator} navigator
+ * @param {DisplayFlags} flags
  * @returns {function({fsPath: string}):(void | Promise<void>)}
  */
-function displayFileCommand(navigator) {
+function displayFileCommand(navigator, flags) {
     return async resource => {
         if (!resource) {
-            vscode.window.showErrorMessage("Command requires argument")
+            window.showErrorMessage("Command requires argument")
             return
         }
         if (!resource.fsPath) {
-            vscode.window.showErrorMessage("Command expects a file resource or editor document as argument")
+            window.showErrorMessage("Command expects a file resource or editor document as argument")
             return
         }
         const target = navigator.getCurrentTarget()
         if (!target) {
-            vscode.window.showErrorMessage("No target slot selected")
+            window.showErrorMessage("No target slot selected")
         }
         const filename = resource.fsPath
-        await displayFile(navigator, target, filename)
+        await displayFileWithFlags(navigator, target, filename, flags)
     }
 }
 
-module.exports = {
+export default {
     playgroundCommand,
     reloadWorkspaceServerConfig,
     startWorkspaceServerCommand,

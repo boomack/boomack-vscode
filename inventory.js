@@ -1,4 +1,4 @@
-const { EventEmitter } = require('vscode')
+import { EventEmitter } from 'vscode'
 
 /**
  * @typedef {import('./model.js').BoomackServer} BoomackServer
@@ -70,7 +70,7 @@ function removeServer(context, name) {
     return oldServers.length !== newServers.length
 }
 
-module.exports = {
+export default {
     getServers,
     updateServers,
     addServer,

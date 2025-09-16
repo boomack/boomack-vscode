@@ -1,8 +1,15 @@
-const vscode = require('vscode')
-const { loadWorkspaceClientConfig } = require('./config.js')
-const { clearClientCache } = require('./client.js')
-const { Navigator } = require('./navigation.js')
-const commands = require('./commands.js')
+import {
+    commands,
+    window,
+} from 'vscode'
+import { loadWorkspaceClientConfig } from './config.js'
+import { clearClientCache } from './client.js'
+import { Navigator } from './navigation.js'
+import cmd from './commands.js'
+
+/**
+ * @typedef {import('vscode').ExtensionContext} ExtensionContext
+ */
 
 /** @type {?Navigator} */
 let navigator = null
@@ -23,8 +30,8 @@ let navigator = null
 // - allow opt-in streaming requests for workspace server
 
 function updateContextActiveTextEditor() {
-    return vscode.commands.executeCommand('setContext',
-            'boomack.activeTextEditor', !!vscode.window.activeTextEditor)
+    return commands.executeCommand('setContext',
+            'boomack.activeTextEditor', !!window.activeTextEditor)
 }
 
 /**
@@ -34,31 +41,31 @@ function setupContextUpdateForSelectionState(navigator) {
     const context = navigator.getContext()
     context.subscriptions.push(
         navigator.onSelectedServerChanged(e =>
-            vscode.commands.executeCommand('setContext',
+            commands.executeCommand('setContext',
                 'boomack.serverSelected', !!e.serverState)))
 
     context.subscriptions.push(
         navigator.onSelectedPanelChanged(e =>
-            vscode.commands.executeCommand('setContext',
+            commands.executeCommand('setContext',
                 'boomack.panelSelected', !!e.panelState)))
 
     context.subscriptions.push(
         navigator.onSelectedSlotChanged(e =>
-            vscode.commands.executeCommand('setContext',
+            commands.executeCommand('setContext',
                 'boomack.slotSelected', !!e.slotState)))
 
 }
 
 /**
- * @param {vscode.ExtensionContext} context
+ * @param {ExtensionContext} context
  */
-function activate(context) {
+export function activate(context) {
 
     // Use the console to output diagnostic information (console.log) and errors (console.error)
     console.log('Boomack VS Code extension initializing...')
 
     updateContextActiveTextEditor()
-    const activeTextEditorChangeSubs = vscode.window.onDidChangeActiveTextEditor(() =>
+    const activeTextEditorChangeSubs = window.onDidChangeActiveTextEditor(() =>
         updateContextActiveTextEditor())
     context.subscriptions.push(activeTextEditorChangeSubs)
 
@@ -77,181 +84,180 @@ function activate(context) {
 
     // register commands, defined in the package.json
 
-    const playgroundCmdSubs = vscode.commands.registerCommand(
-        'boomack.playground', commands.playgroundCommand())
+    const playgroundCmdSubs = commands.registerCommand(
+        'boomack.playground',
+        cmd.playgroundCommand())
     context.subscriptions.push(playgroundCmdSubs)
 
-    const reloadWorkspaceServerConfigCmdSubs = vscode.commands.registerCommand(
-        'boomack.workspaceServer.reloadConfig', commands.reloadWorkspaceServerConfig(navigator))
+    const reloadWorkspaceServerConfigCmdSubs = commands.registerCommand(
+        'boomack.workspaceServer.reloadConfig',
+        cmd.reloadWorkspaceServerConfig(navigator))
     context.subscriptions.push(reloadWorkspaceServerConfigCmdSubs)
 
-    const startWorkspaceServerCmdSubs = vscode.commands.registerCommand(
-        'boomack.workspaceServer.start', commands.startWorkspaceServerCommand(navigator))
+    const startWorkspaceServerCmdSubs = commands.registerCommand(
+        'boomack.workspaceServer.start',
+        cmd.startWorkspaceServerCommand(navigator))
     context.subscriptions.push(startWorkspaceServerCmdSubs)
 
-    const stopWorkspaceServerCmdSubs = vscode.commands.registerCommand(
-        'boomack.workspaceServer.stop', commands.stopWorkspaceServerCommand())
+    const stopWorkspaceServerCmdSubs = commands.registerCommand(
+        'boomack.workspaceServer.stop',
+        cmd.stopWorkspaceServerCommand())
     context.subscriptions.push(stopWorkspaceServerCmdSubs)
 
-    const addServerCmdSubs = vscode.commands.registerCommand(
+    const addServerCmdSubs = commands.registerCommand(
         'boomack.server.add',
-        commands.addServerCommand(navigator))
+        cmd.addServerCommand(navigator))
     context.subscriptions.push(addServerCmdSubs)
 
-    const removeServerCmdSubs = vscode.commands.registerCommand(
+    const removeServerCmdSubs = commands.registerCommand(
         'boomack.server.remove',
-        commands.removeServerCommand(navigator))
+        cmd.removeServerCommand(navigator))
     context.subscriptions.push(removeServerCmdSubs)
 
-    const selectServerCmdSubs = vscode.commands.registerCommand(
+    const selectServerCmdSubs = commands.registerCommand(
         'boomack.server.select',
-        commands.selectServerCommand(navigator))
+        cmd.selectServerCommand(navigator))
     context.subscriptions.push(selectServerCmdSubs)
 
-    const openServerInBrowserCmdSubs = vscode.commands.registerCommand(
+    const openServerInBrowserCmdSubs = commands.registerCommand(
         'boomack.server.openInBrowser',
-        commands.openServerInBrowserCommand())
+        cmd.openServerInBrowserCommand())
     context.subscriptions.push(openServerInBrowserCmdSubs)
 
-    const refreshServerCmdSubs = vscode.commands.registerCommand(
+    const refreshServerCmdSubs = commands.registerCommand(
         'boomack.server.refresh',
-        commands.refreshPanelsCommand(navigator, false))
+        cmd.refreshPanelsCommand(navigator, false))
     context.subscriptions.push(refreshServerCmdSubs)
 
-    const refreshSelectedServerCmdSubs = vscode.commands.registerCommand(
+    const refreshSelectedServerCmdSubs = commands.registerCommand(
         'boomack.server.refreshSelected',
-        commands.refreshPanelsCommand(navigator, true))
+        cmd.refreshPanelsCommand(navigator, true))
     context.subscriptions.push(refreshSelectedServerCmdSubs)
 
-    const selectPanelCmdSubs = vscode.commands.registerCommand(
+    const selectPanelCmdSubs = commands.registerCommand(
         'boomack.panel.select',
-        commands.selectPanelCommand(navigator))
+        cmd.selectPanelCommand(navigator))
     context.subscriptions.push(selectPanelCmdSubs)
 
-    const clearPanelCmdSubs = vscode.commands.registerCommand(
+    const clearPanelCmdSubs = commands.registerCommand(
         'boomack.panel.clear',
-        commands.clearPanelCommand(navigator))
+        cmd.clearPanelCommand(navigator))
     context.subscriptions.push(clearPanelCmdSubs)
 
-    const openPanelInBrowserCmdSubs = vscode.commands.registerCommand(
+    const openPanelInBrowserCmdSubs = commands.registerCommand(
         'boomack.panel.openInBrowser',
-        commands.openPanelInBrowserCommand())
+        cmd.openPanelInBrowserCommand())
     context.subscriptions.push(openPanelInBrowserCmdSubs)
 
-    const refreshPanelCmdSubs = vscode.commands.registerCommand(
+    const refreshPanelCmdSubs = commands.registerCommand(
         'boomack.panel.refresh',
-        commands.refreshSlotsCommand(navigator, false))
+        cmd.refreshSlotsCommand(navigator, false))
     context.subscriptions.push(refreshPanelCmdSubs)
 
-    const refreshSelectedPanelCmdSubs = vscode.commands.registerCommand(
+    const refreshSelectedPanelCmdSubs = commands.registerCommand(
         'boomack.panel.refreshSelected',
-        commands.refreshSlotsCommand(navigator, true))
+        cmd.refreshSlotsCommand(navigator, true))
     context.subscriptions.push(refreshSelectedPanelCmdSubs)
 
-    const selectSlotCmdSubs = vscode.commands.registerCommand(
+    const selectSlotCmdSubs = commands.registerCommand(
         'boomack.slot.select',
-        commands.selectSlotCommand(navigator))
+        cmd.selectSlotCommand(navigator))
     context.subscriptions.push(selectSlotCmdSubs)
 
-    const clearSlotCmdSubs = vscode.commands.registerCommand(
+    const clearSlotCmdSubs = commands.registerCommand(
         'boomack.slot.clear',
-        commands.clearSlotCommand(navigator))
+        cmd.clearSlotCommand(navigator))
     context.subscriptions.push(clearSlotCmdSubs)
 
-    const openSlotInBrowserCmdSubs = vscode.commands.registerCommand(
+    const openSlotInBrowserCmdSubs = commands.registerCommand(
         'boomack.slot.openInBrowser',
-        commands.openSlotInBrowserCommand())
+        cmd.openSlotInBrowserCommand())
     context.subscriptions.push(openSlotInBrowserCmdSubs)
 
-    const slotZoomInCmdSubs = vscode.commands.registerCommand(
+    const slotZoomInCmdSubs = commands.registerCommand(
         'boomack.slot.zoomIn',
-        commands.slotZoomCommand(navigator, 'in'))
+        cmd.slotZoomCommand(navigator, 'in'))
     context.subscriptions.push(slotZoomInCmdSubs)
 
-    const slotZoomOutCmdSubs = vscode.commands.registerCommand(
+    const slotZoomOutCmdSubs = commands.registerCommand(
         'boomack.slot.zoomOut',
-        commands.slotZoomCommand(navigator, 'out'))
+        cmd.slotZoomCommand(navigator, 'out'))
     context.subscriptions.push(slotZoomOutCmdSubs)
 
-    const slotToggleMaximizeCmdSubs = vscode.commands.registerCommand(
+    const slotToggleMaximizeCmdSubs = commands.registerCommand(
         'boomack.slot.toggleMaximize',
-        commands.slotToggleMaximizeCommand(navigator))
+        cmd.slotToggleMaximizeCommand(navigator))
     context.subscriptions.push(slotToggleMaximizeCmdSubs)
 
-    const slotRemoveCmdSubs = vscode.commands.registerCommand(
+    const slotRemoveCmdSubs = commands.registerCommand(
         'boomack.slot.remove',
-        commands.slotRemoveCommand(navigator))
+        cmd.slotRemoveCommand(navigator))
     context.subscriptions.push(slotRemoveCmdSubs)
 
-    const displayDocumentCmdSubs = vscode.commands.registerCommand(
+    const displayDocumentCmdSubs = commands.registerCommand(
         'boomack.display.document',
-        commands.displayFileCommand(navigator))
+        cmd.displayFileCommand(navigator, { displaySource: false }))
     context.subscriptions.push(displayDocumentCmdSubs)
 
-    const displayDocumentSourceCmdSubs = vscode.commands.registerCommand(
+    const displayDocumentSourceCmdSubs = commands.registerCommand(
         'boomack.display.document.source',
-        () => { vscode.window.showInformationMessage("TODO: Display document source") })
+        cmd.displayFileCommand(navigator, { displaySource: true }))
     context.subscriptions.push(displayDocumentSourceCmdSubs)
 
-    const displayDocumentWithMediaTypeCmdSubs = vscode.commands.registerCommand(
+    const displayDocumentWithMediaTypeCmdSubs = commands.registerCommand(
         'boomack.display.document.withMediaType',
-        () => { vscode.window.showInformationMessage("TODO: Display document with media type") })
+        () => { window.showInformationMessage("TODO: Display document with media type") })
     context.subscriptions.push(displayDocumentWithMediaTypeCmdSubs)
 
-    const displaySelectionSourceCmdSubs = vscode.commands.registerCommand(
+    const displaySelectionSourceCmdSubs = commands.registerCommand(
         'boomack.display.selection.source',
-        () => { vscode.window.showInformationMessage("TODO: Display selection source") })
+        () => { window.showInformationMessage("TODO: Display selection source") })
     context.subscriptions.push(displaySelectionSourceCmdSubs)
 
-    const displayDocumentInPanelCmdSubs = vscode.commands.registerCommand(
+    const displayDocumentInPanelCmdSubs = commands.registerCommand(
         'boomack.display.document.inPanel',
-        commands.displayDocumentInPanelCommand(navigator))
+        cmd.displayDocumentInPanelCommand(navigator, { displaySource: false }))
     context.subscriptions.push(displayDocumentInPanelCmdSubs)
 
-    const displayDocumentSourceInPanelCmdSubs = vscode.commands.registerCommand(
+    const displayDocumentSourceInPanelCmdSubs = commands.registerCommand(
         'boomack.display.document.source.inPanel',
-        () => { vscode.window.showInformationMessage("TODO: Display document source in panel") })
+        cmd.displayDocumentInPanelCommand(navigator, { displaySource: true }))
     context.subscriptions.push(displayDocumentSourceInPanelCmdSubs)
 
-    const displayInSlotCmdSubs = vscode.commands.registerCommand(
+    const displayInSlotCmdSubs = commands.registerCommand(
         'boomack.display.document.inSlot',
-        commands.displayDocumentInSlotCommand(navigator))
+        cmd.displayDocumentInSlotCommand(navigator, { displaySource: false }))
     context.subscriptions.push(displayInSlotCmdSubs)
 
-    const displayDocumentSourceInSlotCmdSubs = vscode.commands.registerCommand(
+    const displayDocumentSourceInSlotCmdSubs = commands.registerCommand(
         'boomack.display.document.source.inSlot',
-        () => { vscode.window.showInformationMessage("TODO: Display document source in slot") })
+        cmd.displayDocumentInSlotCommand(navigator, { displaySource: true }))
     context.subscriptions.push(displayDocumentSourceInSlotCmdSubs)
 
-    const displayDocumentInSlotWithIdCmdSubs = vscode.commands.registerCommand(
+    const displayDocumentInSlotWithIdCmdSubs = commands.registerCommand(
         'boomack.display.document.inSlot.withId',
-        commands.displayDocumentInSlotWithIdCommand(navigator))
+        cmd.displayDocumentInSlotWithIdCommand(navigator, { displaySource: false }))
     context.subscriptions.push(displayDocumentInSlotWithIdCmdSubs)
 
-    const displayDocumentSourceInSlotWithIdCmdSubs = vscode.commands.registerCommand(
+    const displayDocumentSourceInSlotWithIdCmdSubs = commands.registerCommand(
         'boomack.display.document.source.inSlot.withId',
-        () => { vscode.window.showInformationMessage("TODO: Display document source in slot with ID") })
+        cmd.displayDocumentInSlotWithIdCommand(navigator, { displaySource: true }))
     context.subscriptions.push(displayDocumentSourceInSlotWithIdCmdSubs)
 
-    const displayFileCmdSubs = vscode.commands.registerCommand(
+    const displayFileCmdSubs = commands.registerCommand(
         'boomack.display.file',
-        commands.displayFileCommand(navigator))
+        cmd.displayFileCommand(navigator, { displaySource: false }))
     context.subscriptions.push(displayFileCmdSubs)
 
-    const displayFileSourceCmdSubs = vscode.commands.registerCommand(
+    const displayFileSourceCmdSubs = commands.registerCommand(
         'boomack.display.file.source',
-        () => { vscode.window.showInformationMessage("TODO: Display file source") })
+        cmd.displayFileCommand(navigator, { displaySource: true }))
     context.subscriptions.push(displayFileSourceCmdSubs)
 }
 
 // This method is called when your extension is deactivated
-function deactivate() {
+export function deactivate() {
     navigator.dispose()
     navigator = null
     clearClientCache()
-}
-
-module.exports = {
-    activate,
-    deactivate
 }

@@ -3,6 +3,7 @@
   "displayName": "Boomack",
   "description": "Boomack client for VS Code",
   "version": "0.0.1",
+  "type": "module",
   "engines": {
     "vscode": "^1.100.0"
   },
@@ -25,9 +26,21 @@
         "boomack.displayTitle": {
           "type": "string",
           "default": "filename",
-          "enum": ["none", "filename", "filepath"],
-          "enumItemLabels": ["None", "Filename", "Path"],
-          "enumDescriptions": [null, "The name of the file", "The full path of the file"],
+          "enum": [
+            "none",
+            "filename",
+            "filepath"
+          ],
+          "enumItemLabels": [
+            "None",
+            "Filename",
+            "Path"
+          ],
+          "enumDescriptions": [
+            null,
+            "The name of the file",
+            "The full path of the file"
+          ],
           "description": "The title for display requests to Boomack",
           "order": 2
         }
@@ -318,8 +331,14 @@
         { "command": "boomack.display.document.source.inPanel", "when": "false" },
         { "command": "boomack.display.document.inSlot", "when": "false" },
         { "command": "boomack.display.document.source.inSlot", "when": "false" },
-        { "command": "boomack.display.document.inSlot.withId", "when": "false" },
-        { "command": "boomack.display.document.source.inSlot.withId", "when": "false" },
+        {
+          "command": "boomack.display.document.inSlot.withId",
+          "when": "boomack.panelSelected && boomack.activeTextEditor"
+        },
+        {
+          "command": "boomack.display.document.source.inSlot.withId",
+          "when": "boomack.panelSelected && boomack.activeTextEditor"
+        },
         { "command": "boomack.display.file", "when": "false" },
         { "command": "boomack.display.file.source", "when": "false" }
       ],
@@ -333,12 +352,6 @@
           "command": "boomack.server.refreshSelected",
           "when": "view == boomack-panels && boomack.serverSelected",
           "group": "navigation"
-        },
-        {
-          "command": "boomack.display.document.inSlot.withId",
-          "alt": "boomack.display.document.source.inSlot.withId",
-          "when": "view == boomack-slots && boomack.panelSelected && boomack.activeTextEditor",
-          "group": "navigation@1"
         },
         {
           "command": "boomack.panel.refreshSelected",
@@ -455,18 +468,19 @@
   },
   "dependencies": {
     "boomack": "0.14.9",
-    "boomack-js": "0.11.3",
-    "lodash": "^4.17.21",
+    "boomack-js": "0.11.6",
+    "lodash-es": "^4.17.21",
     "mime": "^3.0.0",
     "open": "^10.2.0",
-    "wait-on": "^8.0.4"
+    "wait-on": "^8.0.4",
+    "yaml": "^2.8.1"
   },
   "devDependencies": {
-    "@types/vscode": "^1.103.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
-    "eslint": "^9.32.0",
+    "@types/vscode": "^1.103.0",
     "@vscode/test-cli": "^0.0.11",
-    "@vscode/test-electron": "^2.5.2"
+    "@vscode/test-electron": "^2.5.2",
+    "eslint": "^9.32.0"
   }
 }

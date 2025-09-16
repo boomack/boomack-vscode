@@ -1,11 +1,38 @@
-const _ = require('lodash')
-const vscode = require('vscode')
-const { WORKSPACE_SERVER_NAME, WORKSPACE_SERVER_LABEL, isServerState } = require('./model.js')
-const inventory = require('./inventory.js')
-const { getClientFor } = require('./client.js')
+import { keyBy, keys, map, some, sortBy, values } from 'lodash-es'
+import {
+    EventEmitter,
+    ProgressLocation,
+    ThemeIcon,
+    TreeItem,
+    TreeItemCollapsibleState,
+    window,
+} from 'vscode'
+import {
+    isServerState,
+    WORKSPACE_SERVER_LABEL,
+    WORKSPACE_SERVER_NAME,
+} from './model.js'
+import inventory from './inventory.js'
+import { getClientFor } from './client.js'
 
 /**
+ * @template T
+ * @typedef {import('vscode').Event<T>} Event<T>
+ */
+/**
+ * @template T
+ * @typedef {import('vscode').ProviderResult<T>} ProviderResult<T>
+ */
+/**
+ * @template T
+ * @typedef {import('vscode').TreeDataProvider<T>} TreeDataProvider<T>
+ */
+/**
+ * @typedef {import('vscode').Disposable} Disposable
+ * @typedef {import('vscode').ExtensionContext} ExtensionContext
  * @typedef {import('boomack-js').Boomack} BoomackClient
+ */
+/**
  * @typedef {import('./model.js').BoomackServer} BoomackServer
  * @typedef {import('./model.js').PanelDefinition} PanelDefinition
  * @typedef {import('./model.js').SlotDefinition} SlotDefinition
@@ -86,18 +113,18 @@ const SLOT_UI_STATE_TEMPLATE = {
     panel: undefined,
 }
 
-/** @implements {vscode.Disposable} */
-class Navigator {
+/** @implements {Disposable} */
+export class Navigator {
 
     /**
-     * @param {vscode.ExtensionContext} context
+     * @param {ExtensionContext} context
      */
     constructor(context) {
 
-        /** @type {vscode.ExtensionContext} */
+        /** @type {ExtensionContext} */
         this._extContext = context
 
-        /** @type {vscode.Disposable[]} */
+        /** @type {Disposable[]} */
         this._subscriptions = []
 
         /** @type {BoomackServer} */
@@ -112,34 +139,34 @@ class Navigator {
         /** @type {?string} */
         this.selectedServerName = null
 
-        /** @type {vscode.EventEmitter<InventoryChangedEvent>} */
-        this._serversChangedEmitter = new vscode.EventEmitter()
-        /** @type {vscode.Event<InventoryChangedEvent>} */
+        /** @type {EventEmitter<InventoryChangedEvent>} */
+        this._serversChangedEmitter = new EventEmitter()
+        /** @type {Event<InventoryChangedEvent>} */
         this.onServersChanged = this._serversChangedEmitter.event
 
-        /** @type {vscode.EventEmitter<ServerChangedEvent>} */
-        this._serverChangedEmitter = new vscode.EventEmitter()
-        /** @type {vscode.Event<ServerChangedEvent>} */
+        /** @type {EventEmitter<ServerChangedEvent>} */
+        this._serverChangedEmitter = new EventEmitter()
+        /** @type {Event<ServerChangedEvent>} */
         this.onServerChanged = this._serverChangedEmitter.event
 
-        /** @type {vscode.EventEmitter<ServerSelectionEvent>} */
-        this._selectedServerChangedEmitter = new vscode.EventEmitter()
-        /** @type {vscode.Event<ServerSelectionEvent>} */
+        /** @type {EventEmitter<ServerSelectionEvent>} */
+        this._selectedServerChangedEmitter = new EventEmitter()
+        /** @type {Event<ServerSelectionEvent>} */
         this.onSelectedServerChanged = this._selectedServerChangedEmitter.event
 
-        /** @type {vscode.EventEmitter<PanelChangedEvent>} */
-        this._panelChangedEmitter = new vscode.EventEmitter()
-        /** @type {vscode.Event<PanelChangedEvent>} */
+        /** @type {EventEmitter<PanelChangedEvent>} */
+        this._panelChangedEmitter = new EventEmitter()
+        /** @type {Event<PanelChangedEvent>} */
         this.onPanelChanged = this._panelChangedEmitter.event
 
-        /** @type {vscode.EventEmitter<PanelSelectionEvent>} */
-        this._selectedPanelChangedEmitter = new vscode.EventEmitter()
-        /** @type {vscode.Event<PanelSelectionEvent>} */
+        /** @type {EventEmitter<PanelSelectionEvent>} */
+        this._selectedPanelChangedEmitter = new EventEmitter()
+        /** @type {Event<PanelSelectionEvent>} */
         this.onSelectedPanelChanged = this._selectedPanelChangedEmitter.event
 
-        /** @type {vscode.EventEmitter<SlotSelectionEvent>} */
-        this._selectedSlotChangedEmitter = new vscode.EventEmitter()
-        /** @type {vscode.Event<SlotSelectionEvent>} */
+        /** @type {EventEmitter<SlotSelectionEvent>} */
+        this._selectedSlotChangedEmitter = new EventEmitter()
+        /** @type {Event<SlotSelectionEvent>} */
         this.onSelectedSlotChanged = this._selectedSlotChangedEmitter.event
 
         this.setInventoryServers(inventory.getServers(context))
@@ -153,7 +180,7 @@ class Navigator {
     }
 
     /**
-     * @param {vscode.Disposable} subs
+     * @param {Disposable} subs
      */
     registerSubscription(subs) {
         this._subscriptions.push(subs)
@@ -172,7 +199,7 @@ class Navigator {
     getContext() { return this._extContext }
 
     createServerTreeView() {
-        const treeView = vscode.window.createTreeView('boomack-servers', {
+        const treeView = window.createTreeView('boomack-servers', {
             treeDataProvider: this.serverItemProvider,
             canSelectMany: false,
         })
@@ -195,7 +222,7 @@ class Navigator {
     }
 
     createPanelTreeView() {
-        const treeView = vscode.window.createTreeView('boomack-panels', {
+        const treeView = window.createTreeView('boomack-panels', {
             treeDataProvider: this.panelItemProvider,
             canSelectMany: false,
         })
@@ -223,7 +250,7 @@ class Navigator {
     }
 
     createSlotTreeView() {
-        const treeView = vscode.window.createTreeView('boomack-slots', {
+        const treeView = window.createTreeView('boomack-slots', {
             treeDataProvider: this.slotItemProvider,
             canSelectMany: false,
         })
@@ -266,7 +293,7 @@ class Navigator {
      * @param {BoomackServer} server
      */
     async clientFor(server) {
-        return await getClientFor(this._extContext, server)
+        return await getClientFor(server)
     }
 
     _updateServerStateCollection() {
@@ -292,10 +319,10 @@ class Navigator {
                 this.serverStates[server.name] = state
             }
         }
-        const obsoleteServerNames = _.keys(this.serverStates)
+        const obsoleteServerNames = keys(this.serverStates)
             .filter(name =>
                 name !== WORKSPACE_SERVER_NAME
-                && !_.some(servers, s => s.name === name))
+                && !some(servers, s => s.name === name))
         for (const name of obsoleteServerNames) {
             delete this.serverStates[name]
         }
@@ -323,8 +350,8 @@ class Navigator {
             return
         }
 
-        await vscode.window.withProgress({
-            location: vscode.ProgressLocation.Notification,
+        await window.withProgress({
+            location: ProgressLocation.Notification,
             cancellable: false,
             title: `Boomack ${serverState.name}`
         }, async progress => {
@@ -341,7 +368,7 @@ class Navigator {
             // if (defaultPanelState) {
             //     await this._updatePanelState(defaultPanelState)
             // }
-            const panelStates = _.values(serverState.panels)
+            const panelStates = values(serverState.panels)
             let progressValue = 10
             for (const panelState of panelStates) {
                 progress.report({ increment: progressValue, message: `Loading panel "${panelState.id}"` })
@@ -399,7 +426,7 @@ class Navigator {
      * @returns {ServerUIState[]}
      */
     getServerStates() {
-        return _.sortBy(_.values(this.serverStates),
+        return sortBy(values(this.serverStates),
             s => s.name !== WORKSPACE_SERVER_NAME,
             s => s.name.toLocaleLowerCase())
     }
@@ -426,7 +453,7 @@ class Navigator {
             try {
             await this._updateServerState(serverState)
             } catch (err) {
-                vscode.window.showWarningMessage(`Failed to connect to Boomack server "${serverName}"`)
+                window.showWarningMessage(`Failed to connect to Boomack server "${serverName}"`)
                 console.warn('Failed to refresh panels on', serverName, err)
             }
             if (serverState.selectedPanelId) {
@@ -461,7 +488,7 @@ class Navigator {
                 serverState.panels[panelId] = state
             }
         }
-        const obsoletePanelIds = _.keys(serverState.panels)
+        const obsoletePanelIds = keys(serverState.panels)
             .filter(id => !serverState.panelIds.includes(id))
         for (const id of obsoletePanelIds) {
             const panelState = serverState.panels[id]
@@ -484,22 +511,22 @@ class Navigator {
             panelState.definition = /** @type {PanelDefinition} */ (response.body)
             panelState.defaultSlotId = panelState.definition.defaultSlot
             if (!panelState.defaultSlotId && panelState.definition.type === 'grid') {
-                panelState.defaultSlotId = _.sortBy(panelState.definition.slots, 'id')[0]?.id
+                panelState.defaultSlotId = sortBy(panelState.definition.slots, 'id')[0]?.id
             }
             if (panelState.slots) {
-                for (const slotState of _.values(panelState.slots)) {
+                for (const slotState of values(panelState.slots)) {
                     slotState.panel = undefined // reset backlink
                 }
             }
-            panelState.slots = _.keyBy(
-                _.map(panelState.definition.slots, s => ({
+            panelState.slots = keyBy(
+                map(panelState.definition.slots, s => ({
                     ...SLOT_UI_STATE_TEMPLATE,
                     panel: panelState,
                     id: s.id,
                     defaultSlot: s.id === panelState.defaultSlotId,
                 })),
                 s => s.id)
-            if (!_.some(panelState.definition.slots, s => s.id === panelState.selectedSlotId)) {
+            if (!some(panelState.definition.slots, s => s.id === panelState.selectedSlotId)) {
                 panelState.selectedSlotId = null
             }
         } else {
@@ -524,7 +551,7 @@ class Navigator {
      */
     getPanelStates(serverState) {
         if (!serverState) return []
-        return _.sortBy(_.values(serverState.panels),
+        return sortBy(values(serverState.panels),
             p => p.id !== 'default',
             p => p.id)
     }
@@ -569,7 +596,7 @@ class Navigator {
      */
     getSlotStates(panelState) {
         if (!panelState) return []
-        return _.sortBy(_.values(panelState.slots),
+        return sortBy(values(panelState.slots),
             s => !s.defaultSlot,
             s => s.id)
     }
@@ -678,7 +705,7 @@ class Navigator {
 }
 
 /**
- * @implements {vscode.TreeDataProvider<ServerUIState>}
+ * @implements {TreeDataProvider<ServerUIState>}
  */
 class ServerTreeItemProvider {
 
@@ -688,9 +715,9 @@ class ServerTreeItemProvider {
     constructor(navigator) {
         this.navigator = navigator
 
-        /** @type {vscode.EventEmitter<?ServerUIState>} */
-        this._changeEmitter = new vscode.EventEmitter()
-        /** @type {vscode.Event<?ServerUIState>} */
+        /** @type {EventEmitter<?ServerUIState>} */
+        this._changeEmitter = new EventEmitter()
+        /** @type {Event<?ServerUIState>} */
         this.onDidChangeTreeData = this._changeEmitter.event
 
         navigator.registerSubscription(
@@ -704,7 +731,7 @@ class ServerTreeItemProvider {
     /**
      *
      * @param {?ServerUIState} element
-     * @returns {vscode.ProviderResult<ServerUIState[]>}
+     * @returns {ProviderResult<ServerUIState[]>}
      */
     getChildren(element) {
         if (element) return []
@@ -713,15 +740,15 @@ class ServerTreeItemProvider {
 
     /**
      * @param {ServerUIState} element
-     * @returns {vscode.TreeItem}
+     * @returns {TreeItem}
      */
     getTreeItem(element) {
         const server = element.server
         const label = element.name === WORKSPACE_SERVER_NAME
             ? WORKSPACE_SERVER_LABEL
             : element.name
-        const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.None)
-        item.iconPath = new vscode.ThemeIcon('server-environment')
+        const item = new TreeItem(label, TreeItemCollapsibleState.None)
+        item.iconPath = new ThemeIcon('server-environment')
         item.contextValue = element.name === WORKSPACE_SERVER_NAME
             ? 'workspaceServer'
             : 'inventoryServer'
@@ -739,7 +766,7 @@ class ServerTreeItemProvider {
 }
 
 /**
- * @implements {vscode.TreeDataProvider<PanelUIState>}
+ * @implements {TreeDataProvider<PanelUIState>}
  */
 class PanelTreeItemProvider {
 
@@ -749,9 +776,9 @@ class PanelTreeItemProvider {
     constructor(navigator) {
         this.navigator = navigator
 
-        /** @type {vscode.EventEmitter<?PanelUIState>} */
-        this._changeEmitter = new vscode.EventEmitter()
-        /** @type {vscode.Event<?PanelUIState>} */
+        /** @type {EventEmitter<?PanelUIState>} */
+        this._changeEmitter = new EventEmitter()
+        /** @type {Event<?PanelUIState>} */
         this.onDidChangeTreeData = this._changeEmitter.event
 
         /** @type {?ServerUIState} */
@@ -778,7 +805,7 @@ class PanelTreeItemProvider {
     /**
      *
      * @param {?PanelUIState} element
-     * @returns {vscode.ProviderResult<PanelUIState[]>}
+     * @returns {ProviderResult<PanelUIState[]>}
      */
     getChildren(element) {
         if (element || !this.serverState) return []
@@ -787,12 +814,12 @@ class PanelTreeItemProvider {
 
     /**
      * @param {PanelUIState} element
-     * @returns {vscode.TreeItem}
+     * @returns {TreeItem}
      */
     getTreeItem(element) {
         if (!element.server) throw new Error('Showing tree item for disposed panel state')
-        const item = new vscode.TreeItem(element.id, vscode.TreeItemCollapsibleState.None)
-        item.iconPath = new vscode.ThemeIcon('window')
+        const item = new TreeItem(element.id, TreeItemCollapsibleState.None)
+        item.iconPath = new ThemeIcon('window')
         item.description = element.definition?.title
         return item
     }
@@ -801,7 +828,7 @@ class PanelTreeItemProvider {
 }
 
 /**
- * @implements {vscode.TreeDataProvider<SlotUIState>}
+ * @implements {TreeDataProvider<SlotUIState>}
  */
 class SlotTreeItemProvider {
 
@@ -811,9 +838,9 @@ class SlotTreeItemProvider {
     constructor(navigator) {
         this.navigator = navigator
 
-        /** @type {vscode.EventEmitter<?SlotUIState>} */
-        this._changeEmitter = new vscode.EventEmitter()
-        /** @type {vscode.Event<?SlotUIState>} */
+        /** @type {EventEmitter<?SlotUIState>} */
+        this._changeEmitter = new EventEmitter()
+        /** @type {Event<?SlotUIState>} */
         this.onDidChangeTreeData = this._changeEmitter.event
 
         /** @type {?ServerUIState} */
@@ -858,7 +885,7 @@ class SlotTreeItemProvider {
     /**
      *
      * @param {?SlotUIState} element
-     * @returns {vscode.ProviderResult<SlotUIState[]>}
+     * @returns {ProviderResult<SlotUIState[]>}
      */
     getChildren(element) {
         if (element || !this.panelState) return []
@@ -867,21 +894,21 @@ class SlotTreeItemProvider {
 
     /**
      * @param {SlotUIState} element
-     * @returns {vscode.TreeItem}
+     * @returns {TreeItem}
      */
     getTreeItem(element) {
         if (!element.panel) throw new Error('Showing tree item for disposed slot state')
-        const item = new vscode.TreeItem(element.id, vscode.TreeItemCollapsibleState.None)
+        const item = new TreeItem(element.id, TreeItemCollapsibleState.None)
         if (element.defaultSlot) {
             item.description = '(default)'
         }
-        item.iconPath = new vscode.ThemeIcon('symbol-constant')
+        item.iconPath = new ThemeIcon('symbol-constant')
         return item
     }
 
     getParent() { return null }
 }
 
-module.exports = {
+export default {
     Navigator,
 }
