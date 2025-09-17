@@ -1,4 +1,4 @@
-import { keyBy, keys, map, some, sortBy, values } from 'lodash-es'
+import { forEach, has, keys, some, sortBy, values } from 'lodash-es'
 import {
     EventEmitter,
     ProgressLocation,
@@ -513,19 +513,25 @@ export class Navigator {
             if (!panelState.defaultSlotId && panelState.definition.type === 'grid') {
                 panelState.defaultSlotId = sortBy(panelState.definition.slots, 'id')[0]?.id
             }
-            if (panelState.slots) {
-                for (const slotState of values(panelState.slots)) {
-                    slotState.panel = undefined // reset backlink
+            if (!panelState.slots) { panelState.slots = {} }
+            forEach(panelState.definition.slots, s => {
+                if (!has(panelState.slots, s.id)) {
+                    panelState.slots[s.id] = {
+                        ...SLOT_UI_STATE_TEMPLATE,
+                        id: s.id,
+                        panel: panelState,
+                    }
                 }
+                panelState.slots[s.id].defaultSlot = s.id === panelState.defaultSlotId
+            })
+            const existingSlotIds = keys(panelState.definition.slots)
+            const obsoleteSlotIds = keys(panelState.slots)
+                .filter(id => !existingSlotIds.includes(id))
+            for (const id of obsoleteSlotIds) {
+                const slotState = panelState.slots[id]
+                slotState.panel = undefined // reset backlink
+                delete panelState.slots[id]
             }
-            panelState.slots = keyBy(
-                map(panelState.definition.slots, s => ({
-                    ...SLOT_UI_STATE_TEMPLATE,
-                    panel: panelState,
-                    id: s.id,
-                    defaultSlot: s.id === panelState.defaultSlotId,
-                })),
-                s => s.id)
             if (!some(panelState.definition.slots, s => s.id === panelState.selectedSlotId)) {
                 panelState.selectedSlotId = null
             }
