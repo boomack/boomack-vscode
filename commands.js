@@ -898,7 +898,7 @@ async function displayFileSource(navigator, target, filename) {
 
 /**
  * @typedef {Object} DisplayFlags
- * @property {boolean} [displaySource]
+ * @property {'default'|'source'|'prompt'} [typeMode]
  */
 
 /**
@@ -910,14 +910,36 @@ async function displayFileSource(navigator, target, filename) {
 async function displayFileWithFlags(
     navigator, target, filename,
     {
-        displaySource = false,
+        typeMode = 'default',
     }
 ) {
-    if (displaySource) {
+    if (typeMode === 'source') {
         await displayFileSource(navigator, target, filename)
+    } else if (typeMode === 'prompt') {
+        const mediaType = await window.showInputBox({
+            title: "Display",
+            prompt: "Enter a media type",
+            value: 'application/octet-stream',
+        })
+        await displayFile(navigator, target, filename, { mediaType })
     } else {
         await displayFile(navigator, target, filename)
     }
+}
+
+/**
+ * @param {Navigator} navigator
+ * @param {BoomackTarget} target
+ * @param {DisplayFlags} flags
+ */
+async function displayDocumentOnTarget(navigator, target, flags) {
+    const editor = window.activeTextEditor
+    if (!editor) {
+        window.showErrorMessage("No active text editor")
+        return
+    }
+    const filename = editor.document.uri.fsPath
+    await displayFileWithFlags(navigator, target, filename, flags)
 }
 
 /**
@@ -932,13 +954,7 @@ function displayDocumentInPanelCommand(navigator, flags) {
             return
         }
         const target = navigator.targetFromPanel(panelState)
-        const editor = window.activeTextEditor
-        if (!editor) {
-            window.showErrorMessage("No active text editor")
-            return
-        }
-        const filename = editor.document.uri.fsPath
-        await displayFileWithFlags(navigator, target, filename, flags)
+        await displayDocumentOnTarget(navigator, target, flags)
     }
 }
 
@@ -954,13 +970,7 @@ function displayDocumentInSlotCommand(navigator, flags) {
             return
         }
         const target = navigator.targetFromSlot(slotState)
-        const editor = window.activeTextEditor
-        if (!editor) {
-            window.showErrorMessage("No active text editor")
-            return
-        }
-        const filename = editor.document.uri.fsPath
-        await displayFileWithFlags(navigator, target, filename, flags)
+        await displayDocumentOnTarget(navigator, target, flags)
     }
 }
 
@@ -971,11 +981,6 @@ function displayDocumentInSlotCommand(navigator, flags) {
  */
 function displayDocumentInSlotWithIdCommand(navigator, flags) {
     return async () => {
-        const editor = window.activeTextEditor
-        if (!editor) {
-            window.showErrorMessage("No active text editor")
-            return
-        }
         const serverState = navigator.getSelectedServerState()
         const panelState = navigator.getSelectedPanelState(serverState)
         const autoSlotIdPattern = /^slot-(\d+)$/
@@ -985,13 +990,12 @@ function displayDocumentInSlotWithIdCommand(navigator, flags) {
         const nextAutoSlotNumber = lastAutoSlotNumber === undefined ? 0 : (lastAutoSlotNumber + 1)
         const slotId = await window.showInputBox({
             title: "Display",
-            prompt: "Panel ID",
+            prompt: "Enter a Panel ID",
             value: `slot-${nextAutoSlotNumber}`
         })
         if (!slotId) return
         const target = { ...navigator.targetFromPanel(panelState), slotId }
-        const filename = editor.document.uri.fsPath
-        await displayFileWithFlags(navigator, target, filename, flags)
+        await displayDocumentOnTarget(navigator, target, flags)
     }
 }
 
@@ -1003,8 +1007,13 @@ function displayDocumentInSlotWithIdCommand(navigator, flags) {
 function displayFileCommand(navigator, flags) {
     return async resource => {
         if (!resource) {
-            window.showErrorMessage("Command requires argument")
-            return
+            const editor = window.activeTextEditor
+            if (editor) {
+                resource = editor.document.uri
+            } else {
+                window.showErrorMessage("No active text editor")
+                return
+            }
         }
         if (!resource.fsPath) {
             window.showErrorMessage("Command expects a file resource or editor document as argument")

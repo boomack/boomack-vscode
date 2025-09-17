@@ -184,9 +184,57 @@
         "icon": "$(remove)"
       },
       {
+        "command": "boomack.display.activeDocument",
+        "category": "Boomack",
+        "title": "Display Active Document",
+        "icon": "$(send)"
+      },
+      {
+        "command": "boomack.display.activeDocument.source",
+        "category": "Boomack",
+        "title": "Display Text Source of Active Document",
+        "icon": "$(code)"
+      },
+      {
+        "command": "boomack.display.activeDocument.withMediaType",
+        "category": "Boomack",
+        "title": "Display Active Document with different Media Type...",
+        "icon": "$(code-review)"
+      },
+      {
+        "command": "boomack.display.activeDocument.inSlot.withId",
+        "category": "Boomack",
+        "title": "Display Active Document in Slot...",
+        "icon": "$(send)"
+      },
+      {
+        "command": "boomack.display.activeDocument.source.inSlot.withId",
+        "category": "Boomack",
+        "title": "Display Text Source in Slot...",
+        "icon": "$(code)"
+      },
+      {
+        "command": "boomack.display.activeDocument.withMediaType.inSlot.withId",
+        "category": "Boomack",
+        "title": "Display Active Document with different Media Type in Slot...",
+        "icon": "$(code-review)"
+      },
+      {
+        "command": "boomack.display.currentSelection.source",
+        "category": "Boomack",
+        "title": "Display Selection",
+        "icon": "$(send)"
+      },
+      {
+        "command": "boomack.display.currentSelection.withMediaType",
+        "category": "Boomack",
+        "title": "Display Selection with different Media Type",
+        "icon": "$(code-review)"
+      },
+      {
         "command": "boomack.display.document",
         "category": "Boomack",
-        "title": "Display Document on Boomack",
+        "title": "Display on Boomack",
         "icon": "$(send)"
       },
       {
@@ -198,55 +246,37 @@
       {
         "command": "boomack.display.document.withMediaType",
         "category": "Boomack",
-        "title": "Display Document with different Media Type",
+        "title": "Display on Boomack with Media Type...",
         "icon": "$(code-review)"
       },
       {
         "command": "boomack.display.selection.source",
         "category": "Boomack",
-        "title": "Display Current Selection on Boomack",
+        "title": "Display Selection on Boomack",
         "icon": "$(send)"
-      },
-      {
-        "command": "boomack.display.selection.withMediaType",
-        "category": "Boomack",
-        "title": "Display Current Selection with different Media Type",
-        "icon": "$(code-review)"
       },
       {
         "command": "boomack.display.document.inPanel",
         "category": "Boomack",
-        "title": "Display File of Active Editor",
+        "title": "Display Document in default Slot",
         "icon": "$(send)"
       },
       {
         "command": "boomack.display.document.source.inPanel",
         "category": "Boomack",
-        "title": "Display Text Source from Active Editor",
+        "title": "Display Text Source",
         "icon": "$(code)"
       },
       {
         "command": "boomack.display.document.inSlot",
         "category": "Boomack",
-        "title": "Display File of Active Editor",
+        "title": "Display Document",
         "icon": "$(send)"
       },
       {
         "command": "boomack.display.document.source.inSlot",
         "category": "Boomack",
-        "title": "Display Text Source from Active Editor",
-        "icon": "$(code)"
-      },
-      {
-        "command": "boomack.display.document.inSlot.withId",
-        "category": "Boomack",
-        "title": "Display File of Active Editor in (New) Slot",
-        "icon": "$(send)"
-      },
-      {
-        "command": "boomack.display.document.source.inSlot.withId",
-        "category": "Boomack",
-        "title": "Display Text Source from Active Editor in (New) Slot",
+        "title": "Display Text Source",
         "icon": "$(code)"
       },
       {
@@ -294,7 +324,6 @@
       "commandPalette": [
         { "command": "boomack.server.add" },
         { "command": "boomack.server.remove" },
-        { "command": "boomack.server.select" },
         {
           "command": "boomack.workspaceServer.reloadConfig",
           "when": "!boomack.workspaceServer.running"
@@ -322,23 +351,45 @@
         { "command": "boomack.slot.zoomIn" },
         { "command": "boomack.slot.zoomOut" },
         { "command": "boomack.slot.toggleMaximize" },
-        { "command": "boomack.display.document", "when": "boomack.serverSelected" },
-        { "command": "boomack.display.document.source", "when": "boomack.serverSelected" },
-        { "command": "boomack.display.document.withMediaType", "when": "boomack.serverSelected" },
-        { "command": "boomack.display.selection.source", "when": "boomack.serverSelected" },
-        { "command": "boomack.display.selection.withMediaType", "when": "boomack.serverSelected" },
+        {
+          "command": "boomack.display.activeDocument",
+          "when": "boomack.activeTextEditor && boomack.serverSelected"
+        },
+        {
+          "command": "boomack.display.activeDocument.source",
+          "when": "boomack.activeTextEditor && boomack.serverSelected"
+        },
+        {
+          "command": "boomack.display.activeDocument.withMediaType",
+          "when": "boomack.activeTextEditor && boomack.serverSelected"
+        },
+        {
+          "command": "boomack.display.activeDocument.inSlot.withId",
+          "when": "boomack.activeTextEditor && boomack.panelSelected"
+        },
+        {
+          "command": "boomack.display.activeDocument.source.inSlot.withId",
+          "when": "boomack.activeTextEditor && boomack.panelSelected"
+        },
+        {
+          "command": "boomack.display.activeDocument.withMediaType.inSlot.withId",
+          "when": "boomack.activeTextEditor && boomack.panelSelected"
+        },
+        {
+          "command": "boomack.display.currentSelection.source",
+          "when": "editorHasSelection && boomack.serverSelected"
+        },
+        {
+          "command": "boomack.display.currentSelection.withMediaType",
+          "when": "editorHasSelection && boomack.serverSelected"
+        },
+        { "command": "boomack.display.document", "when": "false" },
+        { "command": "boomack.display.document.source", "when": "false" },
+        { "command": "boomack.display.selection.source", "when": "false" },
         { "command": "boomack.display.document.inPanel", "when": "false" },
         { "command": "boomack.display.document.source.inPanel", "when": "false" },
         { "command": "boomack.display.document.inSlot", "when": "false" },
         { "command": "boomack.display.document.source.inSlot", "when": "false" },
-        {
-          "command": "boomack.display.document.inSlot.withId",
-          "when": "boomack.panelSelected && boomack.activeTextEditor"
-        },
-        {
-          "command": "boomack.display.document.source.inSlot.withId",
-          "when": "boomack.panelSelected && boomack.activeTextEditor"
-        },
         { "command": "boomack.display.file", "when": "false" },
         { "command": "boomack.display.file.source", "when": "false" }
       ],
@@ -449,6 +500,28 @@
           "command": "boomack.display.document",
           "alt": "boomack.display.document.source",
           "when": "boomack.serverSelected && boomack.activeTextEditor"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "boomack.display.selection.source",
+          "when": "boomack.serverSelected && editor.hasSelection",
+          "group": "2_boomack@10"
+        },
+        {
+          "command": "boomack.display.document",
+          "when": "boomack.serverSelected",
+          "group": "2_boomack@20"
+        },
+        {
+          "command": "boomack.display.document.source",
+          "when": "boomack.serverSelected",
+          "group": "2_boomack@21"
+        },
+        {
+          "command": "boomack.display.document.withMediaType",
+          "when": "boomack.serverSelected",
+          "group": "2_boomack@22"
         }
       ],
       "explorer/context": [

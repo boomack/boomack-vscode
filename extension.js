@@ -194,19 +194,59 @@ export function activate(context) {
         cmd.slotRemoveCommand(navigator))
     context.subscriptions.push(slotRemoveCmdSubs)
 
+    const displayActiveDocumentCmdSubs = commands.registerCommand(
+        'boomack.display.activeDocument',
+        cmd.displayFileCommand(navigator, { typeMode: 'default' }))
+    context.subscriptions.push(displayActiveDocumentCmdSubs)
+
+    const displayActiveDocumentSourceCmdSubs = commands.registerCommand(
+        'boomack.display.activeDocument.source',
+        cmd.displayFileCommand(navigator, { typeMode: 'source' }))
+    context.subscriptions.push(displayActiveDocumentSourceCmdSubs)
+
+    const displayActiveDocumentWithMediaTypeCmdSubs = commands.registerCommand(
+        'boomack.display.activeDocument.withMediaType',
+        cmd.displayFileCommand(navigator, { typeMode: 'prompt' }))
+    context.subscriptions.push(displayActiveDocumentWithMediaTypeCmdSubs)
+
+    const displayActiveDocumentInSlotWithIdCmdSubs = commands.registerCommand(
+        'boomack.display.activeDocument.inSlot.withId',
+        cmd.displayDocumentInSlotWithIdCommand(navigator, { typeMode: 'default' }))
+    context.subscriptions.push(displayActiveDocumentInSlotWithIdCmdSubs)
+
+    const displayActiveDocumentSourceInSlotWithIdCmdSubs = commands.registerCommand(
+        'boomack.display.activeDocument.source.inSlot.withId',
+        cmd.displayDocumentInSlotWithIdCommand(navigator, { typeMode: 'source' }))
+    context.subscriptions.push(displayActiveDocumentSourceInSlotWithIdCmdSubs)
+
+    const displayActiveDocumentWithMediaTypeInSlotWithIdCmdSubs = commands.registerCommand(
+        'boomack.display.activeDocument.withMediaType.inSlot.withId',
+        cmd.displayDocumentInSlotWithIdCommand(navigator, { typeMode: 'prompt' }))
+    context.subscriptions.push(displayActiveDocumentWithMediaTypeInSlotWithIdCmdSubs)
+
+    const displayCurrentSelectionSourceCmdSubs = commands.registerCommand(
+        'boomack.display.currentSelection.source',
+        () => { window.showInformationMessage("TODO: Display selection source") })
+    context.subscriptions.push(displayCurrentSelectionSourceCmdSubs)
+
+    const displayCurrentSelectionWithMediaTypeCmdSubs = commands.registerCommand(
+        'boomack.display.currentSelection.withMediaType',
+        () => { window.showInformationMessage("TODO: Display selection with media type") })
+    context.subscriptions.push(displayCurrentSelectionWithMediaTypeCmdSubs)
+
     const displayDocumentCmdSubs = commands.registerCommand(
         'boomack.display.document',
-        cmd.displayFileCommand(navigator, { displaySource: false }))
+        cmd.displayFileCommand(navigator, { typeMode: 'default' }))
     context.subscriptions.push(displayDocumentCmdSubs)
 
     const displayDocumentSourceCmdSubs = commands.registerCommand(
         'boomack.display.document.source',
-        cmd.displayFileCommand(navigator, { displaySource: true }))
+        cmd.displayFileCommand(navigator, { typeMode: 'source' }))
     context.subscriptions.push(displayDocumentSourceCmdSubs)
 
     const displayDocumentWithMediaTypeCmdSubs = commands.registerCommand(
         'boomack.display.document.withMediaType',
-        () => { window.showInformationMessage("TODO: Display document with media type") })
+        cmd.displayFileCommand(navigator, { typeMode: 'prompt' }))
     context.subscriptions.push(displayDocumentWithMediaTypeCmdSubs)
 
     const displaySelectionSourceCmdSubs = commands.registerCommand(
@@ -216,42 +256,32 @@ export function activate(context) {
 
     const displayDocumentInPanelCmdSubs = commands.registerCommand(
         'boomack.display.document.inPanel',
-        cmd.displayDocumentInPanelCommand(navigator, { displaySource: false }))
+        cmd.displayDocumentInPanelCommand(navigator, { typeMode: 'default' }))
     context.subscriptions.push(displayDocumentInPanelCmdSubs)
 
     const displayDocumentSourceInPanelCmdSubs = commands.registerCommand(
         'boomack.display.document.source.inPanel',
-        cmd.displayDocumentInPanelCommand(navigator, { displaySource: true }))
+        cmd.displayDocumentInPanelCommand(navigator, { typeMode: 'source' }))
     context.subscriptions.push(displayDocumentSourceInPanelCmdSubs)
 
     const displayInSlotCmdSubs = commands.registerCommand(
         'boomack.display.document.inSlot',
-        cmd.displayDocumentInSlotCommand(navigator, { displaySource: false }))
+        cmd.displayDocumentInSlotCommand(navigator, { typeMode: 'default' }))
     context.subscriptions.push(displayInSlotCmdSubs)
 
     const displayDocumentSourceInSlotCmdSubs = commands.registerCommand(
         'boomack.display.document.source.inSlot',
-        cmd.displayDocumentInSlotCommand(navigator, { displaySource: true }))
+        cmd.displayDocumentInSlotCommand(navigator, { typeMode: 'source' }))
     context.subscriptions.push(displayDocumentSourceInSlotCmdSubs)
-
-    const displayDocumentInSlotWithIdCmdSubs = commands.registerCommand(
-        'boomack.display.document.inSlot.withId',
-        cmd.displayDocumentInSlotWithIdCommand(navigator, { displaySource: false }))
-    context.subscriptions.push(displayDocumentInSlotWithIdCmdSubs)
-
-    const displayDocumentSourceInSlotWithIdCmdSubs = commands.registerCommand(
-        'boomack.display.document.source.inSlot.withId',
-        cmd.displayDocumentInSlotWithIdCommand(navigator, { displaySource: true }))
-    context.subscriptions.push(displayDocumentSourceInSlotWithIdCmdSubs)
 
     const displayFileCmdSubs = commands.registerCommand(
         'boomack.display.file',
-        cmd.displayFileCommand(navigator, { displaySource: false }))
+        cmd.displayFileCommand(navigator, { typeMode: 'default' }))
     context.subscriptions.push(displayFileCmdSubs)
 
     const displayFileSourceCmdSubs = commands.registerCommand(
         'boomack.display.file.source',
-        cmd.displayFileCommand(navigator, { displaySource: true }))
+        cmd.displayFileCommand(navigator, { typeMode: 'source' }))
     context.subscriptions.push(displayFileSourceCmdSubs)
 }
 
