@@ -34,6 +34,8 @@ import { runToolInTerminal } from './tools.js'
 /**
  * @typedef {import('vscode').Terminal} Terminal
  * @typedef {import('vscode').QuickPickItem} QuickPickItem
+ * @typedef {import('vscode').TextEditor} TextEditor
+ * @typedef {import('vscode').Selection} Selection
  */
 /**
  * @typedef {import('./inventory.js').BoomackServer} BoomackServer
@@ -893,7 +895,12 @@ async function displayFileSource(navigator, target, filename) {
     const options = language
         ? { transformation: 'highlight', syntax: language }
         : null
-    await displayFile(navigator, target, filename, { mediaType, options })
+    await displayFile(
+        navigator, target, filename,
+        {
+            mediaType, options,
+            titleSuffix: '(Source)',
+        })
 }
 
 /**
@@ -913,7 +920,9 @@ async function displayFileWithFlags(
         typeMode = 'default',
     }
 ) {
-    if (typeMode === 'source') {
+    if (typeMode === 'default') {
+        await displayFile(navigator, target, filename)
+    } else if (typeMode === 'source') {
         await displayFileSource(navigator, target, filename)
     } else if (typeMode === 'prompt') {
         const mediaType = await window.showInputBox({
@@ -923,7 +932,7 @@ async function displayFileWithFlags(
         })
         await displayFile(navigator, target, filename, { mediaType })
     } else {
-        await displayFile(navigator, target, filename)
+        throw new Error(`Display type mode '${typeMode}' is not supported for file`)
     }
 }
 
@@ -1028,6 +1037,109 @@ function displayFileCommand(navigator, flags) {
     }
 }
 
+/**
+ * @param {Navigator} navigator
+ * @param {BoomackTarget} target
+ * @param {TextEditor} editor
+ * @param {Selection} selection
+ * @param {{
+ *   mediaType?: string,
+ *   options?: Object,
+ * }} [options]
+ */
+async function displaySelection(
+    navigator, target, editor, selection,
+    {
+        mediaType,
+        options,
+    } = {}
+) {
+    const filename = editor.document.uri.fsPath
+    const boomackClient = await navigator.clientFor(target.server)
+    if (!options) { options = {} }
+    if (!mediaType) {
+        const clientConfig = await loadWorkspaceClientConfig()
+        mediaType = lookupMediaType(
+            clientConfig.client.sourceTypes,
+            filename,
+            { defaultType: 'text/plain', mimeFallback: false })
+        let language = 'plain'
+        if (mediaType === 'text/plain') {
+            language = lookupMediaType(
+                clientConfig.client.sourceLanguages,
+                filename,
+                { defaultType: 'plain', mimeFallback: false })
+        }
+        if (language) {
+            options = { ...options, transformation: 'highlight', syntax: language }
+        }
+    }
+    const title = titleForFile(filename, `(Lines ${selection.start.line} – ${selection.end.line})`)
+    const result = await boomackClient.displayMediaItems([{
+        panel: target.panelId,
+        slot: target.slotId || null,
+        text: editor.document.getText(selection),
+        type: mediaType,
+        title,
+        options,
+    }])
+    if (!result.success) {
+        window.showErrorMessage(`Failed to display selected text. HTTP Status ${result.statusCode}.`)
+    }
+}
+
+/**
+ * @param {Navigator} navigator
+ * @param {BoomackTarget} target
+ * @param {TextEditor} editor
+ * @param {Selection} selection
+ * @param {DisplayFlags} flags
+ */
+async function displaySelectionWithFlags(
+    navigator, target, editor, selection,
+    {
+        typeMode = 'source',
+    }
+) {
+    if (typeMode === 'source') {
+        await displaySelection(navigator, target, editor, selection)
+    } else if (typeMode === 'prompt') {
+        const mediaType = await window.showInputBox({
+            title: "Display",
+            prompt: "Enter a media type",
+            value: 'application/octet-stream',
+        })
+        await displaySelection(navigator, target, editor, selection, { mediaType })
+    } else {
+        throw new Error(`Display type mode '${typeMode}' is not supported for selection`)
+    }
+}
+
+/**
+ * @param {Navigator} navigator
+ * @param {DisplayFlags} flags
+ * @returns {function({fsPath: string}):(void | Promise<void>)}
+ */
+function displaySelectionCommand(navigator, flags) {
+    return async () => {
+        const editor = window.activeTextEditor
+        if (!editor) {
+            window.showErrorMessage("No active text editor")
+            return
+        }
+        const selection = editor.selection
+        if (!selection) {
+            window.showErrorMessage("No selection")
+            return
+        }
+        const target = navigator.getCurrentTarget()
+        if (!target) {
+            window.showErrorMessage("No target slot selected")
+        }
+        await displaySelectionWithFlags(navigator, target, editor, selection, flags)
+    }
+}
+
 export default {
     playgroundCommand,
     reloadWorkspaceServerConfig,
@@ -1052,4 +1164,5 @@ export default {
     displayDocumentInSlotCommand,
     displayDocumentInSlotWithIdCommand,
     displayFileCommand,
+    displaySelectionCommand,
 }

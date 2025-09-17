@@ -226,12 +226,12 @@ export function activate(context) {
 
     const displayCurrentSelectionSourceCmdSubs = commands.registerCommand(
         'boomack.display.currentSelection.source',
-        () => { window.showInformationMessage("TODO: Display selection source") })
+        cmd.displaySelectionCommand(navigator, { typeMode: 'source' }))
     context.subscriptions.push(displayCurrentSelectionSourceCmdSubs)
 
     const displayCurrentSelectionWithMediaTypeCmdSubs = commands.registerCommand(
         'boomack.display.currentSelection.withMediaType',
-        () => { window.showInformationMessage("TODO: Display selection with media type") })
+        cmd.displaySelectionCommand(navigator, { typeMode: 'prompt' }))
     context.subscriptions.push(displayCurrentSelectionWithMediaTypeCmdSubs)
 
     const displayDocumentCmdSubs = commands.registerCommand(
@@ -251,7 +251,7 @@ export function activate(context) {
 
     const displaySelectionSourceCmdSubs = commands.registerCommand(
         'boomack.display.selection.source',
-        () => { window.showInformationMessage("TODO: Display selection source") })
+        cmd.displaySelectionCommand(navigator, { typeMode: 'source' }))
     context.subscriptions.push(displaySelectionSourceCmdSubs)
 
     const displayDocumentInPanelCmdSubs = commands.registerCommand(
