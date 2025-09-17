@@ -1,4 +1,4 @@
-import { filter, map, max, omitBy, values } from 'lodash-es'
+import { filter, first, map, max, omitBy, size, values } from 'lodash-es'
 import fs from'node:fs/promises'
 import path from 'node:path'
 import waitOn from 'wait-on'
@@ -82,18 +82,18 @@ function resolvePanelState(uiState) {
     return undefined
 }
 
-// /**
-//  * @param {any} uiState
-//  * @return {SlotUIState|undefined}
-//  */
-// function resolveSlotState(uiState) {
-//     if (!uiState) return undefined
-//     if (isSlotState(uiState)) {
-//         const slotState = /** @type {SlotUIState} */ (uiState)
-//         return slotState
-//     }
-//     return undefined
-// }
+/**
+ * @param {any} uiState
+ * @return {SlotUIState|undefined}
+ */
+function resolveSlotState(uiState) {
+    if (!uiState) return undefined
+    if (isSlotState(uiState)) {
+        const slotState = /** @type {SlotUIState} */ (uiState)
+        return slotState
+    }
+    return undefined
+}
 
 function playgroundCommand() {
     return async () => {
@@ -184,19 +184,35 @@ function userChooseServer(navigator, title, multiStep, excludeWorkspaceServer) {
  * @param {ServerUIState} serverState
  * @param {string} title
  * @param {{ step: number, totalSteps: number }} [multiStep]
- * @returns {Promise<PanelUIState|undefined>}
+ * @param {boolean} [allowSelectNothing]
+ * @returns {Promise<PanelUIState|null|undefined>}
  */
-function userChoosePanelForServer(navigator, serverState, title, multiStep) {
+async function userChoosePanelForServer(navigator, serverState, title, multiStep, allowSelectNothing) {
+    if (serverState.invalid) {
+        await navigator.refreshServerState(serverState)
+    }
     const panelStates = navigator.getPanelStates(serverState)
     const preselectedPanelState = navigator.getSelectedPanelState(serverState)
         || serverState.panels['default']
-    const items = panelStates.map(p => ({
+    let items = panelStates.map(p => ({
         label: p.id,
         description: p.definition?.title,
         iconPath: new ThemeIcon('window'),
         picked: preselectedPanelState?.id === p.id,
     }))
-    return quickPick(
+    if (allowSelectNothing) {
+        // Currently the TreeView API does not allow to unselect items
+        // Therefore, selecting nothing at this point is pointless
+        // items = [
+        //     {
+        //         label: 'Select Nothing',
+        //         iconPath: new ThemeIcon('circle'),
+        //         alwaysShow: true,
+        //     },
+        //     ... items,
+        // ]
+    }
+    return await quickPick(
         items,
         label => panelStates.find(s => s.id === label),
         {
@@ -210,15 +226,16 @@ function userChoosePanelForServer(navigator, serverState, title, multiStep) {
 /**
  * @param {Navigator} navigator
  * @param {string} title
- * @returns {Promise<PanelUIState|undefined>}
+ * @param {boolean} [allowSelectNothing]
+ * @returns {Promise<{ serverState: ServerUIState, panelState: ?PanelUIState }|undefined>}
  */
-async function userChoosePanel(navigator, title) {
+async function userChoosePanel(navigator, title, allowSelectNothing) {
     const serverState = await userChooseServer(
         navigator, title, { step: 1, totalSteps: 2 })
     if (!serverState) return undefined
     const panelState = await userChoosePanelForServer(
-        navigator, serverState, title, { step: 2, totalSteps: 2 })
-    return panelState
+        navigator, serverState, title, { step: 2, totalSteps: 2 }, allowSelectNothing)
+    return { serverState, panelState }
 }
 
 /**
@@ -226,20 +243,34 @@ async function userChoosePanel(navigator, title) {
  * @param {PanelUIState} panelState
  * @param {string} title
  * @param {{ step: number, totalSteps: number }} [multiStep]
- * @returns {Promise<SlotUIState|undefined>}
+ * @param {boolean} [allowSelectNothing]
+ * @returns {Promise<SlotUIState|null|undefined>}
  */
-function userChooseSlotForPanel(navigator, panelState, title, multiStep) {
+function userChooseSlotForPanel(navigator, panelState, title, multiStep, allowSelectNothing) {
     const slotStates = navigator.getSlotStates(panelState)
     const preselectedSlot = navigator.getSelectedSlotState(panelState)
         || panelState.slots[panelState.definition?.defaultSlot]
-    const items = slotStates.map(p => ({
-        label: p.id,
-        iconPath: new ThemeIcon('symbol-constant'),
-        picked: preselectedSlot?.id === p.id,
-    }))
+    /** @type {QuickPickItem[]} */
+    let items = slotStates.map(p => ({
+            label: p.id,
+            iconPath: new ThemeIcon('symbol-constant'),
+            picked: preselectedSlot?.id === p.id,
+        }))
+    if (allowSelectNothing) {
+        // Currently the TreeView API does not allow to unselect items
+        // Therefore, selecting nothing at this point is pointless
+        // items = [
+        //     {
+        //         label: 'Select Nothing',
+        //         iconPath: new ThemeIcon('circle'),
+        //         alwaysShow: true,
+        //     },
+        //     ... items,
+        // ]
+    }
     return quickPick(
         items,
-        label => slotStates.find(s => s.id === label),
+        label => slotStates.find(s => s.id === label) || null,
         {
             title,
             placeholder: 'Slot ID',
@@ -251,9 +282,10 @@ function userChooseSlotForPanel(navigator, panelState, title, multiStep) {
 /**
  * @param {Navigator} navigator
  * @param {string} title
- * @returns {Promise<SlotUIState|undefined>}
+ * @param {boolean} [allowSelectNothing]
+ * @returns {Promise<{ panelState: PanelUIState, slotState: ?SlotUIState }|undefined>}
  */
-async function userChooseSlot(navigator, title) {
+async function userChooseSlot(navigator, title, allowSelectNothing) {
     const serverState = await userChooseServer(
         navigator, title, { step: 1, totalSteps: 3 })
     if (!serverState) return undefined
@@ -261,8 +293,89 @@ async function userChooseSlot(navigator, title) {
         navigator, serverState, title, { step: 2, totalSteps: 3 })
     if (!panelState) return undefined
     const slotState = await userChooseSlotForPanel(
-        navigator, panelState, title, { step: 3, totalSteps: 3 })
-    return slotState
+        navigator, panelState, title, { step: 3, totalSteps: 3 }, allowSelectNothing)
+    return { panelState, slotState }
+}
+
+
+/**
+ * @param {Navigator} navigator
+ * @returns {ServerUIState|undefined}
+ */
+function guessTargetServer(navigator) {
+    const selectedServerState = navigator.getSelectedServerState()
+    if (selectedServerState) return selectedServerState
+    const serverStates = values(navigator.serverStates)
+    if (serverStates.length === 1) return serverStates[0]
+    return undefined
+}
+
+/**
+ * @param {Navigator} navigator
+ * @param {?string} title
+ * @returns {Promise<ServerUIState|undefined>}
+ */
+async function resolveTargetServer(navigator, title) {
+    let serverState = guessTargetServer(navigator)
+    if (serverState) return serverState
+    return await userChooseServer(navigator, title)
+}
+
+/**
+ * @param {Navigator} navigator
+ * @param {?ServerUIState} serverState
+ * @returns {Promise<PanelUIState|undefined>}
+ */
+async function guessTargetPanel(navigator, serverState) {
+    if (!serverState) return undefined
+    const selectedPanelState = navigator.getSelectedPanelState(serverState)
+    if (selectedPanelState) return selectedPanelState
+    if (serverState.invalid) {
+        await navigator.refreshServerState(serverState)
+    }
+    return serverState.panels['default']
+}
+
+/**
+ * @param {Navigator} navigator
+ * @param {?string} title
+ * @returns {Promise<PanelUIState|undefined>}
+ */
+async function resolveTargetPanel(navigator, title) {
+    const serverState = await resolveTargetServer(navigator, title)
+    if (!serverState) return undefined
+    const panelState = await guessTargetPanel(navigator, serverState)
+    if (panelState) return panelState
+    return await userChoosePanelForServer(navigator, serverState, title)
+}
+
+/**
+ * @param {Navigator} navigator
+ * @param {?PanelUIState} panelState
+ * @returns {Promise<SlotUIState|undefined>}
+ */
+async function guessTargetSlot(navigator, panelState) {
+    if (!panelState) return undefined
+    const selectedSlotState = navigator.getSelectedSlotState(panelState)
+    if (selectedSlotState) return selectedSlotState
+    if (panelState.invalid) {
+        await navigator.refreshPanelState(panelState)
+    }
+    const slotStates = values(panelState.slots)
+    return first(filter(slotStates, slot => slot.defaultSlot))
+}
+
+/**
+ * @param {Navigator} navigator
+ * @param {?string} title
+ * @returns {Promise<SlotUIState|undefined>}
+ */
+async function resolveTargetSlot(navigator, title) {
+    const panelState = await resolveTargetPanel(navigator, title)
+    if (!panelState) return undefined
+    const slotState = await guessTargetSlot(navigator, panelState)
+    if (slotState) return slotState
+    return await userChooseSlotForPanel(navigator, panelState, title)
 }
 
 /**
@@ -474,20 +587,13 @@ function selectServerCommand(navigator) {
 }
 
 /**
- * @param {?string} title
- * @returns {Promise<ServerUIState|undefined>}
+ * @param {Navigator} navigator
+ * @returns {function(any):(void | Promise<void>)}
  */
-async function retroactivelySelectServer(title) {
-    return await commands.executeCommand('boomack.server.select', null, title)
-}
-
-/**
- * @returns {function(?ServerUIState):(void | Promise<void>)}
- */
-function openServerInBrowserCommand() {
-    return async serverState => {
-        if (serverState && !isServerState(serverState)) throw new Error('Expected server state or nothing as argument')
-        if (!serverState) serverState = await retroactivelySelectServer('Open Server in Browser')
+function openServerInBrowserCommand(navigator) {
+    return async uiState => {
+        let serverState = resolveServerState(uiState)
+        if (!serverState) serverState = await resolveTargetServer(navigator, 'Open Server in Browser')
         if (!serverState) return
         let url = serverState.server.url
         if (!url.endsWith('/')) url += '/'
@@ -497,14 +603,12 @@ function openServerInBrowserCommand() {
 
 /**
  * @param {Navigator} navigator
- * @param {boolean} targetSelected
  * @returns {function(any):(void | Promise<void>)}
  */
-function refreshPanelsCommand(navigator, targetSelected) {
-    return async element => {
-        let serverState = resolveServerState(element)
-        if (!serverState && targetSelected) serverState = navigator.getSelectedServerState()
-        if (!serverState) serverState = await retroactivelySelectServer('Refresh Panels')
+function refreshPanelsCommand(navigator) {
+    return async uiState => {
+        let serverState = resolveServerState(uiState)
+        if (!serverState) serverState = await resolveTargetServer(navigator, 'Refresh Panels')
         if (!serverState) return
         try {
             await navigator.refreshServerState(serverState)
@@ -517,25 +621,25 @@ function refreshPanelsCommand(navigator, targetSelected) {
 
 /**
  * @param {Navigator} navigator
- * @returns {function(?PanelUIState):(Promise<PanelUIState|undefined>)}
+ * @returns {function(?PanelUIState, ?string):(Promise<PanelUIState|undefined>)}
  */
 function selectPanelCommand(navigator) {
-    return async panelState => {
+    return async (panelState, title) => {
+        if (!title) title = 'Select Boomack Panel'
         if (panelState && !isPanelState(panelState)) throw new Error('Expected panel state or nothing as argument')
-        if (!panelState) panelState = await userChoosePanel(navigator, 'Select Boomack Panel')
-        if (!panelState) return
-        await navigator.selectServer(panelState.server)
-        await navigator.selectPanel(panelState.server, panelState)
+        let serverState = panelState?.server
+        if (!panelState) {
+            let choice = await userChoosePanel(navigator, title, true)
+            if (choice) {
+                serverState = choice.serverState
+                panelState = choice.panelState
+            }
+        }
+        if (!serverState) return undefined
+        await navigator.selectServer(serverState)
+        await navigator.selectPanel(serverState, panelState)
         return panelState
     }
-}
-
-/**
- * @param {?string} title
- * @returns {Promise<PanelUIState|undefined>}
- */
-async function retroactivelySelectPanel(title) {
-    return await commands.executeCommand('boomack.panel.select', null, title)
 }
 
 /**
@@ -561,24 +665,25 @@ async function clearPanel(navigator, panelState) {
 
 /**
  * @param {Navigator} navigator
- * @returns {function(?PanelUIState):(void | Promise<void>)}
+ * @returns {function(any):(void | Promise<void>)}
  */
 function clearPanelCommand(navigator) {
-    return async panelState => {
-        if (panelState && !isPanelState(panelState)) throw new Error('Expected panel state or nothing as argument')
-        if (!panelState) panelState = await retroactivelySelectPanel('Clear Panel')
+    return async uiState => {
+        let panelState = resolvePanelState(uiState)
+        if (!panelState) panelState = await resolveTargetPanel(navigator, 'Clear Panel')
         if (!panelState) return
         await clearPanel(navigator, panelState)
     }
 }
 
 /**
- * @returns {function(?PanelUIState):(void | Promise<void>)}
+ * @param {Navigator} navigator
+ * @returns {function(any):(void | Promise<void>)}
  */
-function openPanelInBrowserCommand() {
-    return async panelState => {
-        if (panelState && !isPanelState(panelState)) throw new Error('Expected panel state or nothing as argument')
-        if (!panelState) panelState = await retroactivelySelectPanel('Open Panel in Browser')
+function openPanelInBrowserCommand(navigator) {
+    return async uiState => {
+        let panelState = resolvePanelState(uiState)
+        if (!panelState) panelState = await resolveTargetPanel(navigator, 'Open Panel in Browser')
         if (!panelState) return
         let url = panelState.server.server.url
         if (!url.endsWith('/')) url += '/'
@@ -589,19 +694,12 @@ function openPanelInBrowserCommand() {
 
 /**
  * @param {Navigator} navigator
- * @param {boolean} targetSelected
  * @returns {function(?PanelUIState):(void | Promise<void>)}
  */
-function refreshSlotsCommand(navigator, targetSelected) {
+function refreshSlotsCommand(navigator) {
     return async element => {
         let panelState = resolvePanelState(element)
-        if (!panelState && targetSelected) {
-            const selectedServerState = navigator.getSelectedServerState()
-            if (selectedServerState) {
-                panelState = navigator.getSelectedPanelState(selectedServerState)
-            }
-        }
-        if (!panelState) panelState = await retroactivelySelectPanel('Refresh Panel')
+        if (!panelState) panelState = await resolveTargetPanel(navigator, 'Refresh Panel')
         if (!panelState) return
         try {
             await navigator.refreshPanelState(panelState)
@@ -614,28 +712,27 @@ function refreshSlotsCommand(navigator, targetSelected) {
 
 /**
  * @param {Navigator} navigator
- * @returns {function(?SlotUIState):(Promise<SlotUIState|undefined>)}
+ * @returns {function(?SlotUIState, ?string):(Promise<SlotUIState|undefined>)}
  */
 function selectSlotCommand(navigator) {
-    return async slotState => {
+    return async (slotState, title) => {
+        if (!title) title = 'Select Boomack Slot'
         if (slotState && !isSlotState(slotState)) throw new Error('Expected slot state or nothing as argument')
-        if (!slotState) slotState = await userChooseSlot(navigator, 'Select Boomack Slot')
-        if (!slotState) return
-        const panelState = slotState.panel
-        await navigator.selectServer(slotState.panel.server)
-        await navigator.selectPanel(slotState.panel.server, slotState.panel)
-        slotState = panelState.slots[slotState.id]
+        let panelState = slotState?.panel
+        if (!slotState) {
+            let choice = await userChooseSlot(navigator, title, true)
+            if (choice) {
+                panelState = choice.panelState
+                slotState = choice.slotState
+            }
+        }
+        if (!panelState) return undefined
+        await navigator.selectServer(panelState.server)
+        await navigator.selectPanel(panelState.server, panelState)
+        // slotState = panelState.slots[slotState.id]
         navigator.selectSlot(panelState, slotState)
         return slotState
     }
-}
-
-/**
- * @param {?string} title
- * @returns {Promise<SlotUIState|undefined>}
- */
-async function retroactivelySelectSlot(title) {
-    return await commands.executeCommand('boomack.slot.select', null, title)
 }
 
 /**
@@ -662,24 +759,25 @@ async function clearSlot(navigator, slotState) {
 
 /**
  * @param {Navigator} navigator
- * @returns {function(?SlotUIState):(void | Promise<void>)}
+ * @returns {function(any):(void | Promise<void>)}
  */
 function clearSlotCommand(navigator) {
-    return async slotState => {
-        if (slotState && !isSlotState(slotState)) throw new Error('Expected slot state or nothing as argument')
-        if (!slotState) slotState = await retroactivelySelectSlot('Clear Slot')
+    return async uiState => {
+        let slotState = resolveSlotState(uiState)
+        if (!slotState) slotState = await resolveTargetSlot(navigator, 'Clear Slot')
         if (!slotState) return
         await clearSlot(navigator, slotState)
     }
 }
 
 /**
- * @returns {function(?SlotUIState):(void | Promise<void>)}
+ * @param {Navigator} navigator
+ * @returns {function(any):(void | Promise<void>)}
  */
-function openSlotInBrowserCommand() {
-    return async slotState => {
-        if (slotState && !isSlotState(slotState)) throw new Error('Expected slot state or nothing as argument')
-        if (!slotState) slotState = await retroactivelySelectSlot('Open Slot in Browser')
+function openSlotInBrowserCommand(navigator) {
+    return async uiState => {
+        let slotState = resolveSlotState(uiState)
+        if (!slotState) slotState = await resolveTargetSlot(navigator, 'Open Slot in Browser')
         if (!slotState) return
         const panelItem = slotState.panel
         let url = panelItem.server.server.url
@@ -689,22 +787,24 @@ function openSlotInBrowserCommand() {
     }
 }
 
-
 /**
  * @param {Navigator} navigator
  * @param {'in'|'out'} direction
- * @returns {function(?SlotUIState):(void | Promise<void>)}
+ * @returns {function(any):(void | Promise<void>)}
  */
 function slotZoomCommand(navigator, direction) {
-    return async slotState => {
-        if (slotState && !isSlotState(slotState)) throw new Error('Expected slot state or nothing as argument')
-        if (!slotState) slotState = await retroactivelySelectSlot('Zoom Slot')
+    return async uiState => {
+        let dirWord = '???'
+        if (direction === 'in') {
+            dirWord = 'In'
+        } else if (direction === 'out') {
+            dirWord = 'Out'
+        }
+        let slotState = resolveSlotState(uiState)
+        if (!slotState) slotState = await resolveTargetSlot(navigator, `Zoom ${dirWord}`)
         if (!slotState) return
         const { server, panelId, slotId } = navigator.targetFromSlot(slotState)
         const client = await navigator.clientFor(server)
-        let dirWord = null
-        if (direction === 'in') dirWord = 'In'
-        else if (direction === 'out') dirWord = 'Out'
         await client.evaluateCode([{
             panelId,
             script: `boomack.cmdSlotZoom${dirWord}('${slotId}')`
@@ -714,12 +814,12 @@ function slotZoomCommand(navigator, direction) {
 
 /**
  * @param {Navigator} navigator
- * @returns {function(?SlotUIState):(void | Promise<void>)}
+ * @returns {function(any):(void | Promise<void>)}
  */
 function slotToggleMaximizeCommand(navigator) {
-    return async slotState => {
-        if (slotState && !isSlotState(slotState)) throw new Error('Expected slot state or nothing as argument')
-        if (!slotState) slotState = await retroactivelySelectSlot('Toggle Maximize Slot')
+    return async uiState => {
+        let slotState = resolveSlotState(uiState)
+        if (!slotState) slotState = await resolveTargetSlot(navigator, 'Toggle Maximize Slot')
         if (!slotState) return
         const { server, panelId, slotId } = navigator.targetFromSlot(slotState)
         const client = await navigator.clientFor(server)
@@ -737,7 +837,10 @@ function slotToggleMaximizeCommand(navigator) {
 function slotRemoveCommand(navigator) {
     return async slotState => {
         if (slotState && !isSlotState(slotState)) throw new Error('Expected slot state or nothing as argument')
-        if (!slotState) slotState = await retroactivelySelectSlot('Remove Slot')
+        if (!slotState) {
+            const choice = await userChooseSlot(navigator, 'Remove Slot')
+            slotState = choice?.slotState
+        }
         if (!slotState) return
         const panelDefinition = slotState.panel.definition
         if (panelDefinition.type !== 'document') {

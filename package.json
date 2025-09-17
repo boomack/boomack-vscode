@@ -292,6 +292,115 @@
         "icon": "$(code)"
       }
     ],
+    "keybindings": [
+      {
+        "command": "boomack.workspaceServer.start",
+        "when": "!boomack.workspaceServer.running",
+        "key": "ctrl+l u",
+        "mac": "cmd+l u"
+      },
+      {
+        "command": "boomack.workspaceServer.stop",
+        "when": "boomack.workspaceServer.running",
+        "key": "ctrl+l k",
+        "mac": "cmd+l k"
+      },
+      {
+        "command": "boomack.server.add",
+        "key": "ctrl+l n",
+        "mac": "cmd+l n"
+      },
+      {
+        "command": "boomack.server.select",
+        "key": "ctrl+l s h",
+        "mac": "cmd+l s h"
+      },
+      {
+        "command": "boomack.panel.select",
+        "key": "ctrl+l s p",
+        "mac": "cmd+l s p"
+      },
+      {
+        "command": "boomack.slot.select",
+        "key": "ctrl+l s s",
+        "mac": "cmd+l s s"
+      },
+      {
+        "command": "boomack.server.openInBrowser",
+        "key": "ctrl+l o h",
+        "mac": "cmd+l o h"
+      },
+      {
+        "command": "boomack.panel.openInBrowser",
+        "key": "ctrl+l o p",
+        "mac": "cmd+l o p"
+      },
+      {
+        "command": "boomack.slot.openInBrowser",
+        "key": "ctrl+l o s",
+        "mac": "cmd+l o s"
+      },
+      {
+        "command": "boomack.server.refresh",
+        "key": "ctrl+l r p",
+        "mac": "cmd+l r p"
+      },
+      {
+        "command": "boomack.panel.refresh",
+        "key": "ctrl+l r s",
+        "mac": "cmd+l r s"
+      },
+      {
+        "command": "boomack.panel.clear",
+        "key": "ctrl+l x p",
+        "mac": "cmd+l x p"
+      },
+      {
+        "command": "boomack.slot.clear",
+        "key": "ctrl+l x s",
+        "mac": "cmd+l x s"
+      },
+      {
+        "command": "boomack.display.activeDocument",
+        "when": "boomack.activeTextEditor && boomack.serverSelected",
+        "key": "ctrl+l d",
+        "mac": "cmd+l d"
+      },
+      {
+        "command": "boomack.display.activeDocument.source",
+        "when": "boomack.activeTextEditor && boomack.serverSelected",
+        "key": "ctrl+l ctrl+d",
+        "mac": "cmd+l cmd+d"
+      },
+      {
+        "command": "boomack.display.activeDocument.withMediaType",
+        "when": "boomack.activeTextEditor && boomack.serverSelected",
+        "key": "ctrl+l shift+d",
+        "mac": "cmd+l shift+d"
+      },
+      {
+        "command": "boomack.display.selection.source",
+        "when": "editorHasSelection && boomack.serverSelected",
+        "key": "ctrl+l ctrl+l",
+        "mac": "cmd+l cmd+l"
+      },
+      {
+        "command": "boomack.display.selection.withMediaType",
+        "when": "editorHasSelection && boomack.serverSelected",
+        "key": "ctrl+l shift+l",
+        "mac": "cmd+l shift+l"
+      },
+      {
+        "command": "boomack.slot.zoomIn",
+        "key": "ctrl+l z i",
+        "mac": "cmd+l z i"
+      },
+      {
+        "command": "boomack.slot.zoomOut",
+        "key": "ctrl+l z o",
+        "mac": "cmd+l z o"
+      }
+    ],
     "viewsContainers": {
       "activitybar": [
         {
@@ -339,12 +448,10 @@
         { "command": "boomack.server.select" },
         { "command": "boomack.server.openInBrowser" },
         { "command": "boomack.server.refresh" },
-        { "command": "boomack.server.refreshSelected", "when": "false" },
         { "command": "boomack.panel.select" },
         { "command": "boomack.panel.clear" },
         { "command": "boomack.panel.openInBrowser" },
         { "command": "boomack.panel.refresh" },
-        { "command": "boomack.panel.refreshSelected", "when": "false" },
         { "command": "boomack.slot.select" },
         { "command": "boomack.slot.clear" },
         { "command": "boomack.slot.openInBrowser" },
@@ -400,12 +507,12 @@
           "group": "navigation"
         },
         {
-          "command": "boomack.server.refreshSelected",
+          "command": "boomack.server.refresh",
           "when": "view == boomack-panels && boomack.serverSelected",
           "group": "navigation"
         },
         {
-          "command": "boomack.panel.refreshSelected",
+          "command": "boomack.panel.refresh",
           "when": "view == boomack-slots && boomack.panelSelected",
           "group": "navigation@2"
         }
@@ -505,7 +612,7 @@
       "editor/context": [
         {
           "command": "boomack.display.selection.source",
-          "when": "boomack.serverSelected && editor.hasSelection",
+          "when": "boomack.serverSelected && editorHasSelection",
           "group": "2_boomack@10"
         },
         {

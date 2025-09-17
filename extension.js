@@ -15,13 +15,10 @@ import cmd from './commands.js'
 let navigator = null
 
 // === TODO ===
-// - display text selection
-// - display HTML source code
-// - display with explicit media type / preset
+// - display notebook cell
 // - setup panel from file
 // - setup from playbook
 // - setup from assets in directory structure (types, presets, layouts, actions, initial content)
-// - detect workspace server config
 // - json schema for server config
 // - json schema for panel layout
 // - json schema for display request
@@ -121,18 +118,13 @@ export function activate(context) {
 
     const openServerInBrowserCmdSubs = commands.registerCommand(
         'boomack.server.openInBrowser',
-        cmd.openServerInBrowserCommand())
+        cmd.openServerInBrowserCommand(navigator))
     context.subscriptions.push(openServerInBrowserCmdSubs)
 
     const refreshServerCmdSubs = commands.registerCommand(
         'boomack.server.refresh',
-        cmd.refreshPanelsCommand(navigator, false))
+        cmd.refreshPanelsCommand(navigator))
     context.subscriptions.push(refreshServerCmdSubs)
-
-    const refreshSelectedServerCmdSubs = commands.registerCommand(
-        'boomack.server.refreshSelected',
-        cmd.refreshPanelsCommand(navigator, true))
-    context.subscriptions.push(refreshSelectedServerCmdSubs)
 
     const selectPanelCmdSubs = commands.registerCommand(
         'boomack.panel.select',
@@ -146,18 +138,13 @@ export function activate(context) {
 
     const openPanelInBrowserCmdSubs = commands.registerCommand(
         'boomack.panel.openInBrowser',
-        cmd.openPanelInBrowserCommand())
+        cmd.openPanelInBrowserCommand(navigator))
     context.subscriptions.push(openPanelInBrowserCmdSubs)
 
     const refreshPanelCmdSubs = commands.registerCommand(
         'boomack.panel.refresh',
-        cmd.refreshSlotsCommand(navigator, false))
+        cmd.refreshSlotsCommand(navigator))
     context.subscriptions.push(refreshPanelCmdSubs)
-
-    const refreshSelectedPanelCmdSubs = commands.registerCommand(
-        'boomack.panel.refreshSelected',
-        cmd.refreshSlotsCommand(navigator, true))
-    context.subscriptions.push(refreshSelectedPanelCmdSubs)
 
     const selectSlotCmdSubs = commands.registerCommand(
         'boomack.slot.select',
@@ -171,7 +158,7 @@ export function activate(context) {
 
     const openSlotInBrowserCmdSubs = commands.registerCommand(
         'boomack.slot.openInBrowser',
-        cmd.openSlotInBrowserCommand())
+        cmd.openSlotInBrowserCommand(navigator))
     context.subscriptions.push(openSlotInBrowserCmdSubs)
 
     const slotZoomInCmdSubs = commands.registerCommand(

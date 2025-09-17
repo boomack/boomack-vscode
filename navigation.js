@@ -273,7 +273,12 @@ export class Navigator {
                 if (blockEvent) return
                 if (e.panelState.server.name !== this.slotItemProvider.serverState?.name) return
                 if (e.panelState.id !== this.slotItemProvider.panelState?.id) return
-                await treeView.reveal(e.slotState, { select: true })
+                try {
+                    await treeView.reveal(e.slotState, { select: true })
+                } catch (err) {
+                    console.error('Failed to select slot item in tree view')
+                    console.error(err)
+                }
             }))
         return treeView
     }
