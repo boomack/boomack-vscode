@@ -1,7 +1,8 @@
-import { filter, first, map, max, omitBy, size, values } from 'lodash-es'
+import { filter, first, map, max, omitBy, values } from 'lodash-es'
 import fs from'node:fs/promises'
 import path from 'node:path'
 import waitOn from 'wait-on'
+import { ctrlc } from 'ctrlc-windows'
 import {
     commands,
     ProgressLocation,
@@ -29,7 +30,10 @@ import {
     getFileSrcRootsFromRunConfig,
 } from './config.js'
 import inventory from './inventory.js'
-import { runToolInTerminal } from './tools.js'
+import {
+    getBoomackServerCommandLine,
+    runInTerminal,
+} from './tools.js'
 
 /**
  * @typedef {import('vscode').Terminal} Terminal
@@ -436,18 +440,28 @@ function startWorkspaceServerCommand(navigator) {
                 args.push(`api.request.fileSrcRoots.${i}=${fileSrcRoots[i]}`)
             }
 
-            workspaceServerTerminal = runToolInTerminal(
+            const cmdLine = await getBoomackServerCommandLine(navigator.getContext())
+            if (!cmdLine) {
+                window.showErrorMessage("Failed to start Project Server")
+                return
+            }
+            console.log('Boomack Commandline:', cmdLine.cmd, [...cmdLine.args, ...args])
+            let started = false
+            workspaceServerTerminal = runInTerminal(
                 navigator.getContext(),
                 'Boomack Server', null,
-                'boomack', args,
+                cmdLine.cmd, [...cmdLine.args, ...args],
                 projectRoot,
                 () => {
+                    const terminal = workspaceServerTerminal
+                    workspaceServerTerminal = null
                     commands.executeCommand('setContext',
                         'boomack.workspaceServer.running', false)
                     navigator.setWorkspaceServerRunning(false)
-                    removeItemOnce(navigator.getContext().subscriptions, workspaceServerTerminal)
-                    workspaceServerTerminal = null
-                    window.showInformationMessage("Boomack Project Server stopped")
+                    removeItemOnce(navigator.getContext().subscriptions, terminal)
+                    if (started) {
+                        window.showInformationMessage("Boomack Project Server stopped")
+                    }
                 })
             try {
                 await waitOn({
@@ -460,6 +474,7 @@ function startWorkspaceServerCommand(navigator) {
                     followRedirect: true,
                     validateStatus: status => status === 200 || status === 401,
                 })
+                started = true
                 progress.report({ increment: 100, message: 'Started' })
             } catch (err) {
                 progress.report({ increment: 100, message: 'Error' })
@@ -485,14 +500,16 @@ function stopWorkspaceServerCommand() {
             window.showWarningMessage("Boomack Project Server is not running")
             return
         }
-        // TODO kill process directly, if NodeJS is run without a shell
-        // const pid = await workspaceServerTerminal.processId
-        // if (pid) {
-        //     process.kill(pid, 'SIGINT')
-        // } else {
-        //     workspaceServerTerminal.dispose()
-        // }
-        workspaceServerTerminal.dispose()
+        const pid = await workspaceServerTerminal.processId
+        if (pid) {
+            if (process.platform === 'win32') {
+                ctrlc(pid)
+            } else {
+                process.kill(pid, 'SIGINT')
+            }
+        } else {
+            workspaceServerTerminal.dispose()
+        }
     }
 }
 

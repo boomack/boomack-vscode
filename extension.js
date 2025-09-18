@@ -16,7 +16,7 @@ let navigator = null
 
 // === TODO ===
 // - display notebook cell
-// - run NodeJS (workspace server) directly without shell for graceful shutdown
+// - provide list with media type choices for display commands 'withMediaType' (from API)
 // - uncouple target (server, panel, slot) from tree view selection (indicate by icon?)
 // - show Boomack target in status bar
 // - setup panel from file

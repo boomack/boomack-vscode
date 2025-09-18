@@ -1,10 +1,15 @@
 import { existsSync } from 'node:fs'
-import { join } from 'node:path'
+import { readFile } from 'node:fs/promises'
+import { basename, dirname, join, resolve } from 'node:path'
 import {
     Uri,
     window,
     workspace,
 } from 'vscode'
+import { lookpath } from 'lookpath'
+import { config } from './config.js'
+
+const boomackServerMainScript = 'server-build/cli.js'
 
 /**
  * @typedef {import('vscode').ExtensionContext} ExtensionContext
@@ -12,86 +17,122 @@ import {
  */
 
 /**
- * @param {string} scriptName
- * @returns {string | undefined}
+ * @param {ExtensionContext} context
+ * @returns {string}
  */
-function platformSpecificExecutable(scriptName) {
-    // The wrapper is a .ps1 or .cmd file on Windows
-    // On Linux/MacOS it is a plain executable file
-    if (process.platform === 'win32') {
-        const batchFileName = `${scriptName}.cmd`
-        if (existsSync(batchFileName)) {
-            return batchFileName
-        }
-        const pwshScriptName = `${scriptName}.ps1`
-        if (existsSync(pwshScriptName)) {
-            return pwshScriptName
-        }
-    } else {
-        if (existsSync(scriptName)) {
-            return scriptName
-        }
-    }
-    return undefined
+function embeddedBoomackServerScriptPath(context) {
+    return join(context.extensionPath, 'node_modules', 'boomack', boomackServerMainScript)
 }
 
 /**
- * Returns the absolute path to the executable that ships with the extension.
- * Works for both Windows (`.cmd`/`.ps1`) and *nix (no extension).
- * 
  * @param {ExtensionContext} context
- * @param {string} toolName
- * @returns {string}
+ * @param {boolean} showMessage
+ * @returns {Promise<{ cmd: string, args: string[] }|undefined>}
  */
-export function getToolPath(context, toolName) {
-    // look in shared .bin folder of extensions
-    const binPath = platformSpecificExecutable(
-        join(context.extensionPath, 'node_modules', '.bin', toolName))
-    if (binPath) return binPath
+async function getEmbeddedBoomackServerCommandLine(context, showMessage) {
+    const nodeExePath = await lookpath('node')
+    if (!nodeExePath) {
+        if (showMessage) {
+            window.showErrorMessage(
+                "Can not find NodeJS executable on PATH."
+                + " Please install NodeJS to run embedded Boomack server.")
+        }
+        return undefined
+    }
+    return {
+        cmd: nodeExePath,
+        args: [embeddedBoomackServerScriptPath(context)]
+    }
+}
 
-    // look inside the bin folder of the package itself
-    const pkgBinPath = platformSpecificExecutable(
-        join(context.extensionPath, 'node_modules', toolName, 'bin', toolName))
-    if (pkgBinPath) return pkgBinPath
+/**
+ * @param {string} filename
+ * @returns {Promise<string|undefined>}
+ */
+async function getScriptPathFromCmdWrapper(filename) {
+    const scriptText = await readFile(filename, { encoding: 'ascii' })
+    const match = /"(?:%~dp0|%dp0%)\\(.+?\.js)"/.exec(scriptText)
+    return match
+        ? resolve(dirname(filename), match[1])
+        : undefined
+}
 
-    throw new Error(`Did not find the executable of "${toolName}". Expected at ${binPath} or ${pkgBinPath}`)
+/**
+ * @param {boolean} showMessage
+ * @returns {Promise<{ cmd: string, args: string[] }|undefined>}
+ */
+async function getSystemBoomackServerCommandLine(showMessage) {
+    const boomackExePath = await lookpath('boomack')
+    if (!boomackExePath) {
+        if (showMessage) {
+            window.showErrorMessage(
+                "Can not find Boomack Server executable on PATH."
+                + " Please install Boomack Server.")
+        }
+        return undefined
+    }
+    if (basename(boomackExePath).toLowerCase() === 'boomack.cmd') {
+        const scriptPath = await getScriptPathFromCmdWrapper(boomackExePath)
+        if (!scriptPath) {
+            return { cmd: 'cmd.exe', args: [ '/C', boomackExePath ] }
+        }
+        const localNodeExe = join(dirname(boomackExePath), 'node.exe')
+        if (existsSync(localNodeExe)) {
+            return {
+                cmd: localNodeExe,
+                args: [scriptPath]
+            }
+        }
+        const nodeExe = await lookpath('node')
+        if (!nodeExe) {
+            if (showMessage) {
+                window.showErrorMessage(
+                    "Can not find NodeJS executable on PATH."
+                    + " Please install NodeJS to run Boomack server.")
+            }
+            return undefined
+        }
+        return {
+            cmd: nodeExe,
+            args: [scriptPath]
+        }
+    } else {
+        return { cmd: boomackExePath, args: [] }
+    }
+}
+
+/**
+ * @param {ExtensionContext} context
+ * @returns {Promise<{ cmd: string, args: string[] }|undefined>}
+ */
+export async function getBoomackServerCommandLine(context) {
+    const installation = config('server.installation')
+    if (installation === 'embedded') {
+        return await getEmbeddedBoomackServerCommandLine(context, true)
+    } else if (installation === 'system') {
+        return await getSystemBoomackServerCommandLine(true)
+    }
+    const embeddedCommandLine = await getEmbeddedBoomackServerCommandLine(context, false)
+    if (embeddedCommandLine) return embeddedCommandLine
+    const systemCommandLine = await getSystemBoomackServerCommandLine(false)
+    if (systemCommandLine) return systemCommandLine
+    window.showErrorMessage(
+        "Can neither find NodeJS nor Boomack Server on PATH."
+        + " Install one of these to run Boomack Server.")
+    return undefined
 }
 
 /**
  * @param {ExtensionContext} context
  * @param {string} label
  * @param {?string} message
- * @param {string} toolName
+ * @param {string} cmd
  * @param {string[]} args
  * @param {string} [cwd]
  * @param {function (): void} [endCb]
  * @returns {Terminal}
  */
-export function runToolInTerminal(context, label, message, toolName, args, cwd, endCb) {
-    const execPath = getToolPath(context, toolName);
-
-    // TODO run JavaScript package without a shell
-    // TODO rename 'tool' into 'jsScript'
-
-    /** @type {?string} */
-    let cmd = null
-    let cmdArgs = []
-    if (execPath.toLowerCase().endsWith('.cmd')) {
-        cmd = 'cmd.exe'
-        cmdArgs.push('/C')
-        cmdArgs.push(execPath)
-    } else if (execPath.toLowerCase().endsWith('.ps1')) {
-        cmd = 'powershell.exe'
-        cmdArgs.push('-NoLogo')
-        cmdArgs.push('-NoProfile')
-        cmdArgs.push('-ExecutionPolicy')
-        cmdArgs.push('ByPass')
-        cmdArgs.push('-File')
-        cmdArgs.push(execPath)
-    } else {
-        cmd = execPath
-    }
-    for (const arg of args) { cmdArgs.push(arg) }
+export function runInTerminal(context, label, message, cmd, args, cwd, endCb) {
 
     const terminal = window.createTerminal({
         iconPath: Uri.joinPath(context.extensionUri, 'res', 'boomack-logo.svg'),
@@ -100,7 +141,7 @@ export function runToolInTerminal(context, label, message, toolName, args, cwd, 
         env: process.env,
         message: message,
         shellPath: cmd,
-        shellArgs: cmdArgs,
+        shellArgs: args,
     })
 
     terminal.processId.then(pid => {
