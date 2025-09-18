@@ -311,6 +311,18 @@
         "category": "Boomack",
         "title": "Display Text Source on Boomack",
         "icon": "$(code)"
+      },
+      {
+        "command": "boomack.display.notebook.cell",
+        "category": "Boomack",
+        "title": "Display Cell Output on Boomack",
+        "icon": "$(send)"
+      },
+      {
+        "command": "boomack.display.notebook.cell.source",
+        "category": "Boomack",
+        "title": "Display Cell Source on Boomack",
+        "icon": "$(code)"
       }
     ],
     "keybindings": [
@@ -650,6 +662,13 @@
           "command": "boomack.display.document.withMediaType",
           "when": "boomack.serverSelected",
           "group": "2_boomack@22"
+        }
+      ],
+      "notebook/cell/title": [
+        {
+          "command": "boomack.display.notebook.cell",
+          "alt": "boomack.display.notebook.cell.source",
+          "group": "inline"
         }
       ],
       "explorer/context": [

@@ -5,6 +5,7 @@ import waitOn from 'wait-on'
 import { ctrlc } from 'ctrlc-windows'
 import {
     commands,
+    NotebookCellKind,
     ProgressLocation,
     ThemeIcon,
     window,
@@ -40,6 +41,7 @@ import {
  * @typedef {import('vscode').QuickPickItem} QuickPickItem
  * @typedef {import('vscode').TextEditor} TextEditor
  * @typedef {import('vscode').Selection} Selection
+ * @typedef {import('vscode').NotebookCell} NotebookCell
  */
 /**
  * @typedef {import('./inventory.js').BoomackServer} BoomackServer
@@ -1194,7 +1196,7 @@ async function displaySelection(
             options = { ...options, transformation: 'highlight', syntax: language }
         }
     }
-    const title = titleForFile(filename, `(Lines ${selection.start.line} – ${selection.end.line})`)
+    const title = titleForFile(filename, `(Lines ${selection.start.line + 1} – ${selection.end.line + 1})`)
     const result = await boomackClient.displayMediaItems([{
         panel: target.panelId,
         slot: target.slotId || null,
@@ -1260,6 +1262,101 @@ function displaySelectionCommand(navigator, flags) {
     }
 }
 
+/**
+ * @param {Navigator} navigator
+ * @param {BoomackTarget} target
+ * @param {NotebookCell} cell
+ * @param {boolean} displaySource
+ * @param {{
+ *   options?: Object,
+ * }} [options]
+ */
+async function displayNotebookCell(
+    navigator, target, cell, displaySource,
+    {
+        options,
+    } = {}
+) {
+    const notebook = cell.notebook
+    const filename = notebook.uri.fsPath
+    const boomackClient = await navigator.clientFor(target.server)
+    if (!options) { options = {} }
+    let request = {
+        panel: target.panelId,
+        slot: target.slotId || null,
+        options,
+    }
+    if (cell.kind === NotebookCellKind.Markup) {
+        request.text = cell.document.getText()
+        if (displaySource) {
+            request.title = titleForFile(filename, `(Cell ${cell.index + 1} Source)`)
+            request.type = 'text/plain'
+            request.options = {
+                ...options,
+                transformation: 'highlight',
+                syntax: 'markdown',
+            }
+        } else {
+            request.title = titleForFile(filename, `(Cell ${cell.index + 1} Output)`)
+            request.type = 'text/markdown'
+        }
+        const result = await boomackClient.displayMediaItems([request])
+        if (!result.success) {
+            window.showErrorMessage(`Failed to display markup cell. HTTP Status ${result.statusCode}.`)
+        }
+    } else if (cell.kind === NotebookCellKind.Code) {
+        if (displaySource) {
+            request.text = cell.document.getText()
+            request.title = titleForFile(filename, `(Cell ${cell.index + 1} Source)`)
+            request.type = 'text/plain'
+            request.options = {
+                ...options,
+                transformation: 'highlight',
+                syntax: cell.document.languageId, // map VS Code language ID to PrismJS language
+            }
+            const result = await boomackClient.displayMediaItems([request])
+            if (!result.success) {
+                window.showErrorMessage(`Failed to display cell source. HTTP Status ${result.statusCode}.`)
+            }
+        } else if (cell.outputs.length > 0 && cell.outputs[0].items.length > 0) {
+            const output = cell.outputs[0].items[0]
+            request.title = titleForFile(filename, `(Cell ${cell.index + 1} Output)`)
+            if (output.mime === 'application/vnd.code.notebook.error') {
+                request.type = 'text/plain'
+                request.text = JSON.parse(new TextDecoder('utf8').decode(output.data)).stack
+            } else {
+                request.type = output.mime === 'application/vnd.code.notebook.stdout'
+                    ? 'text/plain' : output.mime
+                request.data = Buffer.from(output.data).toString('base64')
+            }
+            const result = await boomackClient.displayMediaItems([request])
+            if (!result.success) {
+                window.showErrorMessage(`Failed to display cell output. HTTP Status ${result.statusCode}.`)
+            }
+        }
+    }
+
+}
+
+/**
+ * @param {Navigator} navigator
+ * @param {boolean} displaySource
+ * @returns {function(NotebookCell):(void | Promise<void>)}
+ */
+function displayNotebookCellCommand(navigator, displaySource) {
+    return async cell => {
+        if (!cell) {
+            window.showErrorMessage("Command expects a Notebook cell as argument")
+            return
+        }
+        const target = navigator.getCurrentTarget()
+        if (!target) {
+            window.showErrorMessage("No target slot selected")
+        }
+        await displayNotebookCell(navigator, target, cell, displaySource)
+    }
+}
+
 export default {
     playgroundCommand,
     reloadWorkspaceServerConfig,
@@ -1285,4 +1382,5 @@ export default {
     displayDocumentInSlotWithIdCommand,
     displayFileCommand,
     displaySelectionCommand,
+    displayNotebookCellCommand,
 }

@@ -273,6 +273,16 @@ export function activate(context) {
         'boomack.display.file.source',
         cmd.displayFileCommand(navigator, { typeMode: 'source' }))
     context.subscriptions.push(displayFileSourceCmdSubs)
+
+    const displayNotebookCellCmdSubs = commands.registerCommand(
+        'boomack.display.notebook.cell',
+        cmd.displayNotebookCellCommand(navigator, false))
+    context.subscriptions.push(displayNotebookCellCmdSubs)
+
+    const displayNotebookCellSourceCmdSubs = commands.registerCommand(
+        'boomack.display.notebook.cell.source',
+        cmd.displayNotebookCellCommand(navigator, true))
+    context.subscriptions.push(displayNotebookCellSourceCmdSubs)
 }
 
 // This method is called when your extension is deactivated
