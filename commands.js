@@ -1,4 +1,4 @@
-import { filter, first, map, max, omitBy, values } from 'lodash-es'
+import { chain, filter, first, flatMap, map, max, omitBy, values } from 'lodash-es'
 import fs from'node:fs/promises'
 import path from 'node:path'
 import waitOn from 'wait-on'
@@ -7,6 +7,7 @@ import {
     commands,
     NotebookCellKind,
     ProgressLocation,
+    QuickPickItemKind,
     ThemeIcon,
     window,
     workspace,
@@ -42,6 +43,8 @@ import {
  * @typedef {import('vscode').TextEditor} TextEditor
  * @typedef {import('vscode').Selection} Selection
  * @typedef {import('vscode').NotebookCell} NotebookCell
+ * @typedef {import('vscode').NotebookCellOutput} NotebookCellOutput
+ * @typedef {import('vscode').NotebookCellOutputItem} NotebookCellOutputItem
  */
 /**
  * @typedef {import('./inventory.js').BoomackServer} BoomackServer
@@ -1263,6 +1266,84 @@ function displaySelectionCommand(navigator, flags) {
 }
 
 /**
+ * @param {readonly NotebookCellOutput[]} outputs
+ * @returns {NotebookCellOutputItem|undefined}
+ */
+function autoChooseCellOutputItem(outputs) {
+    const items = flatMap(outputs, o => o.items)
+
+    const error = chain(items)
+        .filter(i => i.mime === 'application/vnd.code.notebook.error')
+        .first().value()
+    if (error) return error
+
+    const image = chain(items).filter(i => i.mime.startsWith('image/')).first().value()
+    if (image) return image
+
+    const markdown = chain(items).filter(i => i.mime === 'text/markdown').first().value()
+    if (markdown) return markdown
+
+    const html = chain(items).filter(i => i.mime === 'text/html').first().value()
+    if (html) return html
+
+    return chain(items).last().value() || undefined
+}
+
+/**
+ * @typedef {QuickPickItem & { outputItem?: NotebookCellOutputItem}} CellOutputQuickPickItem
+ */
+
+/**
+ * @param {readonly NotebookCellOutput[]} outputs
+ * @returns {Promise<NotebookCellOutputItem|undefined>}
+ */
+async function userChooseCellOutputItem(outputs) {
+    /** @type {CellOutputQuickPickItem[]} */
+    const items = []
+    let n1 = 0
+    let n2 = 0
+    for (const output of outputs) {
+        if (items.length > 0) {
+            items.push({
+                kind: QuickPickItemKind.Separator,
+                label: null,
+            })
+        }
+        n1++
+        n2 = 1
+        for (const item of output.items) {
+            items.push({
+                kind: QuickPickItemKind.Default,
+                label: `${n1}.${n2} ${item.mime}`,
+                outputItem: item,
+            })
+            n2++
+        }
+    }
+    const selection = await window.showQuickPick(items,
+        { canPickMany: false, title: 'Display Cell Output' })
+    return selection ? selection.outputItem : undefined
+}
+
+/**
+ * @param {readonly NotebookCellOutput[]} outputs
+ * @returns {Promise<NotebookCellOutputItem|undefined>}
+ */
+async function chooseCellOutpuItem(outputs) {
+    if (outputs.length === 1 && outputs[0].items.length === 1) {
+        return outputs[0].items[0]
+    }
+    const selectionMode = config('notebook.outputSelection')
+    if (selectionMode === 'auto') {
+        return autoChooseCellOutputItem(outputs)
+    }
+    if (selectionMode === 'user') {
+        return await userChooseCellOutputItem(outputs)
+    }
+    throw new Error(`Unsupported setting for 'boomack.notebook.outputSelection': ${selectionMode}`)
+}
+
+/**
  * @param {Navigator} navigator
  * @param {BoomackTarget} target
  * @param {NotebookCell} cell
@@ -1318,20 +1399,28 @@ async function displayNotebookCell(
             if (!result.success) {
                 window.showErrorMessage(`Failed to display cell source. HTTP Status ${result.statusCode}.`)
             }
-        } else if (cell.outputs.length > 0 && cell.outputs[0].items.length > 0) {
-            const output = cell.outputs[0].items[0]
-            request.title = titleForFile(filename, `(Cell ${cell.index + 1} Output)`)
-            if (output.mime === 'application/vnd.code.notebook.error') {
-                request.type = 'text/plain'
-                request.text = JSON.parse(new TextDecoder('utf8').decode(output.data)).stack
+        } else {
+            if (cell.outputs.length > 0) {
+                const outputItem = await chooseCellOutpuItem(cell.outputs)
+                if (!outputItem) {
+                    window.showWarningMessage("Cell has not output")
+                    return
+                }
+                request.title = titleForFile(filename, `(Cell ${cell.index + 1} Output)`)
+                if (outputItem.mime === 'application/vnd.code.notebook.error') {
+                    request.type = 'text/plain'
+                    request.text = JSON.parse(new TextDecoder('utf8').decode(outputItem.data)).stack
+                } else {
+                    request.type = outputItem.mime === 'application/vnd.code.notebook.stdout'
+                        ? 'text/plain' : outputItem.mime
+                    request.data = Buffer.from(outputItem.data).toString('base64')
+                }
+                const result = await boomackClient.displayMediaItems([request])
+                if (!result.success) {
+                    window.showErrorMessage(`Failed to display cell output. HTTP Status ${result.statusCode}.`)
+                }
             } else {
-                request.type = output.mime === 'application/vnd.code.notebook.stdout'
-                    ? 'text/plain' : output.mime
-                request.data = Buffer.from(output.data).toString('base64')
-            }
-            const result = await boomackClient.displayMediaItems([request])
-            if (!result.success) {
-                window.showErrorMessage(`Failed to display cell output. HTTP Status ${result.statusCode}.`)
+                window.showWarningMessage("Cell has not output")
             }
         }
     }
@@ -1346,8 +1435,16 @@ async function displayNotebookCell(
 function displayNotebookCellCommand(navigator, displaySource) {
     return async cell => {
         if (!cell) {
-            window.showErrorMessage("Command expects a Notebook cell as argument")
-            return
+            const editor = window.activeNotebookEditor
+            if (!editor) {
+                window.showErrorMessage("No active notebook editor")
+                return
+            }
+            if (editor.selection.isEmpty) {
+                window.showErrorMessage("No active notebook cell")
+                return
+            }
+            cell = editor.notebook.cellAt(editor.selection.start)
         }
         const target = navigator.getCurrentTarget()
         if (!target) {

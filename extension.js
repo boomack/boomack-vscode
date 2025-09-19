@@ -15,7 +15,6 @@ import cmd from './commands.js'
 let navigator = null
 
 // === TODO ===
-// - display notebook cell
 // - provide list with media type choices for display commands 'withMediaType' (from API)
 // - uncouple target (server, panel, slot) from tree view selection (indicate by icon?)
 // - show Boomack target in status bar
@@ -32,6 +31,11 @@ let navigator = null
 function updateContextActiveTextEditor() {
     return commands.executeCommand('setContext',
             'boomack.activeTextEditor', !!window.activeTextEditor)
+}
+
+function updateContextActiveNotebookEditor() {
+    return commands.executeCommand('setContext',
+            'boomack.activeNotebookEditor', !!window.activeNotebookEditor)
 }
 
 /**
@@ -68,6 +72,11 @@ export function activate(context) {
     const activeTextEditorChangeSubs = window.onDidChangeActiveTextEditor(() =>
         updateContextActiveTextEditor())
     context.subscriptions.push(activeTextEditorChangeSubs)
+
+    updateContextActiveNotebookEditor()
+    const activeNotebookEditorChangeSubs = window.onDidChangeActiveNotebookEditor(() =>
+        updateContextActiveNotebookEditor())
+    context.subscriptions.push(activeNotebookEditorChangeSubs)
 
     if (navigator) throw new Error("Possible multiple parallel activations of the extension")
     navigator = new Navigator(context)
@@ -213,6 +222,16 @@ export function activate(context) {
         'boomack.display.activeDocument.withMediaType.inSlot.withId',
         cmd.displayDocumentInSlotWithIdCommand(navigator, { typeMode: 'prompt' }))
     context.subscriptions.push(displayActiveDocumentWithMediaTypeInSlotWithIdCmdSubs)
+
+    const displayActiveNotebookCellCmdSubs = commands.registerCommand(
+        'boomack.display.activeNotebookCell',
+        cmd.displayNotebookCellCommand(navigator, false))
+    context.subscriptions.push(displayActiveNotebookCellCmdSubs)
+
+    const displayActiveNotebookCellSourceCmdSubs = commands.registerCommand(
+        'boomack.display.activeNotebookCell.source',
+        cmd.displayNotebookCellCommand(navigator, true))
+    context.subscriptions.push(displayActiveNotebookCellSourceCmdSubs)
 
     const displayCurrentSelectionSourceCmdSubs = commands.registerCommand(
         'boomack.display.currentSelection.source',

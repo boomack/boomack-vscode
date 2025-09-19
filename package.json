@@ -2,17 +2,71 @@
   "name": "boomack-vscode",
   "displayName": "Boomack",
   "description": "Boomack client for VS Code",
-  "version": "0.0.1",
-  "type": "module",
-  "engines": {
-    "vscode": "^1.100.0"
-  },
   "categories": [
     "Other"
   ],
+  "keywords": [
+    "Boomack",
+    "presentation",
+    "hypermedia"
+  ],
+  "version": "0.0.1",
+  "preview": true,
+  "engines": {
+    "vscode": "^1.100.0"
+  },
+  "type": "module",
   "activationEvents": [],
   "main": "./extension.js",
+  "extensionDependencies": [
+    "redhat.vscode-yaml",
+    "bpruitt-goddard.mermaid-markdown-syntax-highlighting"
+  ],
+  "scripts": {
+    "lint": "eslint .",
+    "pretest": "npm run lint",
+    "test": "vscode-test"
+  },
+  "dependencies": {
+    "boomack": "0.14.9",
+    "boomack-js": "0.11.7",
+    "ctrlc-windows": "2.2.0",
+    "lodash-es": "4.17.21",
+    "lookpath": "1.2.3",
+    "mime": "4.1.0",
+    "open": "10.2.0",
+    "wait-on": "8.0.5",
+    "yaml": "2.8.1"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "@types/vscode": "^1.103.0",
+    "@vscode/test-cli": "^0.0.11",
+    "@vscode/test-electron": "^2.5.2",
+    "eslint": "^9.32.0"
+  },
   "contributes": {
+    "languages": [
+      {
+        "id": "yaml",
+        "extensions": [
+          ".leaflet",
+          ".vegalite",
+          ".vega"
+        ]
+      }
+    ],
+    "yamlValidation": [
+      {
+        "fileMatch": "*.vegalite",
+        "url": "https://vega.github.io/schema/vega-lite/v5.json"
+      },
+      {
+        "fileMatch": "*.vega",
+        "url": "https://www.schemastore.org/vega.json"
+      }
+    ],
     "configuration": {
       "title": "Boomack",
       "type": "object",
@@ -64,6 +118,24 @@
           ],
           "description": "The title for display requests to Boomack",
           "order": 200
+        },
+        "boomack.notebook.outputSelection": {
+          "type": "string",
+          "default": "auto",
+          "enum": [
+            "auto",
+            "user"
+          ],
+          "enumItemLabels": [
+            "Automatic",
+            "User Selection"
+          ],
+          "enumDescriptions": [
+            "Automatically select most expressive",
+            "Show selection list for the user to pick"
+          ],
+          "description": "How to select one of multiple cell outputs for display",
+          "order": 210
         }
       }
     },
@@ -241,6 +313,18 @@
         "icon": "$(code-review)"
       },
       {
+        "command": "boomack.display.activeNotebookCell",
+        "category": "Boomack",
+        "title": "Display Output of Active Notebook Cell",
+        "icon": "$(send)"
+      },
+      {
+        "command": "boomack.display.activeNotebookCell.source",
+        "category": "Boomack",
+        "title": "Display Source of Active Notebook Cell",
+        "icon": "$(code)"
+      },
+      {
         "command": "boomack.display.currentSelection.source",
         "category": "Boomack",
         "title": "Display Selection",
@@ -412,6 +496,30 @@
         "mac": "cmd+l shift+d"
       },
       {
+        "command": "boomack.display.activeDocument",
+        "when": "boomack.activeTextEditor && boomack.serverSelected",
+        "key": "ctrl+l d",
+        "mac": "cmd+l d"
+      },
+      {
+        "command": "boomack.display.activeDocument.source",
+        "when": "boomack.activeTextEditor && boomack.serverSelected",
+        "key": "ctrl+l ctrl+d",
+        "mac": "cmd+l cmd+d"
+      },
+      {
+        "command": "boomack.display.activeNotebookCell",
+        "when": "boomack.activeNotebookEditor && boomack.serverSelected",
+        "key": "ctrl+l c",
+        "mac": "cmd+l c"
+      },
+      {
+        "command": "boomack.display.activeNotebookCell.source",
+        "when": "boomack.activeNotebookEditor && boomack.serverSelected",
+        "key": "ctrl+l ctrl+c",
+        "mac": "cmd+l cmd+c"
+      },
+      {
         "command": "boomack.display.selection.source",
         "when": "editorHasSelection && boomack.serverSelected",
         "key": "ctrl+l ctrl+l",
@@ -516,6 +624,14 @@
           "when": "boomack.activeTextEditor && boomack.panelSelected"
         },
         {
+          "command": "boomack.display.activeNotebookCell",
+          "when": "boomack.activeNotebookEditor && boomack.serverSelected"
+        },
+        {
+          "command": "boomack.display.activeNotebookCell.source",
+          "when": "boomack.activeNotebookEditor && boomack.serverSelected"
+        },
+        {
           "command": "boomack.display.currentSelection.source",
           "when": "editorHasSelection && boomack.serverSelected"
         },
@@ -525,6 +641,9 @@
         },
         { "command": "boomack.display.document", "when": "false" },
         { "command": "boomack.display.document.source", "when": "false" },
+        { "command": "boomack.display.document.withMediaType", "when": "false" },
+        { "command": "boomack.display.notebook.cell", "when": "false" },
+        { "command": "boomack.display.notebook.cell.source", "when": "false" },
         { "command": "boomack.display.selection.source", "when": "false" },
         { "command": "boomack.display.document.inPanel", "when": "false" },
         { "command": "boomack.display.document.source.inPanel", "when": "false" },
@@ -668,6 +787,7 @@
         {
           "command": "boomack.display.notebook.cell",
           "alt": "boomack.display.notebook.cell.source",
+          "when": "boomack.serverSelected",
           "group": "inline"
         }
       ],
@@ -680,29 +800,5 @@
         }
       ]
     }
-  },
-  "scripts": {
-    "lint": "eslint .",
-    "pretest": "npm run lint",
-    "test": "vscode-test"
-  },
-  "dependencies": {
-    "boomack": "0.14.9",
-    "boomack-js": "0.11.7",
-    "ctrlc-windows": "2.2.0",
-    "lodash-es": "4.17.21",
-    "lookpath": "1.2.3",
-    "mime": "4.1.0",
-    "open": "10.2.0",
-    "wait-on": "8.0.5",
-    "yaml": "2.8.1"
-  },
-  "devDependencies": {
-    "@types/mocha": "^10.0.10",
-    "@types/node": "22.x",
-    "@types/vscode": "^1.103.0",
-    "@vscode/test-cli": "^0.0.11",
-    "@vscode/test-electron": "^2.5.2",
-    "eslint": "^9.32.0"
   }
 }
