@@ -1124,7 +1124,7 @@ function displayDocumentInSlotWithIdCommand(navigator, flags) {
         const nextAutoSlotNumber = lastAutoSlotNumber === undefined ? 0 : (lastAutoSlotNumber + 1)
         const slotId = await window.showInputBox({
             title: "Display",
-            prompt: "Enter a Panel ID",
+            prompt: "Enter a Slot ID",
             value: `slot-${nextAutoSlotNumber}`
         })
         if (!slotId) return
