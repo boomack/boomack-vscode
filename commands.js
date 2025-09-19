@@ -1050,11 +1050,26 @@ async function displayFileWithFlags(
     } else if (typeMode === 'source') {
         await displayFileSource(navigator, target, filename)
     } else if (typeMode === 'prompt') {
-        const mediaType = await window.showInputBox({
-            title: "Display",
-            prompt: "Enter a media type",
-            value: 'application/octet-stream',
-        })
+        let mediaType = null
+        const client = await navigator.clientFor(target.server)
+        const mediaTypeResponse = await client.listMediaTypes()
+        if (mediaTypeResponse.success) {
+            const mediaTypes = /** @type {string[]} */ (mediaTypeResponse.body)
+            mediaType = await window.showQuickPick(mediaTypes, {
+                title: "Display",
+                canPickMany: false,
+            })
+        }
+        if (!mediaType) {
+            mediaType = await window.showInputBox({
+                title: "Display",
+                prompt: "Enter a media type",
+                value: 'application/octet-stream',
+            })
+        }
+        if (!mediaType) {
+            return
+        }
         await displayFile(navigator, target, filename, { mediaType })
     } else {
         throw new Error(`Display type mode '${typeMode}' is not supported for file`)
