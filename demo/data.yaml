@@ -1,0 +1,24 @@
+$schema: https://vega.github.io/schema/vega-lite/v5.json
+width: container
+height: container
+data:
+  url: https://vega.github.io/vega-lite/examples/data/seattle-weather.csv
+mark: bar
+encoding:
+  x:
+    timeUnit: month
+    field: date
+    type: ordinal
+    axis:
+      title: Month of the year
+  y:
+    aggregate: count
+    type: quantitative
+  color:
+    field: weather
+    type: nominal
+    scale:
+      domain: [sun, fog, drizzle, rain, snow]
+      range: ["${yellow}", "${green}", "${teal}", "${blue}", "${pink}"]
+    legend:
+      title: Weather type

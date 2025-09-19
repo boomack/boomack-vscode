@@ -1,0 +1,70 @@
+marker:
+  - lat: 51.50549
+    lon: -0.07537
+    title: The Tower Bridge
+    popup:
+      content: <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/London%2C_Tower_Bridge_--_2016_--_4772.jpg/320px-London%2C_Tower_Bridge_--_2016_--_4772.jpg"/>
+      minWidth: 320
+  - lat: 51.50789
+    lon: -0.08771
+    title: The London Bridge
+    popup: <p>The <b>LONDON</b> Bridge</p>
+  - lat: 51.495178
+    lon: -0.100546
+    popup: A circle with 500m radius
+    type: circle
+    radius: 500
+    color: '#f0441d'
+    fillColor: '#4abd15'
+    fillOpacity: 0.3
+  - lat: 51.513788
+    lon: -0.098325
+    popup: St. Pauls Cathedral
+    type: rectangle
+    width: 300
+    height: 150
+    weight: 2
+    color: '#006'
+    fillOpacity: 0
+lines:
+  - vertices:
+      - [51.503823, -0.111601]
+      - [51.504332, -0.107385]
+      - [51.503958, -0.100733]
+      - [51.504332, -0.093953]
+      - [51.504947, -0.092193]
+      - [51.505856, -0.088374]
+      - [51.505455, -0.086013]
+      - [51.504626, -0.084168]
+      - [51.503637, -0.083095]
+      - [51.497355, -0.071079]
+    color: '#FF0'
+areas:
+  - vertices:
+      - [51.509921, -0.118124]
+      - [51.511095, -0.112621]
+      - [51.510988, -0.104382]
+      - [51.50709, -0.104382]
+      - [51.507196, -0.107219]
+      - [51.504952, -0.113659]
+    stroke: false
+    color: white
+    fillOpacity: 0.75
+    popup: A section of the Thames
+  - vertices:
+      - - [51.501142, -0.092963]
+        - [51.500836, -0.089585]
+        - [51.498298, -0.08351]
+        - [51.497775, -0.07974]
+        - [51.494355, -0.08514]
+        - [51.49576, -0.087634]
+        - [51.499875, -0.092314]
+      - - [51.499563, -0.090874]
+        - [51.499911, -0.089482]
+        - [51.499203, -0.088881]
+        - [51.498094, -0.086821]
+        - [51.497212, -0.088388]
+    popup: A multi-ploygon
+    color: '#B06'
+    weight: 1
+    fillOpacity: 0.5

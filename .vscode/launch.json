@@ -12,7 +12,7 @@
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}",
 				"--profile=Empty",
-				"${workspaceFolder}/../boomack-server/demo/"
+				"${workspaceFolder}/demo/"
 			]
 		}
 	]

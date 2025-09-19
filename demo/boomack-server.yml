@@ -1,0 +1,7 @@
+api:
+  request:
+    fileSrcRoots:
+    - F:\Temp
+client:
+  sourceLanguages:
+    "*.js": "javascript"
