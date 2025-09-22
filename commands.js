@@ -16,7 +16,7 @@ import mime from 'mime'
 import {
     removeItemOnce,
     isFileBinary,
-    textViewOfBinaryFile,
+    htmlViewOfBinaryFile,
 } from './utils.js'
 import {
     WORKSPACE_SERVER_NAME,
@@ -982,12 +982,12 @@ async function displayFile(
  * @param {string} filename
  */
 async function displayBinaryFileSource(navigator, target, filename) {
-    const text = await textViewOfBinaryFile(filename)
+    const text = await htmlViewOfBinaryFile(filename)
     const boomackClient = await navigator.clientFor(target.server)
     const response = await boomackClient.displayMediaItems({
         panel: target.panelId,
         slot: target.slotId,
-        type: 'text/plain',
+        type: 'text/html',
         text,
     })
     if (!response.success) {

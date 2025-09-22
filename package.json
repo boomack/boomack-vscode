@@ -148,6 +148,22 @@
           ],
           "description": "How to select one of multiple cell outputs for display",
           "order": 210
+        },
+        "boomack.displayBinary.bytesPerLine": {
+          "type": "integer",
+          "default": 16,
+          "minimum": 1,
+          "maximum": 1024,
+          "description": "The number of bytes to display in one line",
+          "order": 220
+        },
+        "boomack.displayBinary.maxLines": {
+          "type": "integer",
+          "default": 64,
+          "minimum": 0,
+          "maximum": 1024,
+          "description": "The maximum number of lines",
+          "order": 221
         }
       }
     },

@@ -1,4 +1,5 @@
 import { open } from 'node:fs/promises';
+import { config } from './config.js'
 
 /**
  * @template T
@@ -44,15 +45,30 @@ export async function isFileBinary(filename, maxRead) {
 }
 
 /**
+ * @param {number} x
+ * @returns {string}
+ */
+function byte2char(x) {
+    if (32 <= x && x <= 127) {
+        return String.fromCodePoint(x)
+    } else {
+        return '\u002E'
+    }
+}
+
+/**
  * @param {import('node:fs').PathLike} filename
  * @param {number} [bytesPerLine]
  * @param {number} [maxLines]
  */
-export async function textViewOfBinaryFile(filename, bytesPerLine, maxLines) {
-    if (!bytesPerLine) bytesPerLine = 16 // TODO make configurable
-    if (!maxLines) maxLines = 64 // TODO make configurable
+export async function htmlViewOfBinaryFile(filename, bytesPerLine, maxLines) {
+    if (!Number.isFinite(bytesPerLine)) {
+        bytesPerLine = config('displayBinary.bytesPerLine')
+    }
+    if (!Number.isFinite(maxLines)) {
+        maxLines = config('displayBinary.maxLines')
+    }
     const maxRead = bytesPerLine * maxLines
-
     const f = await open(filename, 'r')
     const fstat = await f.stat()
     const buffer = new Uint8Array(maxRead)
@@ -62,39 +78,68 @@ export async function textViewOfBinaryFile(filename, bytesPerLine, maxLines) {
     } finally {
         f.close()
     }
-    const lines = []
-    lines.push('Binary File')
-    lines.push(`Length: ${fstat.size} Bytes`)
-    lines.push('')
-    let headerLine = '      '
+    const chunks = []
+    /** @param {string} s */
+    function h(s) { chunks.push(s) }
+
+    h(`<h2>Binary File</h2><p><strong>Length:</strong> ${fstat.size} Bytes</p>\n`)
+    if (bytesPerLine < 1 || maxLines < 1) { return chunks.join('\n') }
+    h('<h3>Data</h3>')
+    h('<style>')
+    h('table.boomack-hex-display { line-height: 1em; }')
+    h('table.ui.table.boomack-hex-display > thead > tr > th { padding-bottom: 0.6em }')
+    h('</style>\n')
+    h('<table class="ui very basic very collapsing compact celled table boomack-hex-display">')
+    h('<thead>\n')
+    h('<tr><th>&nbsp;</th><th><code>')
     for (let i = 0; i < bytesPerLine; i++) {
-        let headerField = ' ' + (i % 0xFF).toString(16).padStart(2, '0')
-        headerLine += headerField
+        h((i % 0xFF).toString(16).padStart(2, '0').toUpperCase())
+        if (i < bytesPerLine - 1) h(' ')
     }
-    lines.push(headerLine)
-    lines.push('-'.repeat(bytesPerLine * 3 + 6))
+    h('</code></th><th>&nbsp;</th></tr>\n')
+    h('</thead><tbody>\n')
     let p = 0
 
+    /** @param {number} p */
     function dataLineHeader(p) {
-        return p.toString(16).padStart(4, '0') + ' |'
+        return p.toString(16).padStart(4, '0').toUpperCase()
     }
 
-    let dataLine = '0000 |'
+    const lineBytes = []
+    let hexStr = ''
     while (p < readResult.bytesRead) {
-        // TODO add visible characters after HEX representation
-        dataLine += ' ' + (buffer[p] % 0xFF).toString(16).padStart(2, '0')
+        if (p % bytesPerLine === 0) {
+            h('<tr><td><code>')
+            h(dataLineHeader(p))
+            h('</code></td><td><code>')
+        }
+        hexStr += (buffer[p] % 0xFF).toString(16).padStart(2, '0')
+        lineBytes.push(buffer[p])
         p++
         if (p % bytesPerLine === 0) {
-            lines.push(dataLine)
-            dataLine = dataLineHeader(p)
+            h(hexStr.toUpperCase())
+            hexStr = ''
+            h('</code></td><td><code>')
+            let charStr = ''
+            for (const x of lineBytes) { charStr += byte2char(x) }
+            h(charStr)
+            h('</code></td></tr>\n')
+            lineBytes.length = 0
+        } else {
+            hexStr += ' '
         }
     }
     if (p % bytesPerLine !== 0) {
-        lines.push(dataLine)
+        h(hexStr.toUpperCase())
+        h('</td><td><code>')
+        let charStr = ''
+        for (const x of lineBytes) { charStr += byte2char(x) }
+        h(charStr)
+        h('</code></td></tr>\n')
     }
-    if (readResult.bytesRead < fstat.size) {
-        lines.push(' ... | ...')
+    if (p < fstat.size) {
+        h('<tr><td>…</td><td>…</td><td>…</td><tr>\n')
     }
-    lines.push('-'.repeat(bytesPerLine * 3 + 6))
-    return lines.join('\n')
+    h('</tbody></table>')
+    return chunks.join('')
 }
