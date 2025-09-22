@@ -15,7 +15,6 @@ import cmd from './commands.js'
 let navigator = null
 
 // === TODO ===
-// - provide list with media type choices for display commands 'withMediaType' (from API)
 // - uncouple target (server, panel, slot) from tree view selection (indicate by icon?)
 // - show Boomack target in status bar
 // - setup panel from file
