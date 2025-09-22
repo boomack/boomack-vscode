@@ -1,4 +1,5 @@
 import boomack from 'boomack-js'
+import { config } from './config.js'
 
 /**
  * @typedef {import('vscode').ExtensionContext} ExtensionContext
@@ -25,8 +26,8 @@ export async function getClientFor(server) {
             config: {
                 server: { url: server.url },
                 client: {
-                    timeout: 5000, // TODO make configurable
-                    retry: 0, // TODO make configurable
+                    timeout: config('boomack.client.timeout'),
+                    retry: config('boomack.client.retry'),
                     format: 'application/json',
                     token: server.token,
                 }

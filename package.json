@@ -98,6 +98,18 @@
           "description": "Run the Boomack Project Server with verbose output",
           "order": 101
         },
+        "boomack.client.timeout": {
+          "type": "integer",
+          "default": 5000,
+          "description": "The request timeout in milliseconds",
+          "order": 150
+        },
+        "boomack.client.retry": {
+          "type": "integer",
+          "default": 0,
+          "description": "The number of retries in case of a failed request",
+          "order": 151
+        },
         "boomack.displayTitle": {
           "type": "string",
           "default": "filename",
