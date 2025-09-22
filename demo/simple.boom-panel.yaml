@@ -1,0 +1,11 @@
+type: grid
+columns: 2
+rows: 2
+slots:
+  a:
+    toolbar: true
+    columnSpan: 2
+document:
+  slotTemplate:
+    toolbar: false
+    border: false

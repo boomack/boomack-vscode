@@ -57,6 +57,12 @@
         ]
       }
     ],
+    "jsonValidation": [
+      {
+        "fileMatch": "*.boom-panel.json",
+        "url": "https://schemas.boomack.com/server/v0.14/panel-layout.json"
+      }
+    ],
     "yamlValidation": [
       {
         "fileMatch": "*.vegalite",
@@ -65,6 +71,14 @@
       {
         "fileMatch": "*.vega",
         "url": "https://www.schemastore.org/vega.json"
+      },
+      {
+        "fileMatch": "*.boom-panel.yaml",
+        "url": "https://schemas.boomack.com/server/v0.14/panel-layout.json"
+      },
+      {
+        "fileMatch": "*.boom-panel.yml",
+        "url": "https://schemas.boomack.com/server/v0.14/panel-layout.json"
       }
     ],
     "configuration": {
