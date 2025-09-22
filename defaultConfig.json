@@ -146,6 +146,7 @@
             "*.yaml": "yaml",
             "*.yml": "yaml",
             "*.vega": "yaml",
+            "*.vegalite": "yaml",
             "*.leaflet": "yaml"
         }
     }
