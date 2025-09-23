@@ -1,0 +1,28 @@
+title: Standard
+theme: dark
+type: grid
+grid:
+  columns: 2
+  rows: 6
+defaultSlot: main
+slots:
+  title:
+    toolbar: false
+    border: false
+    columnSpan: 2
+  main:
+    border: false
+    row: 1
+    columnSpan: 2
+    rowSpan: 3
+    history: 10
+  left:
+    row: 4
+    rowSpan: 2
+    history: 0
+    zoom: 0.75
+  right:
+    row: 4
+    rowSpan: 2
+    history: 0
+    zoom: 0.75

@@ -1,0 +1,32 @@
+panels:
+  default: default.boom-panel.yml
+  alternative: two-columns.boom-panel.yml
+  notebook:
+    title: Notebook
+    theme: default
+    type: document
+    document:
+      slotTemplate:
+        history: 0
+        extensions: 0
+        border: false
+        noSingleOut: false
+        noMaximize: false
+    slots:
+      title:
+        toolbar: false
+        history: 0
+
+requests:
+  - panel: default
+    slot: title
+    type: text/html
+    text: '<h1 class="ui center aligned header">Title from Playbook</h1>'
+  - image.boom-request.yml
+  - panel: default
+    slot: left
+    src: ./chart.vegalite
+  - panel: default
+    slot: right
+    type: text/x-yaml
+    src: ./chart.vegalite

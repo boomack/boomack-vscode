@@ -61,6 +61,14 @@
       {
         "fileMatch": "*.boom-panel.json",
         "url": "https://schemas.boomack.com/server/v0.14/panel-layout.json"
+      },
+      {
+        "fileMatch": "*.boom-request.json",
+        "url": "https://schemas.boomack.com/server/v0.14/display-request.json"
+      },
+      {
+        "fileMatch": "*.boom.json",
+        "url": "https://schemas.boomack.com/server/v0.14/playbook.json"
       }
     ],
     "yamlValidation": [
@@ -79,6 +87,22 @@
       {
         "fileMatch": "*.boom-panel.yml",
         "url": "https://schemas.boomack.com/server/v0.14/panel-layout.json"
+      },
+      {
+        "fileMatch": "*.boom-request.yaml",
+        "url": "https://schemas.boomack.com/server/v0.14/display-request.json"
+      },
+      {
+        "fileMatch": "*.boom-request.yml",
+        "url": "https://schemas.boomack.com/server/v0.14/display-request.json"
+      },
+      {
+        "fileMatch": "*.boom.yaml",
+        "url": "https://schemas.boomack.com/server/v0.14/playbook.json"
+      },
+      {
+        "fileMatch": "*.boom.yml",
+        "url": "https://schemas.boomack.com/server/v0.14/playbook.json"
       }
     ],
     "configuration": {

@@ -1,0 +1,8 @@
+{
+    "title": "Hello",
+    "text": "<h1>Hello</h1><p>This is a demo of a Display Request from a file.</p>",
+    "type": "text/html",
+    "options": {
+        "background": "#A0C0D0"
+    }
+}
