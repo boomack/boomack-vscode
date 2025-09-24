@@ -78,7 +78,7 @@
       },
       {
         "fileMatch": "*.vega",
-        "url": "https://www.schemastore.org/vega.json"
+        "url": "https://vega.github.io/schema/vega/v5.json"
       },
       {
         "fileMatch": "*.boom-panel.yaml",
