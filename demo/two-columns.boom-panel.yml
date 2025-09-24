@@ -1,16 +1,15 @@
 type: grid
 theme: science
-columns: 2
-rows: 2
+grid:
+  columns: 2
+  noGap: true
+  noMargin: true
 slots:
   a:
-    toolbar: true
     border: false
-    rowSpan: 2
+    column: 0
     history: 0
   b:
-    toolbar: true
     border: false
     column: 1
-    rowSpan: 2
     history: 0

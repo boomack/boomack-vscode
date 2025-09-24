@@ -159,6 +159,11 @@ export function activate(context) {
         cmd.refreshSlotsCommand(navigator))
     context.subscriptions.push(refreshPanelCmdSubs)
 
+    const updatePanelWithActiveDocumentCmdSubs = commands.registerCommand(
+        'boomack.panel.update.withActiveDocument',
+        cmd.displayFileCommand(navigator, { typeMode: 'panel-layout' }))
+    context.subscriptions.push(updatePanelWithActiveDocumentCmdSubs)
+
     const selectSlotCmdSubs = commands.registerCommand(
         'boomack.slot.select',
         cmd.selectSlotCommand(navigator))
@@ -208,6 +213,11 @@ export function activate(context) {
         'boomack.display.activeDocument.withMediaType',
         cmd.displayFileCommand(navigator, { typeMode: 'prompt' }))
     context.subscriptions.push(displayActiveDocumentWithMediaTypeCmdSubs)
+
+    const displayActiveDocumentAsDisplayRequestCmdSubs = commands.registerCommand(
+        'boomack.display.activeDocument.asDisplayRequest',
+        cmd.displayFileCommand(navigator, { typeMode: 'display-request' }))
+    context.subscriptions.push(displayActiveDocumentAsDisplayRequestCmdSubs)
 
     const displayActiveDocumentInSlotWithIdCmdSubs = commands.registerCommand(
         'boomack.display.activeDocument.inSlot.withId',

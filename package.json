@@ -300,6 +300,12 @@
         "icon": "$(refresh)"
       },
       {
+        "command": "boomack.panel.update.withActiveDocument",
+        "category": "Boomack",
+        "title": "Update Panel with Active Document as Layout",
+        "icon": "$(window)"
+      },
+      {
         "command": "boomack.slot.select",
         "category": "Boomack",
         "title": "Select Slot"
@@ -359,6 +365,12 @@
         "category": "Boomack",
         "title": "Display Active Document with different Media Type...",
         "icon": "$(code-review)"
+      },
+      {
+        "command": "boomack.display.activeDocument.asDisplayRequest",
+        "category": "Boomack",
+        "title": "Send Active Document as Display Request",
+        "icon": "$(send)"
       },
       {
         "command": "boomack.display.activeDocument.inSlot.withId",
@@ -544,6 +556,12 @@
         "mac": "cmd+l x s"
       },
       {
+        "command": "boomack.panel.update.withActiveDocument",
+        "when": "boomack.activeTextEditor && boomack.serverSelected && (resourceExtname == .json || resourceExtname == .yaml || resourceExtname == .yml)",
+        "key": "ctrl+l p",
+        "mac": "cmd+l p"
+      },
+      {
         "command": "boomack.display.activeDocument",
         "when": "boomack.activeTextEditor && boomack.serverSelected",
         "key": "ctrl+l d",
@@ -572,6 +590,12 @@
         "when": "boomack.activeTextEditor && boomack.serverSelected",
         "key": "ctrl+l ctrl+d",
         "mac": "cmd+l cmd+d"
+      },
+      {
+        "command": "boomack.display.activeDocument.asDisplayRequest",
+        "when": "boomack.activeTextEditor && boomack.serverSelected && (resourceExtname == .json || resourceExtname == .yaml || resourceExtname == .yml)",
+        "key": "ctrl+l q",
+        "mac": "cmd+l q"
       },
       {
         "command": "boomack.display.activeNotebookCell",
@@ -678,6 +702,10 @@
           "when": "boomack.activeTextEditor && boomack.serverSelected"
         },
         {
+          "command": "boomack.display.activeDocument.asDisplayRequest",
+          "when": "boomack.activeTextEditor && boomack.serverSelected && (resourceExtname == .json || resourceExtname == .yaml || resourceExtname == .yml)"
+        },
+        {
           "command": "boomack.display.activeDocument.inSlot.withId",
           "when": "boomack.activeTextEditor && boomack.panelSelected"
         },
@@ -716,7 +744,11 @@
         { "command": "boomack.display.document.inSlot", "when": "false" },
         { "command": "boomack.display.document.source.inSlot", "when": "false" },
         { "command": "boomack.display.file", "when": "false" },
-        { "command": "boomack.display.file.source", "when": "false" }
+        { "command": "boomack.display.file.source", "when": "false" },
+        {
+          "command": "boomack.panel.update.withActiveDocument",
+          "when": "boomack.activeTextEditor && boomack.serverSelected && (resourceExtname == .json || resourceExtname == .yaml || resourceExtname == .yml)"
+        }
       ],
       "view/title": [
         {

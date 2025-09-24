@@ -1,4 +1,4 @@
-import { chain, filter, first, flatMap, has, isArray, isObject, map, max, omitBy, values } from 'lodash-es'
+import { chain, filter, first, flatMap, has, isArray, map, max, omitBy, values } from 'lodash-es'
 import fs from'node:fs/promises'
 import path from 'node:path'
 import waitOn from 'wait-on'
@@ -927,8 +927,7 @@ async function sendDisplayRequestFile(navigator, target, filename) {
 
     /** @param {any} x */
     function couldBeDisplayRequest(x) {
-        if (!isObject(x)) return false
-        if (isArray(x)) return false
+        if (!x || typeof x !== 'object' || Array.isArray(x)) return false
         if (!has(x, 'text') && !has(x, 'data') && !has(x, 'src')) return false
         return true
     }
@@ -952,10 +951,10 @@ async function sendDisplayRequestFile(navigator, target, filename) {
         }
     }
 
-    let data = parse(requestText)
+    let request = parse(requestText)
     let probablyValid = true
-    if (isArray(data)) {
-        for (const x of data) {
+    if (isArray(request)) {
+        for (const x of request) {
             if (couldBeDisplayRequest(x)) {
                 if (!x.panel) x.panel = target.panelId
                 if (!x.slot) x.slot = target.slotId
@@ -966,11 +965,11 @@ async function sendDisplayRequestFile(navigator, target, filename) {
                 break
             }
         }
-    } else if (couldBeDisplayRequest(data)) {
-        if (!data.panel) data.panel = target.panelId
-        if (!data.slot) data.slot = target.slotId
-        resolveRelativeSrc(data)
-        guessTypeForSrc(data)
+    } else if (couldBeDisplayRequest(request)) {
+        if (!request.panel) request.panel = target.panelId
+        if (!request.slot) request.slot = target.slotId
+        resolveRelativeSrc(request)
+        guessTypeForSrc(request)
     } else {
         probablyValid = false
     }
@@ -979,10 +978,40 @@ async function sendDisplayRequestFile(navigator, target, filename) {
         window.showWarningMessage("File does not contain one or multiple Display Requests.")
         return
     }
-    const result = await boomackClient.displayMediaItems(data)
+    const result = await boomackClient.displayMediaItems(request)
     if (!result.success) {
-        window.showErrorMessage(`Failed to display file content. HTTP Status ${result.statusCode}.`)
+        window.showErrorMessage(`Failed to display request. HTTP Status ${result.statusCode}.`)
     }
+}
+
+/**
+ * @param {Navigator} navigator
+ * @param {BoomackTarget} target
+ * @param {string} filename
+ */
+async function sendPanelLayoutFile(navigator, target, filename) {
+    const boomackClient = await navigator.clientFor(target.server)
+    const layoutText = await fs.readFile(filename, { encoding: 'utf-8' })
+
+    /** @param {any} x */
+    function couldBePanelLayout(x) {
+        return !!x && typeof x === 'object' && !Array.isArray(x)
+    }
+
+    let layout = parse(layoutText)
+
+    if (!couldBePanelLayout(layout)) {
+        window.showWarningMessage("File does not appear to be a Panel Layout.")
+        return
+    }
+
+    const result = await boomackClient.updatePanel(target.panelId, layout)
+    if (!result.success) {
+        window.showErrorMessage(`Failed to update panel layout. HTTP Status ${result.statusCode}.`)
+        return
+    }
+
+    await commands.executeCommand('boomack.panel.refresh')
 }
 
 /**
@@ -1100,8 +1129,28 @@ async function displayFileSource(navigator, target, filename) {
 
 /**
  * @typedef {Object} DisplayFlags
- * @property {'default'|'source'|'prompt'} [typeMode]
+ * @property {'default'|'source'|'prompt'|'display-request'|'panel-layout'} [typeMode]
  */
+
+/**
+ * @param {string} filename
+ * @returns {boolean}
+ */
+function isDisplayRequestFile(filename) {
+    if (!filename.match(/\.(?:json|yaml|yml)$/i)) return false
+    if (!filename.match(/\.boom-request\.\w{3,4}$/)) return false
+    return true
+}
+
+/**
+ * @param {string} filename
+ * @returns {boolean}
+ */
+function isPanelLayoutFile(filename) {
+    if (!filename.match(/\.(?:json|yaml|yml)$/i)) return false
+    if (!filename.match(/\.boom-panel\.\w{3,4}$/)) return false
+    return true
+}
 
 /**
  * @param {Navigator} navigator
@@ -1116,11 +1165,17 @@ async function displayFileWithFlags(
     }
 ) {
     if (typeMode === 'default') {
-        if (filename.match(/\.boom-request\.\w{3,4}$/) && filename.match(/\.(?:json|yaml|yml)$/i)) {
+        if (isDisplayRequestFile(filename)) {
             await sendDisplayRequestFile(navigator, target, filename)
+        } else if (isPanelLayoutFile(filename)) {
+            await sendPanelLayoutFile(navigator, target, filename)
         } else {
             await displayFile(navigator, target, filename)
         }
+    } else if (typeMode === 'display-request') {
+        await sendDisplayRequestFile(navigator, target, filename)
+    } else  if (typeMode === 'panel-layout') {
+        await sendPanelLayoutFile(navigator, target, filename)
     } else if (typeMode === 'source') {
         await displayFileSource(navigator, target, filename)
     } else if (typeMode === 'prompt') {

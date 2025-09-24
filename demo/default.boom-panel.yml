@@ -11,17 +11,19 @@ slots:
     border: false
     columnSpan: 2
   main:
-    border: false
     row: 1
     columnSpan: 2
     rowSpan: 3
     history: 10
   left:
+    border: false
     row: 4
     rowSpan: 2
     history: 0
     zoom: 0.75
   right:
+    border: false
+    column: 1
     row: 4
     rowSpan: 2
     history: 0
