@@ -17,7 +17,7 @@ let navigator = null
 // === TODO ===
 // - [ ] uncouple target (server, panel, slot) from tree view selection (indicate by icon?)
 // - [ ] show Boomack target in status bar
-// - [ ] setup panel from file
+// - [X] setup panel from file
 // - [X] send display request from file
 // - [ ] execute playbook
 // - [ ] setup from assets in directory structure (presets, types, actions, panels, initial content)
@@ -27,7 +27,9 @@ let navigator = null
 // - [X] json schema for preset
 // - [X] json schema for playbook
 // - [ ] use file:/// references instead of streaming requests for workspace server
-// - [ ] allow opt-in streaming requests for workspace server
+// - [ ] allow opt-in streaming requests for workspace server per config option
+// - [ ] watches for display requests
+// - [ ] watches for panel layouts
 
 function updateContextActiveTextEditor() {
     return commands.executeCommand('setContext',
