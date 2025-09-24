@@ -537,13 +537,13 @@
       },
       {
         "command": "boomack.server.refresh",
-        "key": "ctrl+l r p",
-        "mac": "cmd+l r p"
+        "key": "ctrl+l r s",
+        "mac": "cmd+l r s"
       },
       {
         "command": "boomack.panel.refresh",
-        "key": "ctrl+l r s",
-        "mac": "cmd+l r s"
+        "key": "ctrl+l r p",
+        "mac": "cmd+l r p"
       },
       {
         "command": "boomack.panel.clear",
