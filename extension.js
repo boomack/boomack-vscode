@@ -18,7 +18,7 @@ let navigator = null
 // - [ ] uncouple target (server, panel, slot) from tree view selection (indicate by icon?)
 // - [ ] show Boomack target in status bar
 // - [ ] setup panel from file
-// - [ ] send display request from file (ask user if request contains target)
+// - [X] send display request from file
 // - [ ] execute playbook
 // - [ ] setup from assets in directory structure (presets, types, actions, panels, initial content)
 // - [ ] json schema for server config

@@ -1,8 +1,9 @@
-import { chain, filter, first, flatMap, map, max, omitBy, values } from 'lodash-es'
+import { chain, filter, first, flatMap, has, isArray, isObject, map, max, omitBy, values } from 'lodash-es'
 import fs from'node:fs/promises'
 import path from 'node:path'
 import waitOn from 'wait-on'
 import { ctrlc } from 'ctrlc-windows'
+import { parse } from 'yaml'
 import {
     commands,
     NotebookCellKind,
@@ -916,6 +917,75 @@ function lookupMediaType(
 }
 
 /**
+ * @param {Navigator} navigator
+ * @param {BoomackTarget} target
+ * @param {string} filename
+ */
+async function sendDisplayRequestFile(navigator, target, filename) {
+    const boomackClient = await navigator.clientFor(target.server)
+    const requestText = await fs.readFile(filename, { encoding: 'utf-8' })
+
+    /** @param {any} x */
+    function couldBeDisplayRequest(x) {
+        if (!isObject(x)) return false
+        if (isArray(x)) return false
+        if (!has(x, 'text') && !has(x, 'data') && !has(x, 'src')) return false
+        return true
+    }
+
+    /** @param {{ src?: string, type?: string }} r */
+    function guessTypeForSrc(r) {
+        if (!r.src) return r
+        if (r.type) return r
+        r.type = lookupMediaType(boomackClient.config.client.types, r.src)
+    }
+
+    /** @param {{ src?: string }} r */
+    function resolveRelativeSrc(r) {
+        if (!r.src) return r
+        if (typeof r.src !== 'string') return r
+        let baseDir = path.dirname(filename)
+        const base = `file://${baseDir}/`
+        if (URL.canParse(r.src, base)) {
+            const url = URL.parse(r.src, base)
+            r.src = url.toString()
+        }
+    }
+
+    let data = parse(requestText)
+    let probablyValid = true
+    if (isArray(data)) {
+        for (const x of data) {
+            if (couldBeDisplayRequest(x)) {
+                if (!x.panel) x.panel = target.panelId
+                if (!x.slot) x.slot = target.slotId
+                resolveRelativeSrc(x)
+                guessTypeForSrc(x)
+            } else {
+                probablyValid = false
+                break
+            }
+        }
+    } else if (couldBeDisplayRequest(data)) {
+        if (!data.panel) data.panel = target.panelId
+        if (!data.slot) data.slot = target.slotId
+        resolveRelativeSrc(data)
+        guessTypeForSrc(data)
+    } else {
+        probablyValid = false
+    }
+
+    if (!probablyValid) {
+        window.showWarningMessage("File does not contain one or multiple Display Requests.")
+        return
+    }
+    const result = await boomackClient.displayMediaItems(data)
+    if (!result.success) {
+        window.showErrorMessage(`Failed to display file content. HTTP Status ${result.statusCode}.`)
+    }
+}
+
+/**
  * @param {string} filename
  * @param {string} [suffix]
  * @returns {string}
@@ -1046,7 +1116,11 @@ async function displayFileWithFlags(
     }
 ) {
     if (typeMode === 'default') {
-        await displayFile(navigator, target, filename)
+        if (filename.match(/\.boom-request\.\w{3,4}$/) && filename.match(/\.(?:json|yaml|yml)$/i)) {
+            await sendDisplayRequestFile(navigator, target, filename)
+        } else {
+            await displayFile(navigator, target, filename)
+        }
     } else if (typeMode === 'source') {
         await displayFileSource(navigator, target, filename)
     } else if (typeMode === 'prompt') {

@@ -1,8 +1,11 @@
 {
     "title": "Hello",
-    "text": "<h1>Hello</h1><p>This is a demo of a Display Request from a file.</p>",
-    "type": "text/html",
+    "text": "# Hello\n\nThis is a demo of a **Display Request** from a file.",
+    "type": "text/markdown",
     "options": {
-        "background": "#A0C0D0"
+        "debug": false,
+        "transformation": "commonmark",
+        "align": "middle center",
+        "background": "#A0E0C0"
     }
 }

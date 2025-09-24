@@ -1,3 +1,5 @@
-panel: default
-slot: main
-src: ./image.jpg
+# panel: default
+# slot: default
+title: SVG Image
+type: image/svg+xml  # if type is omitted, it will be guessed from the filename
+src: image.svg
