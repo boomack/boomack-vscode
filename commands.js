@@ -855,6 +855,42 @@ function slotToggleMaximizeCommand(navigator) {
 
 /**
  * @param {Navigator} navigator
+ * @returns {function(any):(void | Promise<void>)}
+ */
+function slotMaximizeCommand(navigator) {
+    return async uiState => {
+        let slotState = resolveSlotState(uiState)
+        if (!slotState) slotState = await resolveTargetSlot(navigator, 'Maximize Slot')
+        if (!slotState) return
+        const { server, panelId, slotId } = navigator.targetFromSlot(slotState)
+        const client = await navigator.clientFor(server)
+        await client.evaluateCode([{
+            panelId,
+            script: `boomack.cmdMaximizeSlot('${slotId}')`
+        }])
+    }
+}
+
+/**
+ * @param {Navigator} navigator
+ * @returns {function(any):(void | Promise<void>)}
+ */
+function revertMaximizedSlotCommand(navigator) {
+    return async uiState => {
+        let panelState = resolvePanelState(uiState)
+        if (!panelState) panelState = await resolveTargetPanel(navigator, 'Revert Maximized Slots')
+        if (!panelState) return
+        const { server, panelId } = navigator.targetFromPanel(panelState)
+        const client = await navigator.clientFor(server)
+        await client.evaluateCode([{
+            panelId,
+            script: `boomack.cmdMaximizeSlot(null)`
+        }])
+    }
+}
+
+/**
+ * @param {Navigator} navigator
  * @returns {function(?SlotUIState):(void | Promise<void>)}
  */
 function slotRemoveCommand(navigator) {
@@ -1616,6 +1652,8 @@ export default {
     clearSlotCommand,
     slotZoomCommand,
     slotToggleMaximizeCommand,
+    slotMaximizeCommand,
+    revertMaximizedSlotCommand,
     openSlotInBrowserCommand,
     slotRemoveCommand,
     displayDocumentInPanelCommand,

@@ -305,6 +305,12 @@
         "icon": "$(window)"
       },
       {
+        "command": "boomack.panel.revertMaximizedSlot",
+        "category": "Boomack",
+        "title": "Revert Maximized Slot",
+        "icon": "$(screen-normal)"
+      },
+      {
         "command": "boomack.slot.select",
         "category": "Boomack",
         "title": "Select Slot"
@@ -327,6 +333,12 @@
         "category": "Boomack",
         "title": "Slot Zoom Out",
         "icon": "$(zoom-out)"
+      },
+      {
+        "command": "boomack.slot.maximize",
+        "category": "Boomack",
+        "title": "Maximize Slot",
+        "icon": "$(screen-full)"
       },
       {
         "command": "boomack.slot.toggleMaximize",
@@ -629,6 +641,16 @@
         "command": "boomack.slot.zoomOut",
         "key": "ctrl+l z o",
         "mac": "cmd+l z o"
+      },
+      {
+        "command": "boomack.panel.revertMaximizedSlot",
+        "key": "ctrl+l m",
+        "mac": "cmd+l m"
+      },
+      {
+        "command": "boomack.slot.maximize",
+        "key": "ctrl+l ctrl+m",
+        "mac": "cmd+l ctrl+m"
       }
     ],
     "viewsContainers": {
@@ -682,12 +704,14 @@
         { "command": "boomack.panel.clear" },
         { "command": "boomack.panel.openInBrowser" },
         { "command": "boomack.panel.refresh" },
+        { "command": "boomack.panel.revertMaximizedSlot" },
         { "command": "boomack.slot.select" },
         { "command": "boomack.slot.clear" },
         { "command": "boomack.slot.openInBrowser" },
         { "command": "boomack.slot.zoomIn" },
         { "command": "boomack.slot.zoomOut" },
-        { "command": "boomack.slot.toggleMaximize" },
+        { "command": "boomack.slot.maximize" },
+        { "command": "boomack.slot.toggleMaximize", "when": "false" },
         {
           "command": "boomack.display.activeDocument",
           "when": "boomack.activeTextEditor && boomack.serverSelected"
@@ -761,6 +785,11 @@
           "group": "navigation"
         },
         {
+          "command": "boomack.panel.revertMaximizedSlot",
+          "when": "view == boomack-slots && boomack.panelSelected",
+          "group": "navigation@1"
+        },
+        {
           "command": "boomack.panel.refresh",
           "when": "view == boomack-slots && boomack.panelSelected",
           "group": "navigation@2"
@@ -819,15 +848,15 @@
           "group": "inline@4"
         },
         {
+          "command": "boomack.panel.revertMaximizedSlot",
+          "when": "view == boomack-panels"
+        },
+        {
           "command": "boomack.slot.zoomIn",
           "when": "view == boomack-slots"
         },
         {
           "command": "boomack.slot.zoomOut",
-          "when": "view == boomack-slots"
-        },
-        {
-          "command": "boomack.slot.toggleMaximize",
           "when": "view == boomack-slots"
         },
         {
@@ -845,6 +874,11 @@
           "command": "boomack.slot.openInBrowser",
           "when": "view == boomack-slots",
           "group": "inline@3"
+        },
+        {
+          "command": "boomack.slot.maximize",
+          "when": "view == boomack-slots",
+          "group": "inline@4"
         },
         {
           "command": "boomack.slot.remove",

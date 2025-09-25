@@ -166,6 +166,11 @@ export function activate(context) {
         cmd.displayFileCommand(navigator, { typeMode: 'panel-layout' }))
     context.subscriptions.push(updatePanelWithActiveDocumentCmdSubs)
 
+    const revertMaximizedSlotCmdSubs = commands.registerCommand(
+        'boomack.panel.revertMaximizedSlot',
+        cmd.revertMaximizedSlotCommand(navigator))
+    context.subscriptions.push(revertMaximizedSlotCmdSubs)
+
     const selectSlotCmdSubs = commands.registerCommand(
         'boomack.slot.select',
         cmd.selectSlotCommand(navigator))
@@ -190,6 +195,11 @@ export function activate(context) {
         'boomack.slot.zoomOut',
         cmd.slotZoomCommand(navigator, 'out'))
     context.subscriptions.push(slotZoomOutCmdSubs)
+
+    const slotMaximizeSlotCmdSubs = commands.registerCommand(
+        'boomack.slot.maximize',
+        cmd.slotMaximizeCommand(navigator))
+    context.subscriptions.push(slotMaximizeSlotCmdSubs)
 
     const slotToggleMaximizeCmdSubs = commands.registerCommand(
         'boomack.slot.toggleMaximize',
