@@ -580,7 +580,7 @@
       },
       {
         "command": "boomack.panel.update.withActiveDocument",
-        "when": "boomack.activeTextEditor && boomack.serverSelected && (resourceExtname == .json || resourceExtname == .yaml || resourceExtname == .yml)",
+        "when": "boomack.activeTextEditor && boomack.serverSelected && resourceExtname =~ /^\\.(?:json|ya?ml)$/i",
         "key": "ctrl+l p",
         "mac": "cmd+l p"
       },
@@ -616,7 +616,7 @@
       },
       {
         "command": "boomack.display.activeDocument.asDisplayRequest",
-        "when": "boomack.activeTextEditor && boomack.serverSelected && (resourceExtname == .json || resourceExtname == .yaml || resourceExtname == .yml)",
+        "when": "boomack.activeTextEditor && boomack.serverSelected && resourceExtname =~ /^\\.(?:json|ya?ml)$/i",
         "key": "ctrl+l q",
         "mac": "cmd+l q"
       },
@@ -879,7 +879,7 @@
         {
           "command": "boomack.display.document.inSlot",
           "alt": "boomack.display.document.source.inSlot",
-          "when": "view == boomack-slots && boomack.activeTextEditor",
+          "when": "view == boomack-slots && boomack.activeTextEditor && !(resourceFilename =~ /\\.boom-panel\\.\\w{3,4}$/ && resourceFilename =~ /\\.(?:json|ya?ml)$/i)",
           "group": "inline@1"
         },
         {

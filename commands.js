@@ -1191,7 +1191,7 @@ async function displayFileSource(navigator, target, filename) {
  * @returns {boolean}
  */
 function isDisplayRequestFile(filename) {
-    if (!filename.match(/\.(?:json|yaml|yml)$/i)) return false
+    if (!filename.match(/\.(?:json|ya?ml)$/i)) return false
     if (!filename.match(/\.boom-request\.\w{3,4}$/)) return false
     return true
 }
@@ -1201,7 +1201,7 @@ function isDisplayRequestFile(filename) {
  * @returns {boolean}
  */
 function isPanelLayoutFile(filename) {
-    if (!filename.match(/\.(?:json|yaml|yml)$/i)) return false
+    if (!filename.match(/\.(?:json|ya?ml)$/i)) return false
     if (!filename.match(/\.boom-panel\.\w{3,4}$/)) return false
     return true
 }
