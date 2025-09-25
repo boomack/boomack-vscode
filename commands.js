@@ -717,6 +717,24 @@ function openPanelInBrowserCommand(navigator) {
 
 /**
  * @param {Navigator} navigator
+ * @returns {function(any):(void | Promise<void>)}
+ */
+function reloadPanelInBrowserCommand(navigator) {
+    return async uiState => {
+        let panelState = resolvePanelState(uiState)
+        if (!panelState) panelState = await resolveTargetPanel(navigator, 'Reload Panel in Browser')
+        if (!panelState) return
+        const { server, panelId } = navigator.targetFromPanel(panelState)
+        const client = await navigator.clientFor(server)
+        await client.evaluateCode([{
+            panelId,
+            script: `window.location.reload()`
+        }])
+    }
+}
+
+/**
+ * @param {Navigator} navigator
  * @returns {function(?PanelUIState):(void | Promise<void>)}
  */
 function refreshSlotsCommand(navigator) {
@@ -1647,6 +1665,7 @@ export default {
     selectPanelCommand,
     clearPanelCommand,
     openPanelInBrowserCommand,
+    reloadPanelInBrowserCommand,
     refreshSlotsCommand,
     selectSlotCommand,
     clearSlotCommand,

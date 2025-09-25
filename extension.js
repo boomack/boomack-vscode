@@ -17,6 +17,7 @@ let navigator = null
 // === TODO ===
 // - [ ] uncouple target (server, panel, slot) from tree view selection (indicate by icon?)
 // - [ ] show Boomack target in status bar
+// - [X] command for forcing panel reload on connected Web Clients
 // - [X] setup panel from file
 // - [X] send display request from file
 // - [ ] execute playbook
@@ -155,6 +156,11 @@ export function activate(context) {
         'boomack.panel.openInBrowser',
         cmd.openPanelInBrowserCommand(navigator))
     context.subscriptions.push(openPanelInBrowserCmdSubs)
+
+    const reloadPanelInBrowserCmdSubs = commands.registerCommand(
+        'boomack.panel.reloadInBrowser',
+        cmd.reloadPanelInBrowserCommand(navigator))
+    context.subscriptions.push(reloadPanelInBrowserCmdSubs)
 
     const refreshPanelCmdSubs = commands.registerCommand(
         'boomack.panel.refresh',

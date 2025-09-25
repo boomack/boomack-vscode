@@ -286,6 +286,13 @@
         "icon": "$(link-external)"
       },
       {
+        "command": "boomack.panel.reloadInBrowser",
+        "category": "Boomack",
+        "title": "Reload Panel in Browser",
+        "shortTitle": "Reload",
+        "icon": "$(refresh)"
+      },
+      {
         "command": "boomack.panel.refresh",
         "category": "Boomack",
         "title": "Refresh Slot List",
@@ -547,6 +554,11 @@
         "mac": "cmd+l o s"
       },
       {
+        "command": "boomack.panel.reloadInBrowser",
+        "key": "ctrl+l ctrl+r",
+        "mac": "cmd+l cmd+r"
+      },
+      {
         "command": "boomack.server.refresh",
         "key": "ctrl+l r s",
         "mac": "cmd+l r s"
@@ -703,6 +715,7 @@
         { "command": "boomack.panel.select" },
         { "command": "boomack.panel.clear" },
         { "command": "boomack.panel.openInBrowser" },
+        { "command": "boomack.panel.reloadInBrowser" },
         { "command": "boomack.panel.refresh" },
         { "command": "boomack.panel.revertMaximizedSlot" },
         { "command": "boomack.slot.select" },
@@ -846,6 +859,10 @@
           "command": "boomack.panel.openInBrowser",
           "when": "view == boomack-panels",
           "group": "inline@4"
+        },
+        {
+          "command": "boomack.panel.reloadInBrowser",
+          "when": "view == boomack-panels"
         },
         {
           "command": "boomack.panel.revertMaximizedSlot",
