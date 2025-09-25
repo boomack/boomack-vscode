@@ -19,8 +19,7 @@
   "activationEvents": [],
   "main": "./extension.js",
   "extensionDependencies": [
-    "redhat.vscode-yaml",
-    "bpruitt-goddard.mermaid-markdown-syntax-highlighting"
+    "redhat.vscode-yaml"
   ],
   "scripts": {
     "lint": "eslint .",
