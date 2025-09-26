@@ -67,7 +67,7 @@
       },
       {
         "fileMatch": "*.boom.json",
-        "url": "https://schemas.boomack.com/server/v0.14/playbook.json"
+        "url": "https://schemas.boomack.com/client/v0.14/playbook.json"
       }
     ],
     "yamlValidation": [
@@ -97,11 +97,11 @@
       },
       {
         "fileMatch": "*.boom.yaml",
-        "url": "https://schemas.boomack.com/server/v0.14/playbook.json"
+        "url": "https://schemas.boomack.com/client/v0.14/playbook.json"
       },
       {
         "fileMatch": "*.boom.yml",
-        "url": "https://schemas.boomack.com/server/v0.14/playbook.json"
+        "url": "https://schemas.boomack.com/client/v0.14/playbook.json"
       }
     ],
     "configuration": {
