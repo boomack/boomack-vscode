@@ -971,6 +971,30 @@ function lookupMediaType(
 }
 
 /**
+ * @param {import('boomack-js').Boomack} boomackClient
+ * @param {{ src?: string, type?: string }} request
+ */
+function guessTypeForDisplayRequestSrc(boomackClient, request) {
+    if (!request.src) return request
+    if (request.type) return request
+    request.type = lookupMediaType(boomackClient.config.client.types, request.src)
+}
+
+/**
+ * @param {string} baseDir
+ * @param {{ src?: string }} request
+ */
+function resolveRelativeDisplayRequestSrc(baseDir, request) {
+    if (!request.src) return request
+    if (typeof request.src !== 'string') return request
+    const base = `file://${baseDir}/`
+    if (URL.canParse(request.src, base)) {
+        const url = URL.parse(request.src, base)
+        request.src = url.toString()
+    }
+}
+
+/**
  * @param {Navigator} navigator
  * @param {BoomackTarget} target
  * @param {string} filename
@@ -986,25 +1010,6 @@ async function sendDisplayRequestFile(navigator, target, filename) {
         return true
     }
 
-    /** @param {{ src?: string, type?: string }} r */
-    function guessTypeForSrc(r) {
-        if (!r.src) return r
-        if (r.type) return r
-        r.type = lookupMediaType(boomackClient.config.client.types, r.src)
-    }
-
-    /** @param {{ src?: string }} r */
-    function resolveRelativeSrc(r) {
-        if (!r.src) return r
-        if (typeof r.src !== 'string') return r
-        let baseDir = path.dirname(filename)
-        const base = `file://${baseDir}/`
-        if (URL.canParse(r.src, base)) {
-            const url = URL.parse(r.src, base)
-            r.src = url.toString()
-        }
-    }
-
     let request = parse(requestText)
     let probablyValid = true
     if (isArray(request)) {
@@ -1012,8 +1017,8 @@ async function sendDisplayRequestFile(navigator, target, filename) {
             if (couldBeDisplayRequest(x)) {
                 if (!x.panel) x.panel = target.panelId
                 if (!x.slot) x.slot = target.slotId
-                resolveRelativeSrc(x)
-                guessTypeForSrc(x)
+                resolveRelativeDisplayRequestSrc(path.dirname(filename), x)
+                guessTypeForDisplayRequestSrc(boomackClient, x)
             } else {
                 probablyValid = false
                 break
@@ -1022,8 +1027,8 @@ async function sendDisplayRequestFile(navigator, target, filename) {
     } else if (couldBeDisplayRequest(request)) {
         if (!request.panel) request.panel = target.panelId
         if (!request.slot) request.slot = target.slotId
-        resolveRelativeSrc(request)
-        guessTypeForSrc(request)
+        resolveRelativeDisplayRequestSrc(path.dirname(filename), request)
+        guessTypeForDisplayRequestSrc(boomackClient, request)
     } else {
         probablyValid = false
     }
@@ -1183,15 +1188,23 @@ async function displayFileSource(navigator, target, filename) {
 
 /**
  * @typedef {Object} DisplayFlags
- * @property {'default'|'source'|'prompt'|'display-request'|'panel-layout'} [typeMode]
+ * @property {'default'|'source'|'prompt'|'display-request'|'panel-layout'|'playbook'} [typeMode]
  */
 
 /**
  * @param {string} filename
  * @returns {boolean}
  */
+function isYamlFile(filename) {
+    return !!filename.match(/\.(?:json|ya?ml)$/i)
+}
+
+/**
+ * @param {string} filename
+ * @returns {boolean}
+ */
 function isDisplayRequestFile(filename) {
-    if (!filename.match(/\.(?:json|ya?ml)$/i)) return false
+    if (!isYamlFile(filename)) return false
     if (!filename.match(/\.boom-request\.\w{3,4}$/)) return false
     return true
 }
@@ -1201,7 +1214,7 @@ function isDisplayRequestFile(filename) {
  * @returns {boolean}
  */
 function isPanelLayoutFile(filename) {
-    if (!filename.match(/\.(?:json|ya?ml)$/i)) return false
+    if (!isYamlFile(filename)) return false
     if (!filename.match(/\.boom-panel\.\w{3,4}$/)) return false
     return true
 }
