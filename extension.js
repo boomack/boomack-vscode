@@ -331,6 +331,11 @@ export function activate(context) {
         'boomack.display.notebook.cell.source',
         cmd.displayNotebookCellCommand(navigator, true))
     context.subscriptions.push(displayNotebookCellSourceCmdSubs)
+
+    const executeActiveDocumentAsPlaybookCmdSubs = commands.registerCommand(
+        'boomack.playbook.execute.activeDocument',
+        cmd.displayFileCommand(navigator, { typeMode: 'playbook' }))
+    context.subscriptions.push(executeActiveDocumentAsPlaybookCmdSubs)
 }
 
 // This method is called when your extension is deactivated

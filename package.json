@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "boomack": "0.14.9",
-    "boomack-js": "0.11.7",
+    "boomack-js": "0.14.0",
     "ctrlc-windows": "2.2.0",
     "lodash-es": "4.17.21",
     "lookpath": "1.2.3",
@@ -503,6 +503,12 @@
         "category": "Boomack",
         "title": "Display Cell Source on Boomack",
         "icon": "$(code)"
+      },
+      {
+        "command": "boomack.playbook.execute.activeDocument",
+        "category": "Boomack",
+        "title": "Execute Active Document as Playbook",
+        "icon": "$(run-all)"
       }
     ],
     "keybindings": [
@@ -663,6 +669,12 @@
         "command": "boomack.slot.maximize",
         "key": "ctrl+l ctrl+m",
         "mac": "cmd+l ctrl+m"
+      },
+      {
+        "command": "boomack.playbook.execute.activeDocument",
+        "when": "boomack.activeTextEditor && boomack.serverSelected && resourceExtname =~ /^\\.(?:json|ya?ml)$/i",
+        "key": "ctrl+l b",
+        "mac": "cmd+l b"
       }
     ],
     "viewsContainers": {

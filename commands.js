@@ -1074,6 +1074,71 @@ async function sendPanelLayoutFile(navigator, target, filename) {
 }
 
 /**
+ * @param {Navigator} navigator
+ * @param {BoomackTarget} target
+ * @param {string} filename
+ */
+async function executePlaybookFile(navigator, target, filename) {
+    const boomackClient = await navigator.clientFor(target.server)
+    const playbookText = await fs.readFile(filename, { encoding: 'utf-8' })
+
+    /** @param {any} x */
+    function couldBePlaybook(x) {
+        return !!x && typeof x === 'object' && !Array.isArray(x)
+    }
+
+    let playbook = parse(playbookText)
+
+    if (!couldBePlaybook(playbook)) {
+        window.showWarningMessage("File does not appear to be a Playbook.")
+        return
+    }
+
+    let errors = []
+
+    await window.withProgress({
+        location: ProgressLocation.Notification,
+        cancellable: false, // TODO
+        title: "Playbook",
+    }, progress => boomackClient.executePlaybook(playbook, {
+        basePath: path.dirname(filename),
+        cancelOnError: true,
+        defaultPanel: target.panelId,
+        defaultSlot: target.slotId,
+        requestHandler: request => {
+            resolveRelativeDisplayRequestSrc(path.dirname(filename), request)
+            guessTypeForDisplayRequestSrc(boomackClient, request)
+            return Promise.resolve(request)
+        },
+        progressHandler: p => {
+            const taskLabel = p.taskType
+                ? p.taskId
+                    ? `${p.taskType} ${p.taskId}`
+                    : p.taskType
+                : null
+            if (p.error) {
+                const message = taskLabel ? `${taskLabel}: ${p.error}` : p.error
+                errors.push(message)
+                progress.report({ message })
+            } else {
+                progress.report({
+                    message: taskLabel,
+                    increment: p.total && p.progress
+                        ? (p.progress / p.total) * 100
+                        : null,
+                })
+            }
+        },
+    }))
+    if (errors.length > 0) {
+        window.showErrorMessage("Failed to execute playbook:\n" + errors.join("\n"))
+    }
+    if (playbook.panels) {
+        await commands.executeCommand('boomack.panel.refresh')
+    }
+}
+
+/**
  * @param {string} filename
  * @param {string} [suffix]
  * @returns {string}
@@ -1220,6 +1285,16 @@ function isPanelLayoutFile(filename) {
 }
 
 /**
+ * @param {string} filename
+ * @returns {boolean}
+ */
+function isPlaybookFile(filename) {
+    if (!isYamlFile(filename)) return false
+    if (!filename.match(/\.boom\.\w{3,4}$/)) return false
+    return true
+}
+
+/**
  * @param {Navigator} navigator
  * @param {BoomackTarget} target
  * @param {string} filename
@@ -1236,6 +1311,8 @@ async function displayFileWithFlags(
             await sendDisplayRequestFile(navigator, target, filename)
         } else if (isPanelLayoutFile(filename)) {
             await sendPanelLayoutFile(navigator, target, filename)
+        } else if (isPlaybookFile(filename)) {
+            await executePlaybookFile(navigator, target, filename)
         } else {
             await displayFile(navigator, target, filename)
         }
@@ -1243,6 +1320,8 @@ async function displayFileWithFlags(
         await sendDisplayRequestFile(navigator, target, filename)
     } else  if (typeMode === 'panel-layout') {
         await sendPanelLayoutFile(navigator, target, filename)
+    } else  if (typeMode === 'playbook') {
+        await executePlaybookFile(navigator, target, filename)
     } else if (typeMode === 'source') {
         await displayFileSource(navigator, target, filename)
     } else if (typeMode === 'prompt') {
@@ -1694,4 +1773,5 @@ export default {
     displayFileCommand,
     displaySelectionCommand,
     displayNotebookCellCommand,
+    executePlaybookFile,
 }
