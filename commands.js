@@ -1104,7 +1104,7 @@ async function executePlaybookFile(navigator, target, filename) {
         basePath: path.dirname(filename),
         cancelOnError: true,
         defaultPanel: target.panelId,
-        defaultSlot: target.slotId,
+        defaultSlot: null, // ignore current target slot, it might have disappeared
         requestHandler: request => {
             resolveRelativeDisplayRequestSrc(path.dirname(filename), request)
             guessTypeForDisplayRequestSrc(boomackClient, request)
