@@ -644,6 +644,64 @@ function refreshPanelsCommand(navigator) {
 
 /**
  * @param {Navigator} navigator
+ * @param {ServerUIState} serverState
+ * @param {string} panelId
+ */
+async function addPanel(navigator, serverState, panelId) {
+    const serverName = serverState.name
+    const client = await navigator.clientFor(serverState.server)
+    try {
+        var response = await client.addPanel(panelId, { type: 'grid' })
+        if (response.success) {
+            window.showInformationMessage(`Created panel "${panelId}" on Boomack server "${serverName}".`)
+        } else {
+            window.showErrorMessage(`Failed to add panel "${panelId}" on Boomack server "${serverName}". HTTP Status ${response.statusCode}.`)
+        }
+    } catch (err) {
+        console.error("Failed to add panel:", err)
+        window.showErrorMessage(`Failed to add panel "${panelId}" on Boomack server "${serverName}"`)
+    }
+}
+
+/**
+ * @param {Navigator} navigator
+ * @returns {function(any):(void | Promise<void>)}
+ */
+function addPanelCommand(navigator) {
+    return async uiState => {
+        let serverState = resolveServerState(uiState)
+        if (!serverState) serverState = await resolveTargetServer(navigator, 'New Panel')
+        if (!serverState) return
+        const panelId = await window.showInputBox({
+            title: 'New Panel',
+            placeHolder: `panel-id`,
+        })
+        if (!panelId) return
+        if (!panelId.match(/^[0-9a-zA-Z-_]+$/)) {
+            window.showErrorMessage(
+                "Invalid ID for new panel. Only the following characters are allowed: " +
+                "A-Z, a-z, 0-9, _, and -.")
+            return
+        }
+        if (serverState.running === false) {
+            window.showErrorMessage("The target server is not running.")
+            return
+        }
+        if (serverState.panelIds && serverState.panelIds.includes(panelId)) {
+            window.showErrorMessage("A panel with the given ID already exists.")
+            return
+        }
+        await addPanel(navigator, serverState, panelId)
+        await commands.executeCommand('boomack.server.refresh', serverState)
+        const panelState = serverState.panels[panelId]
+        if (panelState) {
+            await commands.executeCommand('boomack.panel.select', panelState)
+        }
+    }
+}
+
+/**
+ * @param {Navigator} navigator
  * @returns {function(?PanelUIState, ?string):(Promise<PanelUIState|undefined>)}
  */
 function selectPanelCommand(navigator) {
@@ -696,6 +754,45 @@ function clearPanelCommand(navigator) {
         if (!panelState) panelState = await resolveTargetPanel(navigator, 'Clear Panel')
         if (!panelState) return
         await clearPanel(navigator, panelState)
+    }
+}
+
+/**
+ * @param {Navigator} navigator
+ * @param {PanelUIState} panelState
+ */
+async function removePanel(navigator, panelState) {
+    const { server: serverState, id: panelId } = panelState
+    const serverName = serverState.name
+    const client = await navigator.clientFor(serverState.server)
+    try {
+        var response = await client.deletePanel(panelId)
+        if (response.success) {
+            window.showInformationMessage(`Deleted panel "${panelId}" on Boomack server "${serverName}".`)
+        } else {
+            window.showErrorMessage(`Failed to delete panel "${panelId}" on Boomack server "${serverName}". HTTP Status ${response.statusCode}.`)
+        }
+    } catch (err) {
+        console.error("Failed to delete panel:", err)
+        window.showErrorMessage(`Failed to delete panel "${panelId}" on Boomack server "${serverName}"`)
+    }
+    await commands.executeCommand('boomack.server.refresh', serverState)
+}
+
+/**
+ * @param {Navigator} navigator
+ * @returns {function(any):(void | Promise<void>)}
+ */
+function removePanelCommand(navigator) {
+    return async uiState => {
+        let panelState = resolvePanelState(uiState)
+        if (!panelState) panelState = await resolveTargetPanel(navigator, 'Clear Panel')
+        if (!panelState) return
+        if (panelState.id === 'default') {
+            window.showErrorMessage("The default panel can not be deleted.")
+            return
+        }
+        await removePanel(navigator, panelState)
     }
 }
 
@@ -911,7 +1008,7 @@ function revertMaximizedSlotCommand(navigator) {
  * @param {Navigator} navigator
  * @returns {function(?SlotUIState):(void | Promise<void>)}
  */
-function slotRemoveCommand(navigator) {
+function removeSlotCommand(navigator) {
     return async slotState => {
         if (slotState && !isSlotState(slotState)) throw new Error('Expected slot state or nothing as argument')
         if (!slotState) {
@@ -1079,6 +1176,7 @@ async function sendPanelLayoutFile(navigator, target, filename) {
  * @param {string} filename
  */
 async function executePlaybookFile(navigator, target, filename) {
+    const serverState = navigator.serverStates[target.server.name]
     const boomackClient = await navigator.clientFor(target.server)
     const playbookText = await fs.readFile(filename, { encoding: 'utf-8' })
 
@@ -1134,7 +1232,7 @@ async function executePlaybookFile(navigator, target, filename) {
         window.showErrorMessage("Failed to execute playbook:\n" + errors.join("\n"))
     }
     if (playbook.panels) {
-        await commands.executeCommand('boomack.panel.refresh')
+        await commands.executeCommand('boomack.server.refresh', serverState)
     }
 }
 
@@ -1754,8 +1852,10 @@ export default {
     selectServerCommand,
     openServerInBrowserCommand,
     refreshPanelsCommand,
+    addPanelCommand,
     selectPanelCommand,
     clearPanelCommand,
+    removePanelCommand,
     openPanelInBrowserCommand,
     reloadPanelInBrowserCommand,
     refreshSlotsCommand,
@@ -1766,7 +1866,7 @@ export default {
     slotMaximizeCommand,
     revertMaximizedSlotCommand,
     openSlotInBrowserCommand,
-    slotRemoveCommand,
+    removeSlotCommand,
     displayDocumentInPanelCommand,
     displayDocumentInSlotCommand,
     displayDocumentInSlotWithIdCommand,

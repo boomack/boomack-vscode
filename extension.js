@@ -142,6 +142,11 @@ export function activate(context) {
         cmd.refreshPanelsCommand(navigator))
     context.subscriptions.push(refreshServerCmdSubs)
 
+    const addPanelCmdSubs = commands.registerCommand(
+        'boomack.panel.add',
+        cmd.addPanelCommand(navigator))
+    context.subscriptions.push(addPanelCmdSubs)
+
     const selectPanelCmdSubs = commands.registerCommand(
         'boomack.panel.select',
         cmd.selectPanelCommand(navigator))
@@ -151,6 +156,11 @@ export function activate(context) {
         'boomack.panel.clear',
         cmd.clearPanelCommand(navigator))
     context.subscriptions.push(clearPanelCmdSubs)
+
+    const removePanelCmdSubs = commands.registerCommand(
+        'boomack.panel.remove',
+        cmd.removePanelCommand(navigator))
+    context.subscriptions.push(removePanelCmdSubs)
 
     const openPanelInBrowserCmdSubs = commands.registerCommand(
         'boomack.panel.openInBrowser',
@@ -212,10 +222,10 @@ export function activate(context) {
         cmd.slotToggleMaximizeCommand(navigator))
     context.subscriptions.push(slotToggleMaximizeCmdSubs)
 
-    const slotRemoveCmdSubs = commands.registerCommand(
+    const removeSlotCmdSubs = commands.registerCommand(
         'boomack.slot.remove',
-        cmd.slotRemoveCommand(navigator))
-    context.subscriptions.push(slotRemoveCmdSubs)
+        cmd.removeSlotCommand(navigator))
+    context.subscriptions.push(removeSlotCmdSubs)
 
     const displayActiveDocumentCmdSubs = commands.registerCommand(
         'boomack.display.activeDocument',

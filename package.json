@@ -267,6 +267,12 @@
         "icon": "$(refresh)"
       },
       {
+        "command": "boomack.panel.add",
+        "category": "Boomack",
+        "title": "Add Panel",
+        "icon": "$(add)"
+      },
+      {
         "command": "boomack.panel.select",
         "category": "Boomack",
         "title": "Select Panel"
@@ -277,6 +283,13 @@
         "title": "Clear Panel",
         "shortTitle": "Clear",
         "icon": "$(trash)"
+      },
+      {
+        "command": "boomack.panel.remove",
+        "category": "Boomack",
+        "title": "Remove Panel",
+        "shortTitle": "Remove",
+        "icon": "$(remove)"
       },
       {
         "command": "boomack.panel.openInBrowser",
@@ -526,8 +539,8 @@
       },
       {
         "command": "boomack.server.add",
-        "key": "ctrl+l n",
-        "mac": "cmd+l n"
+        "key": "ctrl+l n h",
+        "mac": "cmd+l n h"
       },
       {
         "command": "boomack.server.select",
@@ -573,6 +586,11 @@
         "command": "boomack.panel.refresh",
         "key": "ctrl+l r p",
         "mac": "cmd+l r p"
+      },
+      {
+        "command": "boomack.panel.add",
+        "key": "ctrl+l n p",
+        "mac": "cmd+l n p"
       },
       {
         "command": "boomack.panel.clear",
@@ -724,8 +742,10 @@
         { "command": "boomack.server.select" },
         { "command": "boomack.server.openInBrowser" },
         { "command": "boomack.server.refresh" },
+        { "command": "boomack.panel.add" },
         { "command": "boomack.panel.select" },
         { "command": "boomack.panel.clear" },
+        { "command": "boomack.panel.remove" },
         { "command": "boomack.panel.openInBrowser" },
         { "command": "boomack.panel.reloadInBrowser" },
         { "command": "boomack.panel.refresh" },
@@ -805,9 +825,14 @@
           "group": "navigation"
         },
         {
+          "command": "boomack.panel.add",
+          "when": "view == boomack-panels && boomack.serverSelected",
+          "group": "navigation@1"
+        },
+        {
           "command": "boomack.server.refresh",
           "when": "view == boomack-panels && boomack.serverSelected",
-          "group": "navigation"
+          "group": "navigation@2"
         },
         {
           "command": "boomack.panel.revertMaximizedSlot",
@@ -866,6 +891,10 @@
           "command": "boomack.panel.clear",
           "when": "view == boomack-panels",
           "group": "inline@3"
+        },
+        {
+          "command": "boomack.panel.remove",
+          "when": "view == boomack-panels"
         },
         {
           "command": "boomack.panel.openInBrowser",
