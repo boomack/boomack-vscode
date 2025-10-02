@@ -1,7 +1,7 @@
 {
   "name": "boomack-vscode",
   "displayName": "Boomack",
-  "description": "Boomack client for VS Code",
+  "description": "Boomack for Visual Studio Code",
   "categories": [
     "Other"
   ],
@@ -10,7 +10,12 @@
     "presentation",
     "hypermedia"
   ],
-  "version": "0.0.1",
+  "license": "MIT",
+  "repository": {
+    "url": "https://github.com/boomack/boomack-vscode"
+  },
+  "publisher": "mastersign",
+  "version": "0.1.0",
   "preview": true,
   "engines": {
     "vscode": "^1.100.0"
@@ -27,7 +32,7 @@
     "test": "vscode-test"
   },
   "dependencies": {
-    "boomack": "0.14.9",
+    "boomack": "0.14.10",
     "boomack-js": "0.14.1",
     "ctrlc-windows": "2.2.0",
     "lodash-es": "4.17.21",
@@ -39,8 +44,8 @@
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
-    "@types/node": "22.x",
-    "@types/vscode": "^1.103.0",
+    "@types/node": "^18",
+    "@types/vscode": "^1.100.0",
     "@vscode/test-cli": "^0.0.11",
     "@vscode/test-electron": "^2.5.2",
     "eslint": "^9.32.0"

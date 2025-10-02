@@ -4,16 +4,24 @@ This extensions allows to interact with a Boomack server.
 
 ## Features
 
-* Select server, panel, and slot as current target
-* Clear content from panel or slot
-* Open server, panel, or slot in default browser
 * Start and stop project server
+* Select server, panel, and slot as current target
+* Open server, panel, or slot in default browser
+* Add and remove panels
+* Set panel layout from editor content
+* Set panel layout from file in file explorer
+* Clear content from panel or slot
+* Display editor content as media item in panel, or specific slot
+* Display source from editor in panel, or specific slot
+* Display file from file explorer as media item
+* Display source of file from file explorer
+* File Types with JSON schema support
+    + `*.boom-request.(json|yaml|yml)` One or multiple Display Requests
+    + `*.boom-panel.(json|yaml|yml)` Panel Layout
+    + `*.boom.(json|yaml|yml)` Boomack Playbook
+* Views for servers, panels, and slots
 
 ## Extension Settings
-
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
 
 This extension contributes the following settings:
 
@@ -23,8 +31,8 @@ This extension contributes the following settings:
 
 ## Release Notes
 
-Currently this project is in early alpha stage.
+Currently this project is in alpha stage.
 
-### 0.0.1
+### 0.1.0
 
-Initial implementation with some prototyping.
+Initial implementation.
