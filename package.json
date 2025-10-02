@@ -16,7 +16,7 @@
   },
   "icon": "res/boomack-logo.png",
   "publisher": "mastersign",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "preview": true,
   "engines": {
     "vscode": "^1.100.0"
@@ -631,18 +631,6 @@
         "when": "boomack.activeTextEditor && boomack.serverSelected",
         "key": "ctrl+l shift+d",
         "mac": "cmd+l shift+d"
-      },
-      {
-        "command": "boomack.display.activeDocument",
-        "when": "boomack.activeTextEditor && boomack.serverSelected",
-        "key": "ctrl+l d",
-        "mac": "cmd+l d"
-      },
-      {
-        "command": "boomack.display.activeDocument.source",
-        "when": "boomack.activeTextEditor && boomack.serverSelected",
-        "key": "ctrl+l ctrl+d",
-        "mac": "cmd+l cmd+d"
       },
       {
         "command": "boomack.display.activeDocument.asDisplayRequest",
