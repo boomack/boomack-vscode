@@ -1086,7 +1086,7 @@ function resolveRelativeDisplayRequestSrc(baseDir, request) {
     if (typeof request.src !== 'string') return request
     const base = `file://${baseDir}/`
     if (URL.canParse(request.src, base)) {
-        const url = URL.parse(request.src, base)
+        const url = new URL(request.src, base)
         request.src = url.toString()
     }
 }
