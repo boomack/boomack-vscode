@@ -108,6 +108,10 @@ This extension contributes the following settings:
 
 Currently this project is in alpha stage.
 
+### 0.1.2
+
+Include npm dependencies in VS Code extension package.
+
 ### 0.1.1
 
 Initial implementation.
