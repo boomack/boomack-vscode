@@ -6,6 +6,10 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 Currently this project is in alpha stage.
 
+## 0.1.3 -- 0.1.5
+
+Bugfixes
+
 ## 0.1.2
 
 Include npm dependencies in VS Code extension package.
