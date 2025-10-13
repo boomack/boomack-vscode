@@ -9,7 +9,7 @@ import {
 import { lookpath } from 'lookpath'
 import { config } from './config.js'
 
-const boomackServerMainScript = 'server-build/cli.js'
+const boomackServerMainScript = 'server-build/cli.mjs'
 
 /**
  * @typedef {import('vscode').ExtensionContext} ExtensionContext
@@ -21,7 +21,7 @@ const boomackServerMainScript = 'server-build/cli.js'
  * @returns {string}
  */
 function embeddedBoomackServerScriptPath(context) {
-    return join(context.extensionPath, 'node_modules', 'boomack', boomackServerMainScript)
+    return join(context.extensionPath, 'server', 'node_modules', 'boomack', boomackServerMainScript)
 }
 
 /**

@@ -28,12 +28,12 @@
     "redhat.vscode-yaml"
   ],
   "scripts": {
+    "update-server": "npm install --prefix ./server --omit dev --legacy-peer-deps",
     "lint": "eslint .",
     "pretest": "npm run lint",
     "test": "vscode-test"
   },
   "dependencies": {
-    "boomack": "0.15.0-preview1",
     "boomack-js": "0.14.1",
     "ctrlc-windows": "2.2.0",
     "lodash-es": "4.17.21",
