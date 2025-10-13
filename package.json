@@ -16,7 +16,7 @@
   },
   "icon": "res/boomack-logo.png",
   "publisher": "mastersign",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "preview": true,
   "engines": {
     "vscode": "^1.100.0"
