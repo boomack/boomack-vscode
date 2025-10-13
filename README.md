@@ -103,15 +103,3 @@ This extension contributes the following settings:
 * `boomack.notebook.outputSelection`: How to select one of multiple cell outputs in a notebook for display (auto, or user)
 * `boomack.displayBinary.bytesPerLine`: The number of bytes to display in one line, when displaying the source of a binary file
 * `boomack.displayBinary.maxLines`: The maximum number of lines, when displaying the source of a binary file
-
-## Release Notes
-
-Currently this project is in alpha stage.
-
-### 0.1.2
-
-Include npm dependencies in VS Code extension package.
-
-### 0.1.1
-
-Initial implementation.
