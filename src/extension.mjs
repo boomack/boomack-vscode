@@ -2,10 +2,10 @@ import {
     commands,
     window,
 } from 'vscode'
-import { loadWorkspaceClientConfig } from './config.js'
-import { clearClientCache } from './client.js'
-import { Navigator } from './navigation.js'
-import cmd from './commands.js'
+import { loadWorkspaceClientConfig } from './config.mjs'
+import { clearClientCache } from './client.mjs'
+import { Navigator } from './navigation.mjs'
+import cmd from './commands.mjs'
 
 /**
  * @typedef {import('vscode').ExtensionContext} ExtensionContext

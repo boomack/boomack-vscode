@@ -7,7 +7,7 @@ import {
     workspace,
 } from 'vscode'
 import { lookpath } from 'lookpath'
-import { config } from './config.js'
+import { config } from './config.mjs'
 
 const boomackServerMainScript = 'server-build/cli.mjs'
 

@@ -1,9 +1,9 @@
 import boomack from 'boomack-js'
-import { config } from './config.js'
+import { config } from './config.mjs'
 
 /**
  * @typedef {import('vscode').ExtensionContext} ExtensionContext
- * @typedef {import('./inventory.js').BoomackServer} BoomackServer
+ * @typedef {import('./inventory.mjs').BoomackServer} BoomackServer
  */
 
 /** @type {Object.<string, boomack.Boomack>} */

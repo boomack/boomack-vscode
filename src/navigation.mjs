@@ -11,9 +11,9 @@ import {
     isServerState,
     WORKSPACE_SERVER_LABEL,
     WORKSPACE_SERVER_NAME,
-} from './model.js'
-import inventory from './inventory.js'
-import { getClientFor } from './client.js'
+} from './model.mjs'
+import inventory from './inventory.mjs'
+import { getClientFor } from './client.mjs'
 
 /**
  * @template T
@@ -33,13 +33,13 @@ import { getClientFor } from './client.js'
  * @typedef {import('boomack-js').Boomack} BoomackClient
  */
 /**
- * @typedef {import('./model.js').BoomackServer} BoomackServer
- * @typedef {import('./model.js').PanelDefinition} PanelDefinition
- * @typedef {import('./model.js').SlotDefinition} SlotDefinition
- * @typedef {import('./model.js').ServerUIState} ServerUIState
- * @typedef {import('./model.js').PanelUIState} PanelUIState
- * @typedef {import('./model.js').SlotUIState} SlotUIState
- * @typedef {import('./model.js').BoomackTarget} BoomackTarget
+ * @typedef {import('./model.mjs').BoomackServer} BoomackServer
+ * @typedef {import('./model.mjs').PanelDefinition} PanelDefinition
+ * @typedef {import('./model.mjs').SlotDefinition} SlotDefinition
+ * @typedef {import('./model.mjs').ServerUIState} ServerUIState
+ * @typedef {import('./model.mjs').PanelUIState} PanelUIState
+ * @typedef {import('./model.mjs').SlotUIState} SlotUIState
+ * @typedef {import('./model.mjs').BoomackTarget} BoomackTarget
  */
 
 /**

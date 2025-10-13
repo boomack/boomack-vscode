@@ -54,8 +54,9 @@ async function loadOptionalYamlFile(fileName) {
  * @returns {Promise<Object>}
  */
 export async function loadWorkspaceClientConfig() {
+    const extensionRoot = __dirname // import.meta.dirname for ESM, but extension is packaged as CommonJS
     const defaultConfig = await loadOptionalYamlFile(
-        join(import.meta.dirname, 'defaultConfig'))
+        join(extensionRoot, '..', 'defaultConfig'))
     if (workspace.workspaceFolders.length === 0) return defaultConfig
     const projectRoot = workspace.workspaceFolders[0].uri.fsPath
     const serverConfig = await loadOptionalYamlFile(

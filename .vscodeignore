@@ -2,6 +2,7 @@
 .vscode-test/**
 test/**
 demo/**
+src/**
 .gitignore
 .yarnrc
 vsc-extension-quickstart.md
@@ -9,3 +10,5 @@ vsc-extension-quickstart.md
 **/*.map
 **/eslint.config.mjs
 **/.vscode-test.*
+/dist/*.js.map
+/dist/package.*

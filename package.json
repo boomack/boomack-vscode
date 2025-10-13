@@ -21,15 +21,20 @@
   "engines": {
     "vscode": "^1.100.0"
   },
-  "type": "module",
+  "type": "commonjs",
   "activationEvents": [],
-  "main": "./extension.js",
+  "main": "./dist/extension.js",
   "extensionDependencies": [
     "redhat.vscode-yaml"
   ],
   "scripts": {
-    "update-server": "npm install --prefix ./server --omit dev --legacy-peer-deps",
+    "update:server": "npm install --prefix ./server --omit dev --legacy-peer-deps",
+    "update:native": "npm install --prefix ./dist --omit dev ctrlc-windows@2.2.0",
+    "compile": "node esbuild.mjs",
+    "package": "node esbuild.mjs --production",
+    "watch:compile": "node esbuild.mjs --watch",
     "lint": "eslint .",
+    "vscode:prepublish": "npm run update:server && npm run update:native && npm run package",
     "pretest": "npm run lint",
     "test": "vscode-test"
   },
@@ -49,7 +54,8 @@
     "@types/vscode": "^1.100.0",
     "@vscode/test-cli": "^0.0.11",
     "@vscode/test-electron": "^2.5.2",
-    "eslint": "^9.32.0"
+    "eslint": "^9.32.0",
+    "esbuild": "^0.25.10"
   },
   "contributes": {
     "languages": [

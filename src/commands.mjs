@@ -18,25 +18,25 @@ import {
     removeItemOnce,
     isFileBinary,
     htmlViewOfBinaryFile,
-} from './utils.js'
+} from './utils.mjs'
 import {
     WORKSPACE_SERVER_NAME,
     WORKSPACE_SERVER_LABEL,
     isServerState,
     isPanelState,
     isSlotState,
-} from './model.js'
+} from './model.mjs'
 import {
     config,
     loadWorkspaceClientConfig,
     loadWorkspaceServerConfig,
     getFileSrcRootsFromRunConfig,
-} from './config.js'
-import inventory from './inventory.js'
+} from './config.mjs'
+import inventory from './inventory.mjs'
 import {
     getBoomackServerCommandLine,
     runInTerminal,
-} from './tools.js'
+} from './tools.mjs'
 
 /**
  * @typedef {import('vscode').Terminal} Terminal
@@ -48,13 +48,13 @@ import {
  * @typedef {import('vscode').NotebookCellOutputItem} NotebookCellOutputItem
  */
 /**
- * @typedef {import('./inventory.js').BoomackServer} BoomackServer
- * @typedef {import('./model.js').UIState} UIState
- * @typedef {import('./model.js').ServerUIState} ServerUIState
- * @typedef {import('./model.js').PanelUIState} PanelUIState
- * @typedef {import('./model.js').SlotUIState} SlotUIState
- * @typedef {import('./model.js').BoomackTarget} BoomackTarget
- * @typedef {import('./navigation.js').Navigator} Navigator
+ * @typedef {import('./inventory.mjs').BoomackServer} BoomackServer
+ * @typedef {import('./model.mjs').UIState} UIState
+ * @typedef {import('./model.mjs').ServerUIState} ServerUIState
+ * @typedef {import('./model.mjs').PanelUIState} PanelUIState
+ * @typedef {import('./model.mjs').SlotUIState} SlotUIState
+ * @typedef {import('./model.mjs').BoomackTarget} BoomackTarget
+ * @typedef {import('./navigation.mjs').Navigator} Navigator
  */
 
 /**

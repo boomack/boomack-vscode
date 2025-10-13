@@ -1,7 +1,7 @@
 import { EventEmitter } from 'vscode'
 
 /**
- * @typedef {import('./model.js').BoomackServer} BoomackServer
+ * @typedef {import('./model.mjs').BoomackServer} BoomackServer
  */
 
 // TODO: store tokens as secret
