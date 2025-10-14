@@ -1,4 +1,4 @@
-import { chain, filter, first, flatMap, has, isArray, map, max, omitBy, values } from 'lodash-es'
+import _ from 'lodash'
 import fs from'node:fs/promises'
 import path from 'node:path'
 import waitOn from 'wait-on'
@@ -315,7 +315,7 @@ async function userChooseSlot(navigator, title, allowSelectNothing) {
 function guessTargetServer(navigator) {
     const selectedServerState = navigator.getSelectedServerState()
     if (selectedServerState) return selectedServerState
-    const serverStates = values(navigator.serverStates)
+    const serverStates = _.values(navigator.serverStates)
     if (serverStates.length === 1) return serverStates[0]
     return undefined
 }
@@ -371,8 +371,8 @@ async function guessTargetSlot(navigator, panelState) {
     if (panelState.invalid) {
         await navigator.refreshPanelState(panelState)
     }
-    const slotStates = values(panelState.slots)
-    return first(filter(slotStates, slot => slot.defaultSlot))
+    const slotStates = _.values(panelState.slots)
+    return _.first(_.filter(slotStates, slot => slot.defaultSlot))
 }
 
 /**
@@ -1025,7 +1025,7 @@ function removeSlotCommand(navigator) {
             defaultSlot: panelDefinition.defaultSlot !== slotState.id
                 ? panelDefinition.defaultSlot
                 : null,
-            slots: omitBy(panelDefinition.slots, slot => slot.id === slotState.id),
+            slots: _.omitBy(panelDefinition.slots, slot => slot.id === slotState.id),
         }
         const client = await navigator.clientFor(slotState.panel.server.server)
         const response = await client.updatePanel(slotState.panel.id, newPanelDefinition)
@@ -1102,13 +1102,13 @@ async function sendDisplayRequestFile(navigator, target, filename) {
     /** @param {any} x */
     function couldBeDisplayRequest(x) {
         if (!x || typeof x !== 'object' || Array.isArray(x)) return false
-        if (!has(x, 'text') && !has(x, 'data') && !has(x, 'src')) return false
+        if (!_.has(x, 'text') && !_.has(x, 'data') && !_.has(x, 'src')) return false
         return true
     }
 
     let request = parse(requestText)
     let probablyValid = true
-    if (isArray(request)) {
+    if (Array.isArray(request)) {
         for (const x of request) {
             if (couldBeDisplayRequest(x)) {
                 if (!x.panel) x.panel = target.panelId
@@ -1505,9 +1505,13 @@ function displayDocumentInSlotWithIdCommand(navigator, flags) {
         const serverState = navigator.getSelectedServerState()
         const panelState = navigator.getSelectedPanelState(serverState)
         const autoSlotIdPattern = /^slot-(\d+)$/
-        const autoSlotIds = filter(map(values(panelState.slots), 'id'), id => autoSlotIdPattern.test(id))
-        const autoSlotNumbers = map(autoSlotIds, id => Number.parseInt(id.substring(5)))
-        const lastAutoSlotNumber = max(autoSlotNumbers)
+        const autoSlotIds = _.chain(panelState.slots)
+            .values()
+            .map('id')
+            .filter(id => autoSlotIdPattern.test(id))
+            .value()
+        const autoSlotNumbers = _.map(autoSlotIds, id => Number.parseInt(id.substring(5)))
+        const lastAutoSlotNumber = _.max(autoSlotNumbers)
         const nextAutoSlotNumber = lastAutoSlotNumber === undefined ? 0 : (lastAutoSlotNumber + 1)
         const slotId = await window.showInputBox({
             title: "Display",
@@ -1657,23 +1661,25 @@ function displaySelectionCommand(navigator, flags) {
  * @returns {NotebookCellOutputItem|undefined}
  */
 function autoChooseCellOutputItem(outputs) {
-    const items = flatMap(outputs, o => o.items)
+    const items = _.flatMap(outputs, o => o.items)
 
-    const error = chain(items)
+    const c = _.chain(items)
+
+    const error = _.chain(items)
         .filter(i => i.mime === 'application/vnd.code.notebook.error')
         .first().value()
     if (error) return error
 
-    const image = chain(items).filter(i => i.mime.startsWith('image/')).first().value()
+    const image = _.chain(items).filter(i => i.mime.startsWith('image/')).first().value()
     if (image) return image
 
-    const markdown = chain(items).filter(i => i.mime === 'text/markdown').first().value()
+    const markdown = _.chain(items).filter(i => i.mime === 'text/markdown').first().value()
     if (markdown) return markdown
 
-    const html = chain(items).filter(i => i.mime === 'text/html').first().value()
+    const html = _.chain(items).filter(i => i.mime === 'text/html').first().value()
     if (html) return html
 
-    return chain(items).last().value() || undefined
+    return _.chain(items).last().value() || undefined
 }
 
 /**

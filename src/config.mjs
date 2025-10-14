@@ -1,7 +1,7 @@
 import { join } from 'node:path'
 import { homedir } from 'node:os'
 import { promises } from 'node:fs'
-import { map, pick, defaultsDeep, get, isString, isArray } from 'lodash-es'
+import _ from 'lodash'
 import { workspace } from 'vscode'
 import { parse } from 'yaml'
 import { fileTypePredicates } from 'boomack-js/config.js'
@@ -20,7 +20,7 @@ const CONFIG_FILE_EXTENSIONS = ['', '.json', '.yaml', '.yml'];
  * @param {string} fileName
  */
 function configFileAlternatives(fileName) {
-    return map(CONFIG_FILE_EXTENSIONS, ext => fileName + ext);
+    return _.map(CONFIG_FILE_EXTENSIONS, ext => fileName + ext);
 }
 
 /**
@@ -63,8 +63,8 @@ export async function loadWorkspaceClientConfig() {
         join(projectRoot, 'boomack-server'))
     const clientConfig = await loadOptionalYamlFile(
         join(projectRoot, 'boomack'))
-    const mergedConfig = pick(
-        defaultsDeep({}, clientConfig, serverConfig, defaultConfig),
+    const mergedConfig = _.pick(
+        _.defaultsDeep({}, clientConfig, serverConfig, defaultConfig),
         ['server', 'client'])
     mergedConfig.client.types = fileTypePredicates(mergedConfig.client.types)
     mergedConfig.client.sourceTypes = fileTypePredicates(mergedConfig.client.sourceTypes)
@@ -87,7 +87,7 @@ export async function loadWorkspaceServerConfig() {
         join(projectRoot, 'boomack-server'))
     const userConfig = await loadOptionalYamlFile(
         join(homedir(), '.boomack-server'))
-    return defaultsDeep({}, userConfig, workspaceConfig)
+    return _.defaultsDeep({}, userConfig, workspaceConfig)
 }
 
 /**
@@ -95,8 +95,8 @@ export async function loadWorkspaceServerConfig() {
  * @returns {string[]}
  */
 export function getFileSrcRootsFromRunConfig(runConfig) {
-    let roots = get(runConfig, 'api.request.fileSrcRoots', [])
-    if (isString(roots)) roots = [roots]
-    if (!isArray(roots)) roots = []
+    let roots = _.get(runConfig, 'api.request.fileSrcRoots', [])
+    if (typeof roots === 'string') roots = [roots]
+    if (!Array.isArray(roots)) roots = []
     return roots
 }

@@ -1,4 +1,4 @@
-import { forEach, has, keys, some, sortBy, values } from 'lodash-es'
+import _ from 'lodash'
 import {
     EventEmitter,
     ProgressLocation,
@@ -324,10 +324,10 @@ export class Navigator {
                 this.serverStates[server.name] = state
             }
         }
-        const obsoleteServerNames = keys(this.serverStates)
+        const obsoleteServerNames = _.keys(this.serverStates)
             .filter(name =>
                 name !== WORKSPACE_SERVER_NAME
-                && !some(servers, s => s.name === name))
+                && !_.some(servers, s => s.name === name))
         for (const name of obsoleteServerNames) {
             delete this.serverStates[name]
         }
@@ -373,7 +373,7 @@ export class Navigator {
             // if (defaultPanelState) {
             //     await this._updatePanelState(defaultPanelState)
             // }
-            const panelStates = values(serverState.panels)
+            const panelStates = _.values(serverState.panels)
             let progressValue = 10
             for (const panelState of panelStates) {
                 progress.report({ increment: progressValue, message: `Loading panel "${panelState.id}"` })
@@ -431,7 +431,7 @@ export class Navigator {
      * @returns {ServerUIState[]}
      */
     getServerStates() {
-        return sortBy(values(this.serverStates),
+        return _.sortBy(_.values(this.serverStates),
             s => s.name !== WORKSPACE_SERVER_NAME,
             s => s.name.toLocaleLowerCase())
     }
@@ -493,7 +493,7 @@ export class Navigator {
                 serverState.panels[panelId] = state
             }
         }
-        const obsoletePanelIds = keys(serverState.panels)
+        const obsoletePanelIds = _.keys(serverState.panels)
             .filter(id => !serverState.panelIds.includes(id))
         for (const id of obsoletePanelIds) {
             const panelState = serverState.panels[id]
@@ -516,11 +516,11 @@ export class Navigator {
             panelState.definition = /** @type {PanelDefinition} */ (response.body)
             panelState.defaultSlotId = panelState.definition.defaultSlot
             if (!panelState.defaultSlotId && panelState.definition.type === 'grid') {
-                panelState.defaultSlotId = sortBy(panelState.definition.slots, 'id')[0]?.id
+                panelState.defaultSlotId = _.sortBy(panelState.definition.slots, 'id')[0]?.id
             }
             if (!panelState.slots) { panelState.slots = {} }
-            forEach(panelState.definition.slots, s => {
-                if (!has(panelState.slots, s.id)) {
+            _.forEach(panelState.definition.slots, s => {
+                if (!_.has(panelState.slots, s.id)) {
                     panelState.slots[s.id] = {
                         ...SLOT_UI_STATE_TEMPLATE,
                         id: s.id,
@@ -529,15 +529,15 @@ export class Navigator {
                 }
                 panelState.slots[s.id].defaultSlot = s.id === panelState.defaultSlotId
             })
-            const existingSlotIds = keys(panelState.definition.slots)
-            const obsoleteSlotIds = keys(panelState.slots)
+            const existingSlotIds = _.keys(panelState.definition.slots)
+            const obsoleteSlotIds = _.keys(panelState.slots)
                 .filter(id => !existingSlotIds.includes(id))
             for (const id of obsoleteSlotIds) {
                 const slotState = panelState.slots[id]
                 slotState.panel = undefined // reset backlink
                 delete panelState.slots[id]
             }
-            if (!some(panelState.definition.slots, s => s.id === panelState.selectedSlotId)) {
+            if (!_.some(panelState.definition.slots, s => s.id === panelState.selectedSlotId)) {
                 panelState.selectedSlotId = null
             }
         } else {
@@ -562,7 +562,7 @@ export class Navigator {
      */
     getPanelStates(serverState) {
         if (!serverState) return []
-        return sortBy(values(serverState.panels),
+        return _.sortBy(_.values(serverState.panels),
             p => p.id !== 'default',
             p => p.id)
     }
@@ -607,7 +607,7 @@ export class Navigator {
      */
     getSlotStates(panelState) {
         if (!panelState) return []
-        return sortBy(values(panelState.slots),
+        return _.sortBy(_.values(panelState.slots),
             s => !s.defaultSlot,
             s => s.id)
     }
