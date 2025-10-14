@@ -3,6 +3,7 @@
     "boomack": "0.15.0-preview1",
     "boomack-plugin-leaflet": "0.2.1",
     "boomack-plugin-mermaid": "0.2.0",
+    "boomack-plugin-pdf": "0.1.1",
     "boomack-plugin-vega": "0.12.3"
   }
 }
