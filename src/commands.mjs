@@ -34,6 +34,7 @@ import {
 } from './config.mjs'
 import inventory from './inventory.mjs'
 import {
+    bundledModulesPath,
     getBoomackServerCommandLine,
     runInTerminal,
 } from './tools.mjs'
@@ -441,9 +442,29 @@ function startWorkspaceServerCommand(navigator) {
             args.push('-h'); args.push(clientConfig.server.host)
             args.push('-p'); args.push(`${clientConfig.server.port}`)
 
-            args.push('-o')
-            for (let i = 0; i < fileSrcRoots.length; i++) {
-                args.push(`api.request.fileSrcRoots.${i}=${fileSrcRoots[i]}`)
+            const pluginsRootIsConfigured = typeof _.get(serverRunConfig, ['plugins', 'root']) === 'string'
+            const pluginsDiscoveryIsConfigured = typeof _.get(serverRunConfig, ['plugins', 'discover']) === 'boolean'
+            let pluginsRootPath = null
+            if (!pluginsRootIsConfigured) {
+                if (config('server.plugins.bundled')) {
+                    pluginsRootPath = bundledModulesPath(navigator.getContext())
+                } else {
+                    pluginsRootPath = config('server.plugins.rootPath')
+                }
+            }
+            if (pluginsRootPath) {
+                args.push('-o')
+                args.push(`plugins.root=${pluginsRootPath}`)
+                if (!pluginsDiscoveryIsConfigured) {
+                    args.push('plugins.discover=true')
+                }
+            }
+
+            if (fileSrcRoots.length) {
+                args.push('-o')
+                for (let i = 0; i < fileSrcRoots.length; i++) {
+                    args.push(`api.request.fileSrcRoots.${i}=${fileSrcRoots[i]}`)
+                }
             }
 
             const cmdLine = await getBoomackServerCommandLine(navigator.getContext())

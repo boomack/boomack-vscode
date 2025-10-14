@@ -141,11 +141,23 @@
           "description": "The Boomack installation to run as Project Server",
           "order": 100
         },
+        "boomack.server.plugins.bundled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use Boomack plug-ins that come bundled with the VS Code extension",
+          "order": 101
+        },
+        "boomack.server.plugins.rootPath": {
+          "type": "string",
+          "default": null,
+          "description": "Path to custom node_modules folder where to look for plug-ins",
+          "order": 102
+        },
         "boomack.server.verbose": {
           "type": "boolean",
           "default": false,
           "description": "Run the Boomack Project Server with verbose output",
-          "order": 101
+          "order": 103
         },
         "boomack.client.timeout": {
           "type": "integer",
