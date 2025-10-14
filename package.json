@@ -125,17 +125,17 @@
           "default": "auto",
           "enum": [
             "auto",
-            "embedded",
+            "bundled",
             "system"
           ],
           "enumItemLabels": [
             "Auto",
-            "Embedded",
+            "Bundled",
             "System"
           ],
           "enumDescriptions": [
             null,
-            "Run embedded JS package of Boomack Server with NodeJS",
+            "Run bundled JS package of Boomack Server with NodeJS",
             "Run boomack command from PATH"
           ],
           "description": "The Boomack installation to run as Project Server",

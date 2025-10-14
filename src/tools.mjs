@@ -20,8 +20,16 @@ const boomackServerMainScript = 'server-build/cli.mjs'
  * @param {ExtensionContext} context
  * @returns {string}
  */
-function embeddedBoomackServerScriptPath(context) {
-    return join(context.extensionPath, 'server', 'node_modules', 'boomack', boomackServerMainScript)
+export function bundledModulesPath(context) {
+    return join(context.extensionPath, 'server', 'node_modules')
+}
+
+/**
+ * @param {ExtensionContext} context
+ * @returns {string}
+ */
+function bundledBoomackServerScriptPath(context) {
+    return join(bundledModulesPath(context), 'boomack', boomackServerMainScript)
 }
 
 /**
@@ -29,19 +37,19 @@ function embeddedBoomackServerScriptPath(context) {
  * @param {boolean} showMessage
  * @returns {Promise<{ cmd: string, args: string[] }|undefined>}
  */
-async function getEmbeddedBoomackServerCommandLine(context, showMessage) {
+async function getBundledBoomackServerCommandLine(context, showMessage) {
     const nodeExePath = await lookpath('node')
     if (!nodeExePath) {
         if (showMessage) {
             window.showErrorMessage(
                 "Can not find NodeJS executable on PATH."
-                + " Please install NodeJS to run embedded Boomack server.")
+                + " Please install NodeJS to run bundled Boomack server.")
         }
         return undefined
     }
     return {
         cmd: nodeExePath,
-        args: [embeddedBoomackServerScriptPath(context)]
+        args: [bundledBoomackServerScriptPath(context)]
     }
 }
 
@@ -88,7 +96,7 @@ async function getSystemBoomackServerCommandLine(showMessage) {
             if (showMessage) {
                 window.showErrorMessage(
                     "Can not find NodeJS executable on PATH."
-                    + " Please install NodeJS to run Boomack server.")
+                    + " Please install NodeJS to run bundled Boomack server.")
             }
             return undefined
         }
@@ -107,13 +115,13 @@ async function getSystemBoomackServerCommandLine(showMessage) {
  */
 export async function getBoomackServerCommandLine(context) {
     const installation = config('server.installation')
-    if (installation === 'embedded') {
-        return await getEmbeddedBoomackServerCommandLine(context, true)
+    if (installation === 'bundled') {
+        return await getBundledBoomackServerCommandLine(context, true)
     } else if (installation === 'system') {
         return await getSystemBoomackServerCommandLine(true)
     }
-    const embeddedCommandLine = await getEmbeddedBoomackServerCommandLine(context, false)
-    if (embeddedCommandLine) return embeddedCommandLine
+    const bundledCommandLine = await getBundledBoomackServerCommandLine(context, false)
+    if (bundledCommandLine) return bundledCommandLine
     const systemCommandLine = await getSystemBoomackServerCommandLine(false)
     if (systemCommandLine) return systemCommandLine
     window.showErrorMessage(
