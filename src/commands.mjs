@@ -458,8 +458,7 @@ function startWorkspaceServerCommand(navigator) {
                 'Boomack Server', null,
                 cmdLine.cmd, [...cmdLine.args, ...args],
                 projectRoot,
-                () => {
-                    const terminal = workspaceServerTerminal
+                terminal => {
                     workspaceServerTerminal = null
                     commands.executeCommand('setContext',
                         'boomack.workspaceServer.running', false)

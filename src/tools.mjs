@@ -129,7 +129,7 @@ export async function getBoomackServerCommandLine(context) {
  * @param {string} cmd
  * @param {string[]} args
  * @param {string} [cwd]
- * @param {function (): void} [endCb]
+ * @param {function (Terminal): void} [endCb]
  * @returns {Terminal}
  */
 export function runInTerminal(context, label, message, cmd, args, cwd, endCb) {
@@ -151,7 +151,7 @@ export function runInTerminal(context, label, message, cmd, args, cwd, endCb) {
                 process.kill(pid, 0) // throws if the process no longer exists
             } catch {
                 clearInterval(handle)
-                if (endCb) endCb()
+                if (endCb) endCb(terminal)
             }
         }, 500)
     })
