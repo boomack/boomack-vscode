@@ -20,7 +20,7 @@ let navigator = null
 // - [X] command for forcing panel reload on connected Web Clients
 // - [X] setup panel from file
 // - [X] send display request from file
-// - [ ] execute playbook
+// - [X] execute playbook
 // - [ ] setup from assets in directory structure (presets, types, actions, panels, initial content)
 // - [ ] json schema for server config
 // - [X] json schema for panel layout
@@ -31,6 +31,8 @@ let navigator = null
 // - [ ] allow opt-in streaming requests for workspace server per config option
 // - [ ] watches for display requests
 // - [ ] watches for panel layouts
+// - [ ] BUG: detect missing NodeJS on Linux
+// - [ ] BUG: detect existing boomack executable on Linux
 
 function updateContextActiveTextEditor() {
     return commands.executeCommand('setContext',
