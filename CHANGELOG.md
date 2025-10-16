@@ -8,6 +8,11 @@ Currently this project is in alpha stage.
 
 ## 0.1.6
 
+### Added
+
+- New configuration options
+  - `boomack.server.executable`
+
 ### Fixed
 
 - Relative URLs in playbooks not working

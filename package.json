@@ -126,38 +126,47 @@
           "enum": [
             "auto",
             "bundled",
-            "system"
+            "system",
+            "custom"
           ],
           "enumItemLabels": [
             "Auto",
             "Bundled",
-            "System"
+            "System",
+            "Custom"
           ],
           "enumDescriptions": [
             null,
             "Run bundled JS package of Boomack Server with NodeJS",
-            "Run boomack command from PATH"
+            "Run boomack command from PATH",
+            "Run custom executable as Boomack Server"
           ],
           "description": "The Boomack installation to run as Project Server",
           "order": 100
+        },
+        "boomack.server.executable": {
+          "type": "string",
+          "default": null,
+          "description": "An absolute path to the executable of the Boomack server",
+          "order": 101
         },
         "boomack.server.plugins.bundled": {
           "type": "boolean",
           "default": true,
           "description": "Use Boomack plug-ins that come bundled with the VS Code extension",
-          "order": 101
+          "order": 102
         },
         "boomack.server.plugins.rootPath": {
           "type": "string",
           "default": null,
           "description": "Path to custom node_modules folder where to look for plug-ins",
-          "order": 102
+          "order": 103
         },
         "boomack.server.verbose": {
           "type": "boolean",
           "default": false,
           "description": "Run the Boomack Project Server with verbose output",
-          "order": 103
+          "order": 104
         },
         "boomack.client.timeout": {
           "type": "integer",

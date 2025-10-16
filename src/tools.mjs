@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
-import { basename, dirname, join, resolve } from 'node:path'
+import { basename, dirname, join, resolve, isAbsolute } from 'node:path'
 import {
     Uri,
     window,
@@ -110,6 +110,36 @@ async function getSystemBoomackServerCommandLine(showMessage) {
 }
 
 /**
+ * @param {boolean} showMessage
+ * @returns {Promise<{ cmd: string, args: string[] }|undefined>}
+ */
+async function getCustomBoomackServerCommandLine(showMessage) {
+    const boomackExePath = config('server.executable')
+    if (!boomackExePath) {
+        if (showMessage) {
+            window.showErrorMessage(
+                "No custom path to the Boomack Server executable set.")
+        }
+        return undefined
+    }
+    if (!isAbsolute(boomackExePath)) {
+        if (showMessage) {
+            window.showErrorMessage(
+                "The given path to the Boomack Server executable is relative.")
+        }
+        return undefined
+    }
+    if (!existsSync(boomackExePath)) {
+        if (showMessage) {
+            window.showErrorMessage(
+                "Did not find the Boomack Server executable at: " + boomackExePath)
+        }
+        return undefined
+    }
+    return { cmd: boomackExePath, args: [] }
+}
+
+/**
  * @param {ExtensionContext} context
  * @returns {Promise<{ cmd: string, args: string[] }|undefined>}
  */
@@ -119,6 +149,8 @@ export async function getBoomackServerCommandLine(context) {
         return await getBundledBoomackServerCommandLine(context, true)
     } else if (installation === 'system') {
         return await getSystemBoomackServerCommandLine(true)
+    } else if (installation === 'custom') {
+        return await getCustomBoomackServerCommandLine(true)
     }
     const bundledCommandLine = await getBundledBoomackServerCommandLine(context, false)
     if (bundledCommandLine) return bundledCommandLine

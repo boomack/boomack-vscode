@@ -95,7 +95,8 @@ This extension contributes the following commands with default key bindings:
 
 This extension contributes the following settings:
 
-* `boomack.server.installation`: The Boomack installation to run as Project Server (auto, embedded, or system)
+* `boomack.server.installation`: The Boomack installation to run as Project Server (auto, embedded, system, or custom)
+* `boomack.server.executable`: An absolute path to the executable of the Boomack server
 * `boomack.server.plugins.bundled`: Use Boomack plug-ins that come bundled with the VS Code extension
 * `boomack.server.plugins.rootPath`: Path to custom node_modules folder where to look for plug-ins
 * `boomack.server.verbose`: Run the Boomack Project Server with verbose output
