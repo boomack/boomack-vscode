@@ -6,22 +6,38 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 Currently this project is in alpha stage.
 
+## 0.1.6
+
+### Fixed
+
+- Relative URLs in playbooks not working
+
 ## 0.1.5
+
+### Added
 
 - New configuration options
   - `boomack.server.plugins.bundled`
   - `boomack.server.plugins.rootPath`
-- Added official plugins
+- Official plugins
   - `boomack-plugin-pdf`
-- Bugfixes
 
-## 0.1.3 -- 0.1.4
+### Fixed
 
-- Added official plugins
+- Various
+
+## 0.1.4
+
+### Added
+
+- Official plugins
   - `boomack-plugin-mermaid`
   - `boomack-plugin-vega`
   - `boomack-plugin-leaflet`
-- Bugfixes
+
+### Fixed
+
+- Various
 
 ## 0.1.2
 
