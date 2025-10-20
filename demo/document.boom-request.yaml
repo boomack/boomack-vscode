@@ -1,0 +1,4 @@
+src: document.md
+options:
+  background: '#A0FFB0'
+  align: middle center

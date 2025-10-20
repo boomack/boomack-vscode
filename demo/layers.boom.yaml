@@ -1,0 +1,18 @@
+panels:
+  default: layers.boom-panel.yaml
+
+requests:
+  - panel: default
+    slot: background
+    src: image.jpg
+    options:
+      scale: fill
+  - panel: default
+    slot: margin
+    src: data.csv
+  - panel: default
+    slot: main
+    src: document.md
+  - panel: default
+    slot: overlay
+    src: image.svg

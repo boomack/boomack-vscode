@@ -1,0 +1,38 @@
+type: grid
+header: false
+grid:
+  columns: 5
+  rows: 5
+  noMargin: true
+  noGap: true
+slots:
+  background:
+    index: 0
+    toolbar: false
+    border: false
+    columnSpan: 5
+    rowSpan: 5
+  
+  main:
+    index: 100
+    column: 1
+    row: 1
+    columnSpan: 3
+    rowSpan: 3
+  
+  margin:
+    index: 200
+    hidden: true
+    toolbar: false
+    column: 4
+    row: 1
+    rowSpan: 3
+  
+  overlay:
+    index: 9999
+    toolbar: false
+    border: false
+    showId: false
+    clickThrough: true
+    columnSpan: 5
+    rowSpan: 5
