@@ -1,3 +1,7 @@
+# If the Boomack Server can not start, because a configuration
+# at the user profile level requires a plugin, that is not embedded
+# in the VS Code extension, then specifying the plugins
+# on the project level can help.
 # plugins:
 #   packages:
 #     - boomack-plugin-vega
@@ -5,18 +9,22 @@
 #     - boomack-plugin-leaflet
 #     - boomack-plugin-pdf
 
+# To use persistence uncomment the following lines
 # storage:
 #   mode: snapshot-files # none, snapshot-files
 #   snapshotInterval: 60
 #   location: state
 
+# To add additional folders, where the Boomack Server is allowed to read
+# content from, uncomment the following lines and replace F:\Temp with your path(s).
+# This is required for Display Requests with the src property set to a file:/// URL.
 # api:
 #   request:
 #     fileSrcRoots:
 #     - F:\Temp
 
+# To adjust the association from filename patterns to syntax highlighting languages
+# uncomment the following lines and adjust the entries accordingly.
 # client:
 #   sourceLanguages:
-#     "*.js": "javascript"
-#     "*.mjs": "javascript"
-#     "*.cjs": "javascript"
+#     "*.xjs": "javascript"
