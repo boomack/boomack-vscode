@@ -71,11 +71,11 @@
     "jsonValidation": [
       {
         "fileMatch": "*.boom-panel.json",
-        "url": "https://schemas.boomack.com/server/v0.14/panel-layout.json"
+        "url": "https://schemas.boomack.com/server/v0.15/panel-layout.json"
       },
       {
         "fileMatch": "*.boom-request.json",
-        "url": "https://schemas.boomack.com/server/v0.14/display-request.json"
+        "url": "https://schemas.boomack.com/server/v0.15/display-request.json"
       },
       {
         "fileMatch": "*.boom.json",
@@ -93,19 +93,19 @@
       },
       {
         "fileMatch": "*.boom-panel.yaml",
-        "url": "https://schemas.boomack.com/server/v0.14/panel-layout.json"
+        "url": "https://schemas.boomack.com/server/v0.15/panel-layout.json"
       },
       {
         "fileMatch": "*.boom-panel.yml",
-        "url": "https://schemas.boomack.com/server/v0.14/panel-layout.json"
+        "url": "https://schemas.boomack.com/server/v0.15/panel-layout.json"
       },
       {
         "fileMatch": "*.boom-request.yaml",
-        "url": "https://schemas.boomack.com/server/v0.14/display-request.json"
+        "url": "https://schemas.boomack.com/server/v0.15/display-request.json"
       },
       {
         "fileMatch": "*.boom-request.yml",
-        "url": "https://schemas.boomack.com/server/v0.14/display-request.json"
+        "url": "https://schemas.boomack.com/server/v0.15/display-request.json"
       },
       {
         "fileMatch": "*.boom.yaml",
