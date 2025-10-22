@@ -1,7 +1,22 @@
-api:
-  request:
-    fileSrcRoots:
-    - F:\Temp
-client:
-  sourceLanguages:
-    "*.js": "javascript"
+# plugins:
+#   packages:
+#     - boomack-plugin-vega
+#     - boomack-plugin-mermaid
+#     - boomack-plugin-leaflet
+#     - boomack-plugin-pdf
+
+# storage:
+#   mode: snapshot-files # none, snapshot-files
+#   snapshotInterval: 60
+#   location: state
+
+# api:
+#   request:
+#     fileSrcRoots:
+#     - F:\Temp
+
+# client:
+#   sourceLanguages:
+#     "*.js": "javascript"
+#     "*.mjs": "javascript"
+#     "*.cjs": "javascript"
