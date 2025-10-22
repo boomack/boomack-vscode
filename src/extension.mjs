@@ -29,8 +29,9 @@ let navigator = null
 // - [X] json schema for playbook
 // - [ ] use file:/// references instead of streaming requests for workspace server
 // - [ ] allow opt-in streaming requests for workspace server per config option
-// - [ ] watches for display requests
-// - [ ] watches for panel layouts
+// - [ ] watches for display requests (file) for immediate feedback
+// - [ ] watches for panel layouts for immediate feedback
+// - [ ] run project server in Docker container
 
 function updateContextActiveTextEditor() {
     return commands.executeCommand('setContext',
