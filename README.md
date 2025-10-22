@@ -1,6 +1,6 @@
 # Boomack VS Code Extension
 
-This extensions allows to interact with a Boomack server.
+This extensions allows to interact with a Boomack Server.
 
 ## Features
 
@@ -10,11 +10,13 @@ This extensions allows to interact with a Boomack server.
 * Add and remove panels
 * Set panel layout from editor content
 * Set panel layout from file in file explorer
-* Clear content from panel or slot
+* Remove slot from document layout
 * Display editor content as media item in panel, or specific slot
 * Display source from editor in panel, or specific slot
 * Display file from file explorer as media item
 * Display source of file from file explorer
+* Clear content from panel or slot
+* Execute Boomack Playbook
 * File Types with JSON schema support
     + `*.boom-request.(json|yaml|yml)` One or multiple Display Requests
     + `*.boom-panel.(json|yaml|yml)` Panel Layout
