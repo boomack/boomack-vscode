@@ -407,6 +407,24 @@
         "icon": "$(link-external)"
       },
       {
+        "command": "boomack.slot.show",
+        "category": "Boomack",
+        "title": "Show Slot",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "boomack.slot.hide",
+        "category": "Boomack",
+        "title": "Hide Slot",
+        "icon": "$(eye-closed)"
+      },
+      {
+        "command": "boomack.slot.toggleVisibility",
+        "category": "Boomack",
+        "title": "Toggle Slot Visibility",
+        "icon": "$(eye)"
+      },
+      {
         "command": "boomack.slot.remove",
         "category": "Boomack",
         "title": "Remove Slot",
@@ -710,6 +728,21 @@
         "mac": "cmd+l cmd+m"
       },
       {
+        "command": "boomack.slot.hide",
+        "key": "ctrl+l ctrl+h",
+        "mac": "cmd+l cmd+h"
+      },
+      {
+        "command": "boomack.slot.show",
+        "key": "ctrl+l ctrl+s",
+        "mac": "cmd+l cmd+s"
+      },
+      {
+        "command": "boomack.slot.toggleVisibility",
+        "key": "ctrl+l v",
+        "mac": "cmd+l v"
+      },
+      {
         "command": "boomack.playbook.execute.activeDocument",
         "when": "boomack.activeTextEditor && boomack.serverSelected && resourceExtname =~ /^\\.(?:json|ya?ml)$/i",
         "key": "ctrl+l b",
@@ -778,6 +811,9 @@
         { "command": "boomack.slot.zoomOut" },
         { "command": "boomack.slot.maximize" },
         { "command": "boomack.slot.toggleMaximize", "when": "false" },
+        { "command": "boomack.slot.show" },
+        { "command": "boomack.slot.hide" },
+        { "command": "boomack.slot.toggleVisibility" },
         {
           "command": "boomack.display.activeDocument",
           "when": "boomack.activeTextEditor && boomack.serverSelected"
@@ -941,7 +977,7 @@
         {
           "command": "boomack.display.document.inSlot",
           "alt": "boomack.display.document.source.inSlot",
-          "when": "view == boomack-slots && boomack.activeTextEditor && !(resourceFilename =~ /\\.boom-panel\\.\\w{3,4}$/ && resourceFilename =~ /\\.(?:json|ya?ml)$/i)",
+          "when": "view == boomack-slots && boomack.activeTextEditor && !(resourceFilename =~ /\\.boom(?:-panel)?\\.\\w{3,4}$/ && resourceFilename =~ /\\.(?:json|ya?ml)$/i)",
           "group": "inline@1"
         },
         {
@@ -950,14 +986,24 @@
           "group": "inline@2"
         },
         {
-          "command": "boomack.slot.openInBrowser",
-          "when": "view == boomack-slots",
+          "command": "boomack.slot.show",
+          "when": "view == boomack-slots && viewItem == hiddenSlot",
+          "group": "inline@3"
+        },
+        {
+          "command": "boomack.slot.hide",
+          "when": "view == boomack-slots && viewItem == visibleSlot",
           "group": "inline@3"
         },
         {
           "command": "boomack.slot.maximize",
           "when": "view == boomack-slots",
           "group": "inline@4"
+        },
+        {
+          "command": "boomack.slot.openInBrowser",
+          "when": "view == boomack-slots",
+          "group": "inline@5"
         },
         {
           "command": "boomack.slot.remove",

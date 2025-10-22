@@ -9,6 +9,7 @@
  * @typedef {Object} SlotDefinition
  * @property {string} id
  * @property {number} index
+ * @property {boolean} hidden
  */
 
 /**
@@ -16,7 +17,7 @@
  * @property {string} title
  * @property {string} type
  * @property {string} defaultSlot
- * @property {SlotDefinition[]} slots
+ * @property {Object.<string, SlotDefinition>} slots
  */
 
 /**
@@ -30,6 +31,7 @@
  * @property {?PanelUIState} panel
  * @property {string} id
  * @property {boolean} defaultSlot
+ * @property {boolean} hidden
  */
 
 /**

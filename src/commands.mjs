@@ -50,6 +50,7 @@ import {
  */
 /**
  * @typedef {import('./inventory.mjs').BoomackServer} BoomackServer
+ * @typedef {import('./model.mjs').SlotDefinition} SlotDefinition
  * @typedef {import('./model.mjs').UIState} UIState
  * @typedef {import('./model.mjs').ServerUIState} ServerUIState
  * @typedef {import('./model.mjs').PanelUIState} PanelUIState
@@ -1026,6 +1027,70 @@ function revertMaximizedSlotCommand(navigator) {
 
 /**
  * @param {Navigator} navigator
+ * @param {string} title
+ * @param {function(SlotDefinition):SlotDefinition} modification
+ * @returns {function(?UIState):(void | Promise<void>)}
+ */
+function modifySlotDefinitionCommandFactory(navigator, title, modification) {
+    return async uiState => {
+        let slotState = resolveSlotState(uiState)
+        if (!slotState) slotState = await resolveTargetSlot(navigator, 'Clear Slot')
+        if (!slotState) return
+        const panelDefinition = slotState.panel.definition
+        const newPanelDefinition = {
+            ...panelDefinition,
+            defaultSlot: panelDefinition.defaultSlot !== slotState.id
+                ? panelDefinition.defaultSlot
+                : null,
+            slots: _.mapValues(panelDefinition.slots, slot => {
+                if (slot.id !== slotState.id) return slot
+                return modification(slot)
+            }),
+        }
+        const client = await navigator.clientFor(slotState.panel.server.server)
+        const response = await client.updatePanel(slotState.panel.id, newPanelDefinition)
+        if (!response.success) {
+            window.showErrorMessage("Modifying panel failed")
+            console.error(`Failed to update panel layout: HTTP status ${response.statusCode} ${response.statusMessage}`)
+            console.log(response.body)
+            return
+        }
+        await navigator.refreshPanelState(slotState.panel)
+    }
+}
+
+/**
+ * @param {Navigator} navigator
+ * @returns {function(?SlotUIState):(void | Promise<void>)}
+ */
+function hideSlotCommand(navigator) {
+    return modifySlotDefinitionCommandFactory(
+        navigator, "Hide Slot",
+        slot => ({ ...slot, hidden: true }))
+}
+
+/**
+ * @param {Navigator} navigator
+ * @returns {function(?SlotUIState):(void | Promise<void>)}
+ */
+function showSlotCommand(navigator) {
+    return modifySlotDefinitionCommandFactory(
+        navigator, "Show Slot",
+        slot => ({ ...slot, hidden: false }))
+}
+
+/**
+ * @param {Navigator} navigator
+ * @returns {function(?SlotUIState):(void | Promise<void>)}
+ */
+function toggleSlotVisibilityCommand(navigator) {
+    return modifySlotDefinitionCommandFactory(
+        navigator, "Toggle Slot Visibility",
+        slot => ({ ...slot, hidden: !slot.hidden }))
+}
+
+/**
+ * @param {Navigator} navigator
  * @returns {function(?SlotUIState):(void | Promise<void>)}
  */
 function removeSlotCommand(navigator) {
@@ -1892,6 +1957,9 @@ export default {
     slotMaximizeCommand,
     revertMaximizedSlotCommand,
     openSlotInBrowserCommand,
+    hideSlotCommand,
+    showSlotCommand,
+    toggleSlotVisibilityCommand,
     removeSlotCommand,
     displayDocumentInPanelCommand,
     displayDocumentInSlotCommand,

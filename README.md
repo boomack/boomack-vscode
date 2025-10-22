@@ -10,6 +10,7 @@ This extensions allows to interact with a Boomack Server.
 * Add and remove panels
 * Set panel layout from editor content
 * Set panel layout from file in file explorer
+* Hide and show slot in panel
 * Remove slot from document layout
 * Display editor content as media item in panel, or specific slot
 * Display source from editor in panel, or specific slot
@@ -71,6 +72,12 @@ This extension contributes the following commands with default key bindings:
   <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>Z</kbd>&nbsp;<kbd>O</kbd>
 * `boomack.slot.maximize`
   <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>M</kbd>
+* `boomack.slot.hide`
+  <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>Ctrl</kbd>+<kbd>H</kbd>
+* `boomack.slot.show`
+  <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>Ctrl</kbd>+<kbd>S</kbd>
+* `boomack.slot.toggleVisibility`
+  <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>V</kbd>
 * `boomack.display.activeDocument`
   <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>D</kbd>
 * `boomack.display.activeDocument.source`

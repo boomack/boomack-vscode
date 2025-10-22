@@ -229,6 +229,21 @@ export function activate(context) {
         cmd.removeSlotCommand(navigator))
     context.subscriptions.push(removeSlotCmdSubs)
 
+    const hideSlotCmdSubs = commands.registerCommand(
+        'boomack.slot.hide',
+        cmd.hideSlotCommand(navigator))
+    context.subscriptions.push(hideSlotCmdSubs)
+
+    const showSlotCmdSubs = commands.registerCommand(
+        'boomack.slot.show',
+        cmd.showSlotCommand(navigator))
+    context.subscriptions.push(showSlotCmdSubs)
+
+    const toggleSlotVisibilityCmdSubs = commands.registerCommand(
+        'boomack.slot.toggleVisibility',
+        cmd.toggleSlotVisibilityCommand(navigator))
+    context.subscriptions.push(toggleSlotVisibilityCmdSubs)
+
     const displayActiveDocumentCmdSubs = commands.registerCommand(
         'boomack.display.activeDocument',
         cmd.displayFileCommand(navigator, { typeMode: 'default' }))

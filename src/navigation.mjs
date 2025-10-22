@@ -110,6 +110,7 @@ const SLOT_UI_STATE_TEMPLATE = {
     stateType: 'slot',
     id: '<unknown>',
     defaultSlot: false,
+    hidden: false,
     panel: undefined,
 }
 
@@ -528,6 +529,7 @@ export class Navigator {
                     }
                 }
                 panelState.slots[s.id].defaultSlot = s.id === panelState.defaultSlotId
+                panelState.slots[s.id].hidden = s.hidden
             })
             const existingSlotIds = _.keys(panelState.definition.slots)
             const obsoleteSlotIds = _.keys(panelState.slots)
@@ -913,6 +915,7 @@ class SlotTreeItemProvider {
         if (element.defaultSlot) {
             item.description = '(default)'
         }
+        item.contextValue = element.hidden ? 'hiddenSlot' : 'visibleSlot'
         item.iconPath = new ThemeIcon('symbol-constant')
         return item
     }

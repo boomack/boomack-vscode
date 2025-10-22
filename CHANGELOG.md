@@ -13,6 +13,10 @@ Currently this project is in alpha stage.
 - Boomack Server 0.15.0-preview5
 - PDF PlugIn 0.2.0
 
+### Added
+
+- Hide/Show/Toggle slot in panel
+
 ## 0.1.6
 
 ### Added
