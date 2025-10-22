@@ -707,7 +707,7 @@
       {
         "command": "boomack.slot.maximize",
         "key": "ctrl+l ctrl+m",
-        "mac": "cmd+l ctrl+m"
+        "mac": "cmd+l cmd+m"
       },
       {
         "command": "boomack.playbook.execute.activeDocument",
