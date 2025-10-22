@@ -6,6 +6,13 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 Currently this project is in alpha stage.
 
+## 0.1.7
+
+### Changed
+
+- Boomack Server 0.15.0-preview5
+- PDF PlugIn 0.2.0
+
 ## 0.1.6
 
 ### Added
