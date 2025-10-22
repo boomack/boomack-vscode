@@ -31,8 +31,6 @@ let navigator = null
 // - [ ] allow opt-in streaming requests for workspace server per config option
 // - [ ] watches for display requests
 // - [ ] watches for panel layouts
-// - [ ] BUG: detect missing NodeJS on Linux
-// - [ ] BUG: detect existing boomack executable on Linux
 
 function updateContextActiveTextEditor() {
     return commands.executeCommand('setContext',
