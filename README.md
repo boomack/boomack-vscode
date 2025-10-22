@@ -27,69 +27,69 @@ This extension contributes the following commands with default key bindings:
 (on MacOS the <kbd>Ctrl</kbd> is replaced by <kbd>Cmd</kbd>)
 
 * `boomack.server.add`
-  <kbd>Ctrl</kbd>+<kbd>L</kbd> <kbd>N</kbd> <kbd>H</kbd>
+  <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>N</kbd>&nbsp;<kbd>H</kbd>
 * `boomack.server.remove`
 * `boomack.workspaceServer.reloadConfig`
 * `boomack.workspaceServer.start`
-  <kbd>Ctrl</kbd>+<kbd>L</kbd> <kbd>U</kbd>
+  <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>U</kbd>
 * `boomack.workspaceServer.stop`
-  <kbd>Ctrl</kbd>+<kbd>L</kbd> <kbd>K</kbd>
+  <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>K</kbd>
 * `boomack.server.select`
-  <kbd>Ctrl</kbd>+<kbd>L</kbd> <kbd>S</kbd> <kbd>H</kbd>
+  <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>S</kbd>&nbsp;<kbd>H</kbd>
 * `boomack.server.openInBrowser`
-  <kbd>Ctrl</kbd>+<kbd>L</kbd> <kbd>O</kbd> <kbd>H</kbd>
+  <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>O</kbd>&nbsp;<kbd>H</kbd>
 * `boomack.server.refresh`
-  <kbd>Ctrl</kbd>+<kbd>L</kbd> <kbd>R</kbd> <kbd>H</kbd>
+  <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>R</kbd>&nbsp;<kbd>H</kbd>
 * `boomack.panel.add`
-  <kbd>Ctrl</kbd>+<kbd>L</kbd> <kbd>N</kbd> <kbd>P</kbd>
+  <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>N</kbd>&nbsp;<kbd>P</kbd>
 * `boomack.panel.select`
-  <kbd>Ctrl</kbd>+<kbd>L</kbd> <kbd>S</kbd> <kbd>P</kbd>
+  <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>S</kbd>&nbsp;<kbd>P</kbd>
 * `boomack.panel.clear`
-  <kbd>Ctrl</kbd>+<kbd>L</kbd> <kbd>X</kbd> <kbd>P</kbd>
+  <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>X</kbd>&nbsp;<kbd>P</kbd>
 * `boomack.panel.remove`
 * `boomack.panel.openInBrowser`
-  <kbd>Ctrl</kbd>+<kbd>L</kbd> <kbd>O</kbd> <kbd>P</kbd>
+  <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>O</kbd>&nbsp;<kbd>P</kbd>
 * `boomack.panel.reloadInBrowser`
-  <kbd>Ctrl</kbd>+<kbd>L</kbd> <kbd>Ctrl</kbd>+<kbd>R</kbd>
+  <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>Ctrl</kbd>+<kbd>R</kbd>
 * `boomack.panel.refresh`
-  <kbd>Ctrl</kbd>+<kbd>L</kbd> <kbd>R</kbd> <kbd>P</kbd>
+  <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>R</kbd>&nbsp;<kbd>P</kbd>
 * `boomack.panel.revertMaximizedSlot`
-  <kbd>Ctrl</kbd>+<kbd>L</kbd> <kbd>Ctrl</kbd>+<kbd>M</kbd>
+  <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>Ctrl</kbd>+<kbd>M</kbd>
 * `boomack.panel.update.withActiveDocument`
-  <kbd>Ctrl</kbd>+<kbd>L</kbd> <kbd>P</kbd>
+  <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>P</kbd>
 * `boomack.slot.select`
-  <kbd>Ctrl</kbd>+<kbd>L</kbd> <kbd>S</kbd> <kbd>S</kbd>
+  <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>S</kbd>&nbsp;<kbd>S</kbd>
 * `boomack.slot.clear`
-  <kbd>Ctrl</kbd>+<kbd>L</kbd> <kbd>X</kbd> <kbd>S</kbd>
+  <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>X</kbd>&nbsp;<kbd>S</kbd>
 * `boomack.slot.openInBrowser`
-  <kbd>Ctrl</kbd>+<kbd>L</kbd> <kbd>O</kbd> <kbd>S</kbd>
+  <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>O</kbd>&nbsp;<kbd>S</kbd>
 * `boomack.slot.zoomIn`
-  <kbd>Ctrl</kbd>+<kbd>L</kbd> <kbd>Z</kbd> <kbd>I</kbd>
+  <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>Z</kbd>&nbsp;<kbd>I</kbd>
 * `boomack.slot.zoomOut`
-  <kbd>Ctrl</kbd>+<kbd>L</kbd> <kbd>Z</kbd> <kbd>O</kbd>
+  <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>Z</kbd>&nbsp;<kbd>O</kbd>
 * `boomack.slot.maximize`
-  <kbd>Ctrl</kbd>+<kbd>L</kbd> <kbd>M</kbd>
+  <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>M</kbd>
 * `boomack.display.activeDocument`
-  <kbd>Ctrl</kbd>+<kbd>L</kbd> <kbd>D</kbd>
+  <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>D</kbd>
 * `boomack.display.activeDocument.source`
-  <kbd>Ctrl</kbd>+<kbd>L</kbd> <kbd>Ctrl</kbd>+<kbd>D</kbd>
+  <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>Ctrl</kbd>+<kbd>D</kbd>
 * `boomack.display.activeDocument.withMediaType`
-  <kbd>Ctrl</kbd>+<kbd>L</kbd> <kbd>Shift</kbd>+<kbd>D</kbd>
+  <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>Shift</kbd>+<kbd>D</kbd>
 * `boomack.display.activeDocument.asDisplayRequest`
-  <kbd>Ctrl</kbd>+<kbd>L</kbd> <kbd>Q</kbd>
+  <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>Q</kbd>
 * `boomack.display.activeDocument.inSlot.withId`
 * `boomack.display.activeDocument.source.inSlot.withId`
 * `boomack.display.activeDocument.withMediaType.inSlot.withId`
 * `boomack.display.activeNotebookCell`
-  <kbd>Ctrl</kbd>+<kbd>L</kbd> <kbd>C</kbd>
+  <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>C</kbd>
 * `boomack.display.activeNotebookCell.source`
-  <kbd>Ctrl</kbd>+<kbd>L</kbd> <kbd>Ctrl</kbd>+<kbd>C</kbd>
+  <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>Ctrl</kbd>+<kbd>C</kbd>
 * `boomack.display.currentSelection.source`
-  <kbd>Ctrl</kbd>+<kbd>L</kbd> <kbd>Ctrl</kbd>+<kbd>L</kbd>
+  <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>Ctrl</kbd>+<kbd>L</kbd>
 * `boomack.display.currentSelection.withMediaType`
-  <kbd>Ctrl</kbd>+<kbd>L</kbd> <kbd>Shift</kbd>+<kbd>L</kbd>
+  <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>Shift</kbd>+<kbd>L</kbd>
 * `boomack.playbook.execute.activeDocument`
-  <kbd>Ctrl</kbd>+<kbd>L</kbd> <kbd>B</kbd>
+  <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>B</kbd>
 
 ## Extension Settings
 
