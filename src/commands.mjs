@@ -1774,8 +1774,6 @@ function displaySelectionCommand(navigator, flags) {
 function autoChooseCellOutputItem(outputs) {
     const items = _.flatMap(outputs, o => o.items)
 
-    const c = _.chain(items)
-
     const error = _.chain(items)
         .filter(i => i.mime === 'application/vnd.code.notebook.error')
         .first().value()
