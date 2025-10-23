@@ -70,6 +70,10 @@
     ],
     "jsonValidation": [
       {
+        "fileMatch": "boomack-server.json",
+        "url": "https://schemas.boomack.com/server/v0.15/configuratioin.json"
+      },
+      {
         "fileMatch": "*.boom-panel.json",
         "url": "https://schemas.boomack.com/server/v0.15/panel-layout.json"
       },
@@ -90,6 +94,14 @@
       {
         "fileMatch": "*.vega",
         "url": "https://vega.github.io/schema/vega/v5.json"
+      },
+      {
+        "fileMatch": "boomack-server.yaml",
+        "url": "https://schemas.boomack.com/server/v0.15/configuration.json"
+      },
+      {
+        "fileMatch": "boomack-server.yml",
+        "url": "https://schemas.boomack.com/server/v0.15/configuration.json"
       },
       {
         "fileMatch": "*.boom-panel.yaml",

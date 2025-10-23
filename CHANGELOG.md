@@ -6,6 +6,12 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 Currently this project is in alpha stage.
 
+## Unpublished
+
+### Added
+
+- JSON schema for server configuration
+
 ## 0.1.7
 
 ### Changed

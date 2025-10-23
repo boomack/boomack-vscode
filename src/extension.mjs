@@ -22,7 +22,7 @@ let navigator = null
 // - [X] send display request from file
 // - [X] execute playbook
 // - [ ] setup from assets in directory structure (presets, types, actions, panels, initial content)
-// - [ ] json schema for server config
+// - [X] json schema for server config
 // - [X] json schema for panel layout
 // - [X] json schema for display request
 // - [X] json schema for preset
