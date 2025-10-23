@@ -180,6 +180,19 @@
           "description": "Run the Boomack Project Server with verbose output",
           "order": 104
         },
+        "boomack.client.fileSrc.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Allow using file:/// URLs to send file content",
+          "order": 130
+        },
+        "boomack.client.fileSrc.hosts": {
+          "type": "array",
+          "items": "string",
+          "default": ["127.0.0.1", "::1", "localhost"],
+          "description": "Hosts to send file content as file:/// URL to",
+          "order": 131
+        },
         "boomack.client.timeout": {
           "type": "integer",
           "default": 5000,

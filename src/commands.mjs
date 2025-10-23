@@ -1,6 +1,7 @@
-import _ from 'lodash'
 import fs from'node:fs/promises'
 import path from 'node:path'
+import { pathToFileURL } from 'node:url'
+import _ from 'lodash'
 import waitOn from 'wait-on'
 import { ctrlc } from 'ctrlc-windows'
 import { parse } from 'yaml'
@@ -1341,6 +1342,17 @@ function titleForFile(filename, suffix) {
 }
 
 /**
+ * @param {BoomackServer} server
+ * @returns {boolean}
+ */
+function canSendAsFileUrlTo(server) {
+    if (!config('client.fileSrc.enable')) return false
+    const fileSrcHosts = config('client.fileSrc.hosts') || []
+    const serverUrl = new URL(server.url)
+    return fileSrcHosts.includes(serverUrl.hostname)
+}
+
+/**
  * @param {Navigator} navigator
  * @param {BoomackTarget} target
  * @param {string} filename
@@ -1364,19 +1376,32 @@ async function displayFile(
     }
     const presets = null
     const title = titleForFile(filename, titleSuffix)
-    const fileStat = await fs.stat(filename)
-    const fd = await fs.open(filename)
-    const s = fd.createReadStream()
-    const result = target.slotId
-        ? await boomackClient.streamMediaItemToSlot(
-            target.panelId, target.slotId,
-            mediaType, s, fileStat.size,
-            title, presets, options)
-        : await boomackClient.streamMediaItemToPanel(
-            target.panelId,
-            mediaType, s, fileStat.size,
-            title, presets, options)
-    fd.close()
+    let result = null
+    if (canSendAsFileUrlTo(target.server)) {
+        result = await boomackClient.displayMediaItems({
+            panel: target.panelId,
+            slot: target.slotId,
+            type: mediaType,
+            src: pathToFileURL(filename).toString(),
+            title,
+            presets,
+            options,
+        })
+    } else {
+        const fileStat = await fs.stat(filename)
+        const fd = await fs.open(filename)
+        const s = fd.createReadStream()
+        result = target.slotId
+            ? await boomackClient.streamMediaItemToSlot(
+                target.panelId, target.slotId,
+                mediaType, s, fileStat.size,
+                title, presets, options)
+            : await boomackClient.streamMediaItemToPanel(
+                target.panelId,
+                mediaType, s, fileStat.size,
+                title, presets, options)
+        fd.close()
+    }
     if (!result.success) {
         window.showErrorMessage(`Failed to display file content. HTTP Status ${result.statusCode}.`)
     }
