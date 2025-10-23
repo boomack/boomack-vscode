@@ -17,18 +17,10 @@ let navigator = null
 // === TODO ===
 // - [ ] uncouple target (server, panel, slot) from tree view selection (indicate by icon?)
 // - [ ] show Boomack target in status bar
-// - [X] command for forcing panel reload on connected Web Clients
-// - [X] setup panel from file
-// - [X] send display request from file
 // - [X] execute playbook
 // - [ ] setup from assets in directory structure (presets, types, actions, panels, initial content)
-// - [X] json schema for server config
-// - [X] json schema for panel layout
-// - [X] json schema for display request
-// - [X] json schema for preset
-// - [X] json schema for playbook
-// - [ ] use file:/// references instead of streaming requests for workspace server
-// - [ ] allow opt-in streaming requests for workspace server per config option
+// - [X] use file:/// references instead of streaming requests for workspace server
+// - [X] allow opt-in streaming requests for workspace server per config option
 // - [ ] watches for display requests (file) for immediate feedback
 // - [ ] watches for panel layouts for immediate feedback
 // - [ ] run project server in Docker container
