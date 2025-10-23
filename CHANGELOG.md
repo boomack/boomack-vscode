@@ -11,6 +11,7 @@ Currently this project is in alpha stage.
 ### Added
 
 - JSON schema for server configuration
+- Setting `boomack.client.debugRequests`
 - Setting `boomack.client.fileSrc.enable`
 - Setting `boomack.client.fileSrc.hosts`
 

@@ -1376,6 +1376,9 @@ async function displayFile(
     }
     const presets = null
     const title = titleForFile(filename, titleSuffix)
+    if (config('client.debugRequests')) {
+        options = { ...(options || {}), debug: true }
+    }
     let result = null
     if (canSendAsFileUrlTo(target.server)) {
         result = await boomackClient.displayMediaItems({
@@ -1702,6 +1705,9 @@ async function displaySelection(
         }
     }
     const title = titleForFile(filename, `(Lines ${selection.start.line + 1} – ${selection.end.line + 1})`)
+    if (config('client.debugRequests')) {
+        options = { ...options, debug: true }
+    }
     const result = await boomackClient.displayMediaItems([{
         panel: target.panelId,
         slot: target.slotId || null,

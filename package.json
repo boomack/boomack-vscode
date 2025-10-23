@@ -180,6 +180,12 @@
           "description": "Run the Boomack Project Server with verbose output",
           "order": 104
         },
+        "boomack.client.debugRequests": {
+          "type": "boolean",
+          "default": false,
+          "description": "A switch to send the debug flag in Display Requests",
+          "order": 120
+        },
         "boomack.client.fileSrc.enable": {
           "type": "boolean",
           "default": true,
