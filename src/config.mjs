@@ -57,19 +57,42 @@ export async function loadWorkspaceClientConfig() {
     const extensionRoot = __dirname // import.meta.dirname for ESM, but extension is packaged as CommonJS
     const defaultConfig = await loadOptionalYamlFile(
         join(extensionRoot, '..', 'defaultConfig'))
-    if (workspace.workspaceFolders.length === 0) return defaultConfig
-    const projectRoot = workspace.workspaceFolders[0].uri.fsPath
-    const serverConfig = await loadOptionalYamlFile(
-        join(projectRoot, 'boomack-server'))
-    const clientConfig = await loadOptionalYamlFile(
-        join(projectRoot, 'boomack'))
-    const mergedConfig = _.pick(
-        _.defaultsDeep({}, clientConfig, serverConfig, defaultConfig),
-        ['server', 'client'])
+    let mergedConfig = null
+    if (workspace.workspaceFolders.length > 0) {
+        const projectRoot = workspace.workspaceFolders[0].uri.fsPath
+        const serverConfig = await loadOptionalYamlFile(
+            join(projectRoot, 'boomack-server'))
+        const clientConfig = await loadOptionalYamlFile(
+            join(projectRoot, 'boomack'))
+        mergedConfig = _.pick(
+            _.defaultsDeep({}, clientConfig, serverConfig, defaultConfig),
+            ['server', 'client'])
+    } else {
+        mergedConfig = defaultConfig
+    }
     mergedConfig.client.types = fileTypePredicates(mergedConfig.client.types)
     mergedConfig.client.sourceTypes = fileTypePredicates(mergedConfig.client.sourceTypes)
     mergedConfig.client.sourceLanguages = fileTypePredicates(mergedConfig.client.sourceLanguages)
     return mergedConfig
+}
+
+let defaultClientConfig = null
+
+/**
+ * Loads the default client config for non-workspace servers.
+ *
+ * @returns {Promise<Object>}
+ */
+export async function loadDefaultClientConfig() {
+    if (defaultClientConfig) return defaultClientConfig
+    const extensionRoot = __dirname // import.meta.dirname for ESM, but extension is packaged as CommonJS
+    const defaultConfig = await loadOptionalYamlFile(
+        join(extensionRoot, '..', 'defaultConfig'))
+    defaultConfig.client.types = fileTypePredicates(defaultConfig.client.types)
+    defaultConfig.client.sourceTypes = fileTypePredicates(defaultConfig.client.sourceTypes)
+    defaultConfig.client.sourceLanguages = fileTypePredicates(defaultConfig.client.sourceLanguages)
+    defaultClientConfig = defaultConfig
+    return defaultConfig
 }
 
 /**

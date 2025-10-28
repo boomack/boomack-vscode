@@ -12,6 +12,11 @@ Currently this project is in alpha stage.
 
 - Automatically select project server when it started
 
+### Fixed
+
+- Media type mapping from client configuration
+  only for project server
+
 ## 0.1.8
 
 ### Added

@@ -29,9 +29,10 @@ import {
 } from './model.mjs'
 import {
     config,
+    getFileSrcRootsFromRunConfig,
+    loadDefaultClientConfig,
     loadWorkspaceClientConfig,
     loadWorkspaceServerConfig,
-    getFileSrcRootsFromRunConfig,
 } from './config.mjs'
 import inventory from './inventory.mjs'
 import {
@@ -50,6 +51,7 @@ import {
  * @typedef {import('vscode').NotebookCellOutputItem} NotebookCellOutputItem
  */
 /**
+ * @typedef {import('boomack-js').Boomack} Boomack
  * @typedef {import('./inventory.mjs').BoomackServer} BoomackServer
  * @typedef {import('./model.mjs').SlotDefinition} SlotDefinition
  * @typedef {import('./model.mjs').UIState} UIState
@@ -412,6 +414,15 @@ function reloadWorkspaceServerConfig(navigator) {
         const config = await loadWorkspaceClientConfig()
         navigator.updateWorkspaceServer(config)
     }
+}
+
+/**
+ * @param {BoomackServer} server
+ */
+async function loadClientConfigFor(server) {
+    return server?.name === WORKSPACE_SERVER_NAME
+        ? await loadWorkspaceClientConfig()
+        : await loadDefaultClientConfig()
 }
 
 /**
@@ -1155,13 +1166,15 @@ function lookupMediaType(
 }
 
 /**
- * @param {import('boomack-js').Boomack} boomackClient
+ * @param {BoomackTarget} target
  * @param {{ src?: string, type?: string }} request
+ * @returns {Promise<void>}
  */
-function guessTypeForDisplayRequestSrc(boomackClient, request) {
-    if (!request.src) return request
-    if (request.type) return request
-    request.type = lookupMediaType(boomackClient.config.client.types, request.src)
+async function guessTypeForDisplayRequestSrc(target, request) {
+    if (!request.src) return
+    if (request.type) return
+    const clientConfig = await loadClientConfigFor(target.server)
+    request.type = lookupMediaType(clientConfig.client.types, request.src)
 }
 
 /**
@@ -1202,7 +1215,7 @@ async function sendDisplayRequestFile(navigator, target, filename) {
                 if (!x.panel) x.panel = target.panelId
                 if (!x.slot) x.slot = target.slotId
                 resolveRelativeDisplayRequestSrc(path.dirname(filename), x)
-                guessTypeForDisplayRequestSrc(boomackClient, x)
+                await guessTypeForDisplayRequestSrc(target, x)
             } else {
                 probablyValid = false
                 break
@@ -1212,7 +1225,7 @@ async function sendDisplayRequestFile(navigator, target, filename) {
         if (!request.panel) request.panel = target.panelId
         if (!request.slot) request.slot = target.slotId
         resolveRelativeDisplayRequestSrc(path.dirname(filename), request)
-        guessTypeForDisplayRequestSrc(boomackClient, request)
+        await guessTypeForDisplayRequestSrc(target, request)
     } else {
         probablyValid = false
     }
@@ -1290,10 +1303,10 @@ async function executePlaybookFile(navigator, target, filename) {
         cancelOnError: true,
         defaultPanel: target.panelId,
         defaultSlot: null, // ignore current target slot, it might have disappeared
-        requestHandler: request => {
+        requestHandler: async request => {
             resolveRelativeDisplayRequestSrc(path.dirname(filename), request)
-            guessTypeForDisplayRequestSrc(boomackClient, request)
-            return Promise.resolve(request)
+            await guessTypeForDisplayRequestSrc(target, request)
+            return request
         },
         progressHandler: p => {
             const taskLabel = p.taskType
@@ -1372,8 +1385,9 @@ async function displayFile(
     } = {}
 ) {
     const boomackClient = await navigator.clientFor(target.server)
+    const clientConfig = await loadClientConfigFor(target.server)
     if (!mediaType) {
-        mediaType = lookupMediaType(boomackClient.config.client.types, filename)
+        mediaType = lookupMediaType(clientConfig.client.types, filename)
     }
     const presets = null
     const title = titleForFile(filename, titleSuffix)
@@ -1440,7 +1454,7 @@ async function displayFileSource(navigator, target, filename) {
     if (await isFileBinary(filename)) {
         return await displayBinaryFileSource(navigator, target, filename)
     }
-    const clientConfig = await loadWorkspaceClientConfig()
+    const clientConfig = await loadClientConfigFor(target.server)
     let mediaType = lookupMediaType(
         clientConfig.client.sourceTypes,
         filename,
