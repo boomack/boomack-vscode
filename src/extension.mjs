@@ -280,16 +280,6 @@ export function activate(context) {
         cmd.displayNotebookCellCommand(navigator, true))
     context.subscriptions.push(displayActiveNotebookCellSourceCmdSubs)
 
-    const displayCurrentSelectionSourceCmdSubs = commands.registerCommand(
-        'boomack.display.currentSelection.source',
-        cmd.displaySelectionCommand(navigator, { typeMode: 'source' }))
-    context.subscriptions.push(displayCurrentSelectionSourceCmdSubs)
-
-    const displayCurrentSelectionWithMediaTypeCmdSubs = commands.registerCommand(
-        'boomack.display.currentSelection.withMediaType',
-        cmd.displaySelectionCommand(navigator, { typeMode: 'prompt' }))
-    context.subscriptions.push(displayCurrentSelectionWithMediaTypeCmdSubs)
-
     const displayDocumentCmdSubs = commands.registerCommand(
         'boomack.display.document',
         cmd.displayFileCommand(navigator, { typeMode: 'default' }))
@@ -305,10 +295,20 @@ export function activate(context) {
         cmd.displayFileCommand(navigator, { typeMode: 'prompt' }))
     context.subscriptions.push(displayDocumentWithMediaTypeCmdSubs)
 
+    const displaySelectionCmdSubs = commands.registerCommand(
+        'boomack.display.selection',
+        cmd.displaySelectionCommand(navigator, { typeMode: 'default' }))
+    context.subscriptions.push(displaySelectionCmdSubs)
+
     const displaySelectionSourceCmdSubs = commands.registerCommand(
         'boomack.display.selection.source',
         cmd.displaySelectionCommand(navigator, { typeMode: 'source' }))
     context.subscriptions.push(displaySelectionSourceCmdSubs)
+
+    const displaySelectionWithMediaTypeCmdSubs = commands.registerCommand(
+        'boomack.display.selection.withMediaType',
+        cmd.displaySelectionCommand(navigator, { typeMode: 'prompt' }))
+    context.subscriptions.push(displaySelectionWithMediaTypeCmdSubs)
 
     const displayDocumentInPanelCmdSubs = commands.registerCommand(
         'boomack.display.document.inPanel',

@@ -1523,6 +1523,37 @@ function isPlaybookFile(filename) {
 /**
  * @param {Navigator} navigator
  * @param {BoomackTarget} target
+ * @param {string} [filename ]
+ * @returns {Promise<string|undefined>}
+ */
+async function promptForMediaType(navigator, target, filename) {
+    const client = await navigator.clientFor(target.server)
+    const clientConfig = await loadClientConfigFor(target.server)
+    const proposedMediaType = lookupMediaType(clientConfig.client.types, filename) || 'application/octet-stream'
+    const mediaTypeResponse = await client.listMediaTypes()
+    let mediaType = null
+    if (mediaTypeResponse.success) {
+        const mediaTypes = /** @type {string[]} */ (mediaTypeResponse.body)
+        mediaTypes.sort()
+        mediaType = await window.showQuickPick(mediaTypes, {
+            title: "Display",
+            canPickMany: false,
+            placeHolder: proposedMediaType,
+        })
+    }
+    if (!mediaType) {
+        mediaType = await window.showInputBox({
+            title: "Display",
+            prompt: "Enter a media type",
+            value: proposedMediaType,
+        })
+    }
+    return mediaType
+}
+
+/**
+ * @param {Navigator} navigator
+ * @param {BoomackTarget} target
  * @param {string} filename
  * @param {DisplayFlags} flags
  */
@@ -1551,23 +1582,7 @@ async function displayFileWithFlags(
     } else if (typeMode === 'source') {
         await displayFileSource(navigator, target, filename)
     } else if (typeMode === 'prompt') {
-        let mediaType = null
-        const client = await navigator.clientFor(target.server)
-        const mediaTypeResponse = await client.listMediaTypes()
-        if (mediaTypeResponse.success) {
-            const mediaTypes = /** @type {string[]} */ (mediaTypeResponse.body)
-            mediaType = await window.showQuickPick(mediaTypes, {
-                title: "Display",
-                canPickMany: false,
-            })
-        }
-        if (!mediaType) {
-            mediaType = await window.showInputBox({
-                title: "Display",
-                prompt: "Enter a media type",
-                value: 'application/octet-stream',
-            })
-        }
+        const mediaType = await promptForMediaType(navigator, target, filename)
         if (!mediaType) {
             return
         }
@@ -1689,6 +1704,7 @@ function displayFileCommand(navigator, flags) {
  * @param {Selection} selection
  * @param {{
  *   mediaType?: string,
+ *   asSource?: boolean,
  *   options?: Object,
  * }} [options]
  */
@@ -1696,27 +1712,35 @@ async function displaySelection(
     navigator, target, editor, selection,
     {
         mediaType,
+        asSource,
         options,
     } = {}
 ) {
     const filename = editor.document.uri.fsPath
     const boomackClient = await navigator.clientFor(target.server)
     if (!options) { options = {} }
+    const clientConfig = await loadClientConfigFor(target.server)
     if (!mediaType) {
-        const clientConfig = await loadWorkspaceClientConfig()
-        mediaType = lookupMediaType(
-            clientConfig.client.sourceTypes,
-            filename,
-            { defaultType: 'text/plain', mimeFallback: false })
-        let language = 'plain'
-        if (mediaType === 'text/plain') {
+        if (asSource) {
+            mediaType = lookupMediaType(
+                clientConfig.client.sourceTypes,
+                filename,
+                { defaultType: 'text/plain', mimeFallback: false })
+        } else {
+            mediaType = lookupMediaType(clientConfig.client.types, filename)
+        }
+    }
+    if (asSource && mediaType === 'text/plain') {
+        if (options.transformation === undefined) {
+            options = { ...options, transformation: 'highlight' }
+        }
+        if (options.syntax === undefined) {
+            let language = 'plain'
             language = lookupMediaType(
                 clientConfig.client.sourceLanguages,
                 filename,
                 { defaultType: 'plain', mimeFallback: false })
-        }
-        if (language) {
-            options = { ...options, transformation: 'highlight', syntax: language }
+            options = { ...options, syntax: language }
         }
     }
     const title = titleForFile(filename, `(Lines ${selection.start.line + 1} – ${selection.end.line + 1})`)
@@ -1749,15 +1773,14 @@ async function displaySelectionWithFlags(
         typeMode = 'source',
     }
 ) {
-    if (typeMode === 'source') {
-        await displaySelection(navigator, target, editor, selection)
+    if (typeMode === 'default') {
+        await displaySelection(navigator, target, editor, selection, { asSource: false })
+    } else if (typeMode === 'source') {
+        await displaySelection(navigator, target, editor, selection, { asSource: true })
     } else if (typeMode === 'prompt') {
-        const mediaType = await window.showInputBox({
-            title: "Display",
-            prompt: "Enter a media type",
-            value: 'application/octet-stream',
-        })
-        await displaySelection(navigator, target, editor, selection, { mediaType })
+        const filename = editor.document.uri.fsPath
+        const mediaType = await promptForMediaType(navigator, target, filename)
+        await displaySelection(navigator, target, editor, selection, { mediaType, asSource: false })
     } else {
         throw new Error(`Display type mode '${typeMode}' is not supported for selection`)
     }

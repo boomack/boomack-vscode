@@ -516,18 +516,6 @@
         "icon": "$(code)"
       },
       {
-        "command": "boomack.display.currentSelection.source",
-        "category": "Boomack",
-        "title": "Display Selection",
-        "icon": "$(send)"
-      },
-      {
-        "command": "boomack.display.currentSelection.withMediaType",
-        "category": "Boomack",
-        "title": "Display Selection with different Media Type",
-        "icon": "$(code-review)"
-      },
-      {
         "command": "boomack.display.document",
         "category": "Boomack",
         "title": "Display on Boomack",
@@ -546,10 +534,22 @@
         "icon": "$(code-review)"
       },
       {
+        "command": "boomack.display.selection",
+        "category": "Boomack",
+        "title": "Display Selection",
+        "icon": "$(send)"
+      },
+      {
         "command": "boomack.display.selection.source",
         "category": "Boomack",
-        "title": "Display Selection on Boomack",
-        "icon": "$(send)"
+        "title": "Display Selected Text",
+        "icon": "$(code)"
+      },
+      {
+        "command": "boomack.display.selection.withMediaType",
+        "category": "Boomack",
+        "title": "Display Selection with different Media Type",
+        "icon": "$(code-review)"
       },
       {
         "command": "boomack.display.document.inPanel",
@@ -727,6 +727,12 @@
         "mac": "cmd+l cmd+c"
       },
       {
+        "command": "boomack.display.selection",
+        "when": "editorHasSelection && boomack.serverSelected",
+        "key": "ctrl+l l",
+        "mac": "cmd+l l"
+      },
+      {
         "command": "boomack.display.selection.source",
         "when": "editorHasSelection && boomack.serverSelected",
         "key": "ctrl+l ctrl+l",
@@ -882,11 +888,15 @@
           "when": "boomack.activeNotebookEditor && boomack.serverSelected"
         },
         {
-          "command": "boomack.display.currentSelection.source",
+          "command": "boomack.display.selection",
           "when": "editorHasSelection && boomack.serverSelected"
         },
         {
-          "command": "boomack.display.currentSelection.withMediaType",
+          "command": "boomack.display.selection.source",
+          "when": "editorHasSelection && boomack.serverSelected"
+        },
+        {
+          "command": "boomack.display.selection.withMediaType",
           "when": "editorHasSelection && boomack.serverSelected"
         },
         { "command": "boomack.display.document", "when": "false" },
@@ -894,7 +904,6 @@
         { "command": "boomack.display.document.withMediaType", "when": "false" },
         { "command": "boomack.display.notebook.cell", "when": "false" },
         { "command": "boomack.display.notebook.cell.source", "when": "false" },
-        { "command": "boomack.display.selection.source", "when": "false" },
         { "command": "boomack.display.document.inPanel", "when": "false" },
         { "command": "boomack.display.document.source.inPanel", "when": "false" },
         { "command": "boomack.display.document.inSlot", "when": "false" },
@@ -1050,9 +1059,14 @@
       ],
       "editor/context": [
         {
-          "command": "boomack.display.selection.source",
+          "command": "boomack.display.selection",
           "when": "boomack.serverSelected && editorHasSelection",
           "group": "2_boomack@10"
+        },
+        {
+          "command": "boomack.display.selection.source",
+          "when": "boomack.serverSelected && editorHasSelection",
+          "group": "2_boomack@11"
         },
         {
           "command": "boomack.display.document",

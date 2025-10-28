@@ -93,9 +93,11 @@ This extension contributes the following commands with default key bindings:
   <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>C</kbd>
 * `boomack.display.activeNotebookCell.source`
   <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>Ctrl</kbd>+<kbd>C</kbd>
-* `boomack.display.currentSelection.source`
+* `boomack.display.selection`
+  <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>L</kbd>
+* `boomack.display.selection.source`
   <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>Ctrl</kbd>+<kbd>L</kbd>
-* `boomack.display.currentSelection.withMediaType`
+* `boomack.display.selection.withMediaType`
   <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>Shift</kbd>+<kbd>L</kbd>
 * `boomack.playbook.execute.activeDocument`
   <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>B</kbd>

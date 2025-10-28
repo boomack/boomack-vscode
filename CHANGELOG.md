@@ -8,8 +8,14 @@ Currently this project is in alpha stage.
 
 ## 0.1.9
 
+### Added
+
+- Command `boomack.display.selection` <kbd>Ctrl</kbd>+<kbd>L</kbd>&nbsp;<kbd>L</kbd>
+- Suggestions for media type in `boomack.display.selection.withMediaType`
+
 ### Changed
 
+- Sort media types for user selection
 - Automatically select project server when it started
 
 ### Fixed
