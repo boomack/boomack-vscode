@@ -515,6 +515,7 @@ function startWorkspaceServerCommand(navigator) {
             commands.executeCommand('setContext',
                     'boomack.workspaceServer.running', true)
             window.showInformationMessage("Boomack Project Server started")
+            await navigator.selectServer(navigator.serverStates[WORKSPACE_SERVER_NAME])
         })
     }
 }

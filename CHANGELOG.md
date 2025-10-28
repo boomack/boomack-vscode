@@ -6,7 +6,13 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 Currently this project is in alpha stage.
 
-## Unpublished
+## 0.1.9
+
+### Changed
+
+- Automatically select project server when it started
+
+## 0.1.8
 
 ### Added
 
