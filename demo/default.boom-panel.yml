@@ -1,4 +1,13 @@
 title: Standard
+
+defs:
+  footSlot: &footSlot
+    border: false
+    row: 4
+    rowSpan: 2
+    history: 0
+    zoom: 0.75
+
 theme: dark
 type: grid
 grid:
@@ -16,15 +25,8 @@ slots:
     rowSpan: 3
     history: 10
   left:
-    border: false
-    row: 4
-    rowSpan: 2
-    history: 0
-    zoom: 0.75
+    <<: *footSlot
+    column: 0
   right:
-    border: false
+    <<: *footSlot
     column: 1
-    row: 4
-    rowSpan: 2
-    history: 0
-    zoom: 0.75
