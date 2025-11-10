@@ -4,7 +4,7 @@ import { pathToFileURL } from 'node:url'
 import _ from 'lodash'
 import waitOn from 'wait-on'
 import { ctrlc } from 'ctrlc-windows'
-import { parse } from 'yaml'
+import yaml from 'yaml'
 import {
     commands,
     NotebookCellKind,
@@ -61,6 +61,11 @@ import {
  * @typedef {import('./model.mjs').BoomackTarget} BoomackTarget
  * @typedef {import('./navigation.mjs').Navigator} Navigator
  */
+
+const yamlParseOptions = { merge: true }
+const parseDisplayRequestOptions = { ...yamlParseOptions }
+const parsePanelLayoutOptions = { ...yamlParseOptions }
+const parsePlaybookOptions = { ...yamlParseOptions }
 
 /**
  * @param {any} uiState
@@ -1207,7 +1212,7 @@ async function sendDisplayRequestFile(navigator, target, filename) {
         return true
     }
 
-    let request = parse(requestText)
+    let request = yaml.parse(requestText, parseDisplayRequestOptions)
     let probablyValid = true
     if (Array.isArray(request)) {
         for (const x of request) {
@@ -1254,8 +1259,13 @@ async function sendPanelLayoutFile(navigator, target, filename) {
         return !!x && typeof x === 'object' && !Array.isArray(x)
     }
 
-    let layout = parse(layoutText)
-
+    let layout = null
+    try {
+        layout = yaml.parse(layoutText, parsePanelLayoutOptions)
+    } catch (err) {
+        window.showWarningMessage("Failed to parse file with Panel Layout: " + err)
+        return
+    }
     if (!couldBePanelLayout(layout)) {
         window.showWarningMessage("File does not appear to be a Panel Layout.")
         return
@@ -1285,7 +1295,7 @@ async function executePlaybookFile(navigator, target, filename) {
         return !!x && typeof x === 'object' && !Array.isArray(x)
     }
 
-    let playbook = parse(playbookText)
+    let playbook = yaml.parse(playbookText, parsePlaybookOptions)
 
     if (!couldBePlaybook(playbook)) {
         window.showWarningMessage("File does not appear to be a Playbook.")
