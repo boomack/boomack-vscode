@@ -1164,7 +1164,7 @@ function lookupMediaType(
         let ext = path.extname(name)
         if (ext.startsWith('.')) ext = ext.substring(1)
         if (ext) {
-            return mime.getType(ext);
+            return mime.getType(ext) || defaultType;
         }
     }
     return defaultType;
