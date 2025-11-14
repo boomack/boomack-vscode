@@ -1,32 +1,51 @@
-panels:
-  default: default.boom-panel.yml
-  alternative: two-columns.boom-panel.yml
-  notebook:
-    title: Notebook
-    theme: default
-    type: document
-    document:
-      slotTemplate:
-        history: 0
-        extensions: 0
-        border: false
-        noSingleOut: false
-        noMaximize: false
-    slots:
-      title:
-        toolbar: false
-        history: 0
+steps:
+  - type: update-panel
+    tags: [panel]
+    panel: default
+    layout: default.boom-panel.yml
 
-requests:
-  - panel: default
-    slot: title
-    type: text/html
-    text: '<h1 class="ui center aligned header">Title from Playbook</h1>'
-  - image.boom-request.yml
-  - panel: default
-    slot: left
-    src: ./chart.vegalite
-  - panel: default
-    slot: right
-    type: text/x-yaml
-    src: ./chart.vegalite
+  - type: display
+    # a single display request
+    request:
+      panel: default
+      slot: title
+      type: text/html
+      text: '<h1 class="ui center aligned header">Title from Playbook</h1>'
+  - type: display
+    # a single referenced display request
+    request: image.boom-request.yml
+  - type: display
+    # multiple display requests with common target panel
+    panel: default
+    tags: [foot]
+    requests:
+      - slot: left
+        src: ./chart.vegalite
+      - slot: right
+        type: text/x-yaml
+        src: ./chart.vegalite
+
+  - type: update-panel
+    label: alt
+    tags: [panel]
+    panel: alternative
+    layout: two-columns.boom-panel.yml
+
+  - type: update-panel
+    tags: [panel]
+    panel: notebook
+    layout:
+      title: Notebook
+      theme: default
+      type: document
+      document:
+        slotTemplate:
+          history: 0
+          extensions: 0
+          border: false
+          noSingleOut: false
+          noMaximize: false
+      slots:
+        title:
+          toolbar: false
+          history: 0
