@@ -8,7 +8,12 @@
         "token": null,
         "timeout": 5000,
         "retry": 0,
-        "types": {},
+        "types": {
+            "*.vega": "application/x-vega-spec",
+            "*.vegalite": "application/x-vega-lite-spec",
+            "*.mermaid": "text/x-mermaid",
+            "*.leaflet": "application/x-leaflet"
+        },
         "sourceTypes": {},
         "sourceLanguages": {
             "*.ipynb": "json",
