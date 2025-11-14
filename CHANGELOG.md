@@ -6,6 +6,20 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 Currently this project is in alpha stage.
 
+## 0.1.10
+
+### Added
+
+- Media types for file extensions: `*.vega`, `*.vegalite`, `*.mermaid`, `*.leaflet`
+- Playbook Sequence Steps
+- JSON schema for `*.boom-step.(json|yaml|yml)`
+
+### Fixed
+
+- URL for JSON schema für `boomack-server.json`
+- Media type lookup
+- Support for YAML merge keys
+
 ## 0.1.9
 
 ### Added
