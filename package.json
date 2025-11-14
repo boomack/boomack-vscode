@@ -39,7 +39,7 @@
     "test": "vscode-test"
   },
   "dependencies": {
-    "boomack-js": "0.14.4",
+    "boomack-js": "0.15.1",
     "ctrlc-windows": "2.2.0",
     "lodash": "4.17.21",
     "lookpath": "1.2.3",
@@ -82,8 +82,12 @@
         "url": "https://schemas.boomack.com/server/v0.15/display-request.json"
       },
       {
+        "fileMatch": "*.boom-step.json",
+        "url": "https://schemas.boomack.com/client/v0.15/sequence-step.json"
+      },
+      {
         "fileMatch": "*.boom.json",
-        "url": "https://schemas.boomack.com/client/v0.14/playbook.json"
+        "url": "https://schemas.boomack.com/client/v0.15/playbook.json"
       }
     ],
     "yamlValidation": [
@@ -120,12 +124,20 @@
         "url": "https://schemas.boomack.com/server/v0.15/display-request.json"
       },
       {
+        "fileMatch": "*.boom-step.yaml",
+        "url": "https://schemas.boomack.com/client/v0.15/sequence-step.json"
+      },
+      {
+        "fileMatch": "*.boom-step.yml",
+        "url": "https://schemas.boomack.com/client/v0.15/sequence-step.json"
+      },
+      {
         "fileMatch": "*.boom.yaml",
-        "url": "https://schemas.boomack.com/client/v0.14/playbook.json"
+        "url": "https://schemas.boomack.com/client/v0.15/playbook.json"
       },
       {
         "fileMatch": "*.boom.yml",
-        "url": "https://schemas.boomack.com/client/v0.14/playbook.json"
+        "url": "https://schemas.boomack.com/client/v0.15/playbook.json"
       }
     ],
     "configuration": {
