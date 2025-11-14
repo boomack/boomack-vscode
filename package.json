@@ -71,7 +71,7 @@
     "jsonValidation": [
       {
         "fileMatch": "boomack-server.json",
-        "url": "https://schemas.boomack.com/server/v0.15/configuratioin.json"
+        "url": "https://schemas.boomack.com/server/v0.15/configuration.json"
       },
       {
         "fileMatch": "*.boom-panel.json",
