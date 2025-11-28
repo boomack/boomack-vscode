@@ -9,7 +9,7 @@ import {
 import { lookpath } from 'lookpath'
 import { config } from './config.mjs'
 
-const boomackServerMainScript = 'server-build/cli.mjs'
+const boomackServerMainScript = 'dist/index.mjs'
 
 /**
  * @typedef {import('vscode').ExtensionContext} ExtensionContext
