@@ -3,8 +3,8 @@ import { homedir } from 'node:os'
 import { promises } from 'node:fs'
 import _ from 'lodash'
 import { workspace } from 'vscode'
-import yaml from 'yaml'
-import { fileTypePredicates } from 'boomack-js/config.js'
+import yaml from 'js-yaml'
+import { fileTypePredicates } from 'boomack-js/config'
 
 /**
  * @param {string} name
@@ -25,6 +25,7 @@ function configFileAlternatives(fileName) {
 
 /**
  * @param {string} fileName
+ * @returns {Promise<any>}
  */
 async function loadOptionalYamlFile(fileName) {
     let text = null;
@@ -42,7 +43,7 @@ async function loadOptionalYamlFile(fileName) {
         }
     }
     if (text === null) return {}
-    return yaml.parse(text, { merge: false })
+    return yaml.load(text)
 }
 
 /**
