@@ -14,6 +14,8 @@ import {
     window,
     workspace,
 } from 'vscode'
+import { fileTypePredicates } from 'boomack-js/config'
+import boomackClientKnownFileTypes from 'boomack-js/types'
 import mime from 'mime'
 import {
     removeItemOnce,
@@ -1138,6 +1140,8 @@ function removeSlotCommand(navigator) {
     }
 }
 
+const boomackClientKnownTypePredicates = fileTypePredicates(boomackClientKnownFileTypes)
+
 /**
  * @param {{ predicate: function(string):boolean, type: string }[]} types
  * @param {string} filename
@@ -1152,10 +1156,20 @@ function lookupMediaType(
     } = {}
 ) {
     const name = path.basename(filename)
+
+    // check for match in given predicates
     for (const { predicate, type } of types) {
         if (predicate(name)) return type
     }
+
     if (mimeFallback) {
+
+        // check for match in known file types from boomack-js
+        for (const { predicate, type } of boomackClientKnownTypePredicates) {
+            if (predicate(name)) return type
+        }
+
+        // try to guess mime type by file extension with mime package
         let ext = path.extname(name)
         if (ext.startsWith('.')) ext = ext.substring(1)
         if (ext) {
