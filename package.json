@@ -39,7 +39,7 @@
     "test": "vscode-test"
   },
   "dependencies": {
-    "boomack-js": "0.15.6",
+    "boomack-js": "0.15.7",
     "ctrlc-windows": "2.2.0",
     "lodash": "4.17.21",
     "lookpath": "1.2.3",
