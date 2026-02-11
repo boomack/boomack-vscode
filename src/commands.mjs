@@ -501,7 +501,11 @@ function startWorkspaceServerCommand(navigator) {
                     navigator.setWorkspaceServerRunning(false)
                     removeItemOnce(navigator.getContext().subscriptions, terminal)
                     if (started) {
-                        window.showInformationMessage("Boomack Project Server stopped")
+                        if (terminal.exitStatus.code === 0) {
+                            window.showInformationMessage("Boomack Project Server stopped")
+                        } else {
+                            window.showErrorMessage("Boomack Server stopped with error")
+                        }
                     }
                 })
             try {
