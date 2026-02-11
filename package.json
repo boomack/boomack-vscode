@@ -192,6 +192,12 @@
           "description": "Run the Boomack Project Server with verbose output",
           "order": 104
         },
+        "boomack.server.haltOnError": {
+          "type": "boolean",
+          "default": true,
+          "description": "Keep terminal open if Boomack server failed to start",
+          "order": 105
+        },
         "boomack.client.debugRequests": {
           "type": "boolean",
           "default": false,

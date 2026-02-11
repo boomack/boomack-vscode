@@ -111,6 +111,7 @@ This extension contributes the following settings:
 * `boomack.server.plugins.bundled`: Use Boomack plug-ins that come bundled with the VS Code extension
 * `boomack.server.plugins.rootPath`: Path to custom node_modules folder where to look for plug-ins
 * `boomack.server.verbose`: Run the Boomack Project Server with verbose output
+* `boomack.server.haltOnError`: Keep terminal open if Boomack server failed to start
 * `boomack.client.debugRequests`: A switch to send the debug flag in Display Requests
 * `boomack.client.fileSrc.enable`: Allow using file:/// URLs to send file content
 * `boomack.client.fileSrc.hosts`: Hosts to send file content as file:/// URL to

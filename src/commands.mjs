@@ -453,6 +453,7 @@ function startWorkspaceServerCommand(navigator) {
             progress.report({ increment: 20, message: 'Starting...' })
             const args = []
             if (config('server.verbose')) { args.push('-v') }
+            if (config('server.haltOnError')) { args.push('--halt-on-error') }
 
             args.push('-h'); args.push(clientConfig.server.host)
             args.push('-p'); args.push(`${clientConfig.server.port}`)
@@ -503,8 +504,6 @@ function startWorkspaceServerCommand(navigator) {
                     if (started) {
                         if (terminal.exitStatus.code === 0) {
                             window.showInformationMessage("Boomack Project Server stopped")
-                        } else {
-                            window.showErrorMessage("Boomack Server stopped with error")
                         }
                     }
                 })
