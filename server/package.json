@@ -1,9 +1,9 @@
 {
   "dependencies": {
-    "boomack": "0.15.4",
+    "boomack": "0.15.5",
     "boomack-plugin-leaflet": "0.2.2",
     "boomack-plugin-mermaid": "0.2.0",
     "boomack-plugin-pdf": "0.2.0",
-    "boomack-plugin-vega": "0.12.4"
+    "boomack-plugin-vega": "0.12.5"
   }
 }
