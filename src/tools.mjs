@@ -184,16 +184,10 @@ export function runInTerminal(context, label, message, cmd, args, cwd, endCb) {
         shellArgs: args,
     })
 
-    terminal.processId.then(pid => {
-        if (!pid) return
-        const handle = setInterval(() => {
-            try {
-                process.kill(pid, 0) // throws if the process no longer exists
-            } catch {
-                clearInterval(handle)
-                if (endCb) endCb(terminal)
-            }
-        }, 500)
+    const exitEvent = window.onDidCloseTerminal(t => {
+        if (t !== terminal) return
+        exitEvent.dispose()
+        if (endCb) endCb(terminal)
     })
 
     terminal.show()
